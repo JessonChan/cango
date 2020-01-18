@@ -3,6 +3,7 @@ package cango
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 )
 
 type Can struct {
@@ -42,7 +43,45 @@ func (can *Can) Run(as ...Addr) {
 	}
 }
 
-func (can *Can) Route(string, *Controller) {
+func (can *Can) Route(uri URI) {
+	rv := reflect.ValueOf(uri)
+	if rv.Kind() != reflect.Ptr {
+		panic(uri)
+	}
+	tv := reflect.Indirect(rv).Interface()
+	fmt.Println(reflect.TypeOf(tv))
+	tvs := reflect.TypeOf(tv)
+	for i := 0; i < tvs.NumField(); i++ {
+		f := tvs.Field(i)
+		if f.PkgPath != "" {
+			continue
+		}
+		if fmt.Sprint(f.Type) == "cango.URI" {
+			fmt.Println(f.Name + ":" + f.Type.Name() + ":" + f.Tag.Get("value"))
+			fmt.Println(parseTag(f.Tag.Get("value")))
+		}
+	}
+}
+func parseTag(tag string) (vars map[int]string) {
+	if tag == "" {
+		return
+	}
+	vars = map[int]string{}
+	segNum := 0
+	lastBit := tag[0]
+	segBegin := 0
+	for i := 0; i < len(tag); i++ {
+		v := tag[i]
+		if lastBit == '{' {
+			segNum++
+			segBegin = i
+		}
+		if v == '}' {
+			vars[segNum] = tag[segBegin:i]
+		}
+		lastBit = v
+	}
+	return
 }
 func (can *Can) route([]string, *Controller) {
 }

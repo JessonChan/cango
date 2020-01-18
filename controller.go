@@ -4,7 +4,8 @@ type URI interface {
 }
 
 type Controller struct {
-	URI `value:"/cinema/{cinemaId}/movie/{movieId}"`
+	URI  `value:"/cinema/{cinemaId}/movie/{movieId}"`
+	Name string
 }
 
 type SugarController struct {
