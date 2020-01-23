@@ -1,33 +1,21 @@
 package cango
 
+import (
+	"net/http"
+)
+
 type URI interface {
+	Request() *http.Request
 }
 
-type Controller struct {
-	URI  `value:"/cinema/{cinemaId}/movie/{movieId}"`
-	Name string
+type context struct {
+	request *http.Request
 }
 
-type SugarController struct {
-	*Controller
+func (c *context) Request() *http.Request {
+	return c.request
 }
 
-func (s *SugarController) Get(param struct {
-	URI      `value:"/people/{peopleId}.json"`
-	CinemaId int `nil:"false"`
-	MovieId  int
-	PeopleId int
-}) {
-	if s.URI == nil {
-		return
-	}
-	if param.URI == nil {
-		return
-	}
-	if param.CinemaId == 0 {
-		return
-	}
-	if param.MovieId == 0 {
-	}
-	return
+type Method interface {
 }
+type PostMethod Method
