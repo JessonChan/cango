@@ -34,12 +34,16 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rt := can.Do(r)
+	rt, statusCode := can.Do(r)
+	rw.WriteHeader(int(statusCode))
+	if rt == nil {
+		_, _ = rw.Write([]byte("{}"))
+		return
+	}
 	bs, err := responseHandler(rt)
 	if err == nil {
 		_, _ = rw.Write(bs)
 	} else {
-		fmt.Println(err)
 		_, _ = rw.Write([]byte("{}"))
 	}
 }
@@ -55,10 +59,10 @@ func (can *Can) Run(as ...Addr) {
 	var err error
 	go func() { err = can.srv.ListenAndServe() }()
 	if err != nil {
-		fmt.Println("cango start failed @" + addr.String())
+		fmt.Println("cango start failed @ " + addr.String())
 		panic(err)
 	}
-	fmt.Println("cango start success@" + addr.String())
+	fmt.Println("cango start success @ " + addr.String())
 	<-startChan
 }
 
@@ -98,35 +102,38 @@ func assignValue(value reflect.Value, vars map[string]string) {
 	}
 }
 
-func (can *Can) Do(req *http.Request) interface{} {
-	match := &mux.RouteMatch{}
-	if router.Match(req, match) {
-		m, ok := methodMap[match.Route.GetName()]
-		if ok == false {
-			// error,match failed
-			return nil
-		}
-		if m.Type.NumIn() != 2 {
-			// error,method only have one arg
-			return nil
-		}
-		// controller
-		ct := reflect.New(m.Type.In(0).Elem())
-		// method
-		mt := reflect.New(m.Type.In(1)).Elem()
+type StatusCode int
 
-		assignValue(ct.Elem(), match.Vars)
-		assignValue(mt, match.Vars)
-		vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
-		if len(vs) == 0 {
-			return nil
-		}
-		if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
-			return vs[0].Elem().Interface()
-		}
-		return vs[0].Interface()
+func (can *Can) Do(req *http.Request) (interface{}, StatusCode) {
+	match := &mux.RouteMatch{}
+	router.Match(req, match)
+	if match.MatchErr != nil {
+		return nil, http.StatusNotFound
 	}
-	return nil
+	m, ok := methodMap[match.Route.GetName()]
+	if ok == false {
+		// error,match failed
+		return nil, http.StatusMethodNotAllowed
+	}
+	if m.Type.NumIn() != 2 {
+		// error,method only have one arg
+		return nil, http.StatusMethodNotAllowed
+	}
+	// controller
+	ct := reflect.New(m.Type.In(0).Elem())
+	// method
+	mt := reflect.New(m.Type.In(1)).Elem()
+
+	assignValue(ct.Elem(), match.Vars)
+	assignValue(mt, match.Vars)
+	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
+	if len(vs) == 0 {
+		return nil, http.StatusMethodNotAllowed
+	}
+	if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
+		return vs[0].Elem().Interface(), http.StatusOK
+	}
+	return vs[0].Interface(), http.StatusOK
 }
 
 func lowerCase(str string) string {
