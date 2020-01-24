@@ -69,6 +69,10 @@ func (can *Can) Run(as ...Addr) {
 var router = mux.NewRouter()
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
 
+func dumpSingleRoute(name, url string) {
+	fmt.Println(name + " : " + url)
+}
+
 func (can *Can) urlStr(uri interface{}) (string, string) {
 	typ := reflect.TypeOf(uri)
 	if typ.Kind() != reflect.Struct {
@@ -191,6 +195,7 @@ func (can *Can) Route(uri URI) {
 					route := router.Name(ctlName + "." + m.Name)
 					route.Path(urlStr + f.Tag.Get("value"))
 					methodMap[route.GetName()] = m
+					dumpSingleRoute(route.GetName(), urlStr+f.Tag.Get("value"))
 				}
 			}
 		}
