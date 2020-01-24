@@ -73,6 +73,7 @@ func dumpSingleRoute(name, url string) {
 	fmt.Println(name + " : " + url)
 }
 
+// urlStr get uri from tag value
 func (can *Can) urlStr(uri interface{}) (string, string) {
 	typ := reflect.TypeOf(uri)
 	if typ.Kind() != reflect.Struct {
@@ -164,12 +165,25 @@ func upperCase(str string) string {
 
 var methodMap = map[string]reflect.Method{}
 
-func (can *Can) Route(uri URI) {
+func (can *Can) RouteWithPrefix(prefix string, uris ...URI) {
+	for _, uri := range uris {
+		can.route(prefix, uri)
+	}
+}
+
+const emptyPrefix = ""
+
+func (can *Can) Route(uris ...URI) {
+	can.RouteWithPrefix(emptyPrefix, uris...)
+}
+
+func (can *Can) route(prefix string, uri URI) {
 	rp := reflect.ValueOf(uri)
 	if rp.Kind() != reflect.Ptr {
 		panic("route controller must be prt")
 	}
 	urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Interface())
+	urlStr = prefix + urlStr
 	tvp := reflect.TypeOf(uri)
 	for i := 0; i < tvp.NumMethod(); i++ {
 		m := tvp.Method(i)
