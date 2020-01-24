@@ -3,6 +3,8 @@ package cango
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -11,18 +13,23 @@ import (
 )
 
 type Can struct {
-	srv *http.Server
+	srv          *http.Server
+	viewRootPath string
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
 
 func NewCan() *Can {
-	return &Can{&http.Server{Addr: defaultAddr.String()}}
+	return &Can{srv: &http.Server{Addr: defaultAddr.String()}}
 }
 
 type Addr struct {
 	Host string
 	Port int
+}
+
+type View struct {
+	RootPath string
 }
 
 func (addr Addr) String() string {
@@ -36,6 +43,16 @@ var responseHandler responseTypeHandler = json.Marshal
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rt, statusCode := can.Do(r)
 	rw.WriteHeader(int(statusCode))
+
+	mv, ok := rt.(ModelView)
+	if ok {
+		tpl := template.New(mv.Tpl)
+		bs, _ := ioutil.ReadFile(can.viewRootPath + mv.Tpl)
+		_, _ = tpl.Parse(string(bs))
+		_ = tpl.Execute(rw, mv.Model)
+		return
+	}
+
 	if rt == nil {
 		_, _ = rw.Write([]byte("{}"))
 		return
@@ -48,13 +65,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (can *Can) Run(as ...Addr) {
-	addr := append(as, defaultAddr)[0]
+func (can *Can) Run(as ...interface{}) {
+	addr := getAddr(as)
 	if can.srv == nil {
 		can.srv = &http.Server{}
 	}
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
+	can.viewRootPath = getViewRootPath(as)
 	startChan := make(chan interface{}, 1)
 	var err error
 	go func() { err = can.srv.ListenAndServe() }()
@@ -66,11 +84,43 @@ func (can *Can) Run(as ...Addr) {
 	<-startChan
 }
 
-var router = mux.NewRouter()
+func getAddr(as []interface{}) Addr {
+	for _, v := range as {
+		if addr, ok := v.(Addr); ok {
+			return addr
+		}
+	}
+	return defaultAddr
+}
+
+func getViewRootPath(as []interface{}) string {
+	for _, v := range as {
+		if view, ok := v.(View); ok {
+			return view.RootPath
+		}
+	}
+	return "."
+}
+
+var rootRouter = mux.NewRouter()
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
 
-func dumpSingleRoute(name, url string) {
-	fmt.Println(name + " : " + url)
+/*
+	methods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
+	for _, m := range methods {
+		fmt.Printf("	reflect.TypeOf((*%sMethod)(nil)).Elem(): http.Method%s,\n", m, m)
+	}
+*/
+
+var httpMethodMap = map[reflect.Type]string{
+	reflect.TypeOf((*GetMethod)(nil)).Elem():     http.MethodGet,
+	reflect.TypeOf((*PostMethod)(nil)).Elem():    http.MethodPost,
+	reflect.TypeOf((*HeadMethod)(nil)).Elem():    http.MethodHead,
+	reflect.TypeOf((*PutMethod)(nil)).Elem():     http.MethodPut,
+	reflect.TypeOf((*PatchMethod)(nil)).Elem():   http.MethodPatch,
+	reflect.TypeOf((*DeleteMethod)(nil)).Elem():  http.MethodDelete,
+	reflect.TypeOf((*OptionsMethod)(nil)).Elem(): http.MethodOptions,
+	reflect.TypeOf((*TraceMethod)(nil)).Elem():   http.MethodTrace,
 }
 
 // urlStr get uri from tag value
@@ -111,7 +161,7 @@ type StatusCode int
 
 func (can *Can) Do(req *http.Request) (interface{}, StatusCode) {
 	match := &mux.RouteMatch{}
-	router.Match(req, match)
+	rootRouter.Match(req, match)
 	if match.MatchErr != nil {
 		return nil, http.StatusNotFound
 	}
@@ -190,28 +240,34 @@ func (can *Can) route(prefix string, uri URI) {
 		if m.PkgPath != "" {
 			continue
 		}
-		ts := make([]reflect.Type, m.Type.NumIn())
-		fs := make(map[string]reflect.StructField, 2*m.Type.NumIn())
 		for i := 0; i < m.Type.NumIn(); i++ {
 			in := m.Type.In(i)
-			ts[i] = in
 			if in.Kind() != reflect.Struct {
 				continue
 			}
+			routerName := ctlName + "." + m.Name
+			route := rootRouter.Name(routerName)
+			var httpMethods []string
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)
 				if f.PkgPath != "" {
 					panic("could not use unexpected filed in param:" + f.Name)
 				}
-				fs[f.Name] = f
-				fs[lowerCase(f.Name)] = f
-				if f.Type == uriType {
-					route := router.Name(ctlName + "." + m.Name)
+				switch f.Type {
+				case uriType:
 					route.Path(urlStr + f.Tag.Get("value"))
-					methodMap[route.GetName()] = m
-					dumpSingleRoute(route.GetName(), urlStr+f.Tag.Get("value"))
+					methodMap[routerName] = m
+				}
+				m, ok := httpMethodMap[f.Type]
+				if ok {
+					httpMethods = append(httpMethods, m)
 				}
 			}
+			// default method is get
+			if len(httpMethods) == 0 {
+				httpMethods = append(httpMethods, http.MethodGet)
+			}
+			route.Methods(httpMethods...)
 		}
 	}
 }
