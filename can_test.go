@@ -1,10 +1,41 @@
 package cango
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 )
+
+type PageController struct {
+	URI       `value:"/blog/{blogName}/article/{articleId}-{pageId}"`
+	BlogName  string
+	ArticleId int
+	PageId    int
+}
+
+type Comment struct {
+	Id      int
+	Content string
+	Author  string
+}
+
+func (p *PageController) GetComments(param struct {
+	URI    `value:"/comments/list.json"`
+	Method `value:"get,post"`
+	PostMethod
+}) {
+	fmt.Println(p.BlogName, p.ArticleId, p.PageId)
+}
+
+func (p *PageController) GetComment(param struct {
+	URI       `value:"/comment/{commentId}.json"`
+	CommentId int
+}) Comment {
+	fmt.Println("getComment", param.CommentId, p.ArticleId, p.PageId, p.BlogName)
+	return Comment{Id: param.CommentId, Content: "写的太好了，五星推荐", Author: "追求理想的风"}
+}
 
 func TestAddr_String(t *testing.T) {
 	type fields struct {
@@ -16,7 +47,7 @@ func TestAddr_String(t *testing.T) {
 		fields fields
 		want   string
 	}{
-		// TODO: Add test cases.
+		{name: "local", fields: fields{Host: "127.0.0.1", Port: 8080}, want: "127.0.0.1:8080"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -43,13 +74,16 @@ func TestCan_Do(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		// TODO: Add test cases.
+		{name: "do", fields: fields{&http.Server{}}, args: args{&http.Request{URL: &url.URL{Path: "/blog/jack/article/501-3/comment/123.json"}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// can := &Can{
-			// 	srv: tt.fields.srv,
-			// }
+			can := &Can{
+				srv: tt.fields.srv,
+			}
+			can.Route(&PageController{})
+			rt := can.Do(tt.args.req)
+			t.Log(rt)
 		})
 	}
 }

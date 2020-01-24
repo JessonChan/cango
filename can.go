@@ -1,6 +1,7 @@
 package cango
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -28,20 +29,37 @@ func (addr Addr) String() string {
 	return fmt.Sprintf("%s:%d", addr.Host, addr.Port)
 }
 
+type responseTypeHandler func(interface{}) ([]byte, error)
+
+var responseHandler responseTypeHandler = json.Marshal
+
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	can.Do(r)
+	rt := can.Do(r)
+	bs, err := responseHandler(rt)
+	if err == nil {
+		_, _ = rw.Write(bs)
+	} else {
+		fmt.Println(err)
+		_, _ = rw.Write([]byte("{}"))
+	}
 }
 
 func (can *Can) Run(as ...Addr) {
 	addr := append(as, defaultAddr)[0]
 	if can.srv == nil {
-		can.srv = &http.Server{Addr: addr.String()}
+		can.srv = &http.Server{}
 	}
+	can.srv.Addr = addr.String()
 	can.srv.Handler = can
-	err := can.srv.ListenAndServe()
+	startChan := make(chan interface{}, 1)
+	var err error
+	go func() { err = can.srv.ListenAndServe() }()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("cango start failed @" + addr.String())
+		panic(err)
 	}
+	fmt.Println("cango start success@" + addr.String())
+	<-startChan
 }
 
 var router = mux.NewRouter()
@@ -80,17 +98,17 @@ func assignValue(value reflect.Value, vars map[string]string) {
 	}
 }
 
-func (can *Can) Do(req *http.Request) {
+func (can *Can) Do(req *http.Request) interface{} {
 	match := &mux.RouteMatch{}
 	if router.Match(req, match) {
 		m, ok := methodMap[match.Route.GetName()]
 		if ok == false {
 			// error,match failed
-			return
+			return nil
 		}
 		if m.Type.NumIn() != 2 {
 			// error,method only have one arg
-			return
+			return nil
 		}
 		// controller
 		ct := reflect.New(m.Type.In(0).Elem())
@@ -99,8 +117,16 @@ func (can *Can) Do(req *http.Request) {
 
 		assignValue(ct.Elem(), match.Vars)
 		assignValue(mt, match.Vars)
-		ct.MethodByName(m.Name).Call([]reflect.Value{mt})
+		vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
+		if len(vs) == 0 {
+			return nil
+		}
+		if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
+			return vs[0].Elem().Interface()
+		}
+		return vs[0].Interface()
 	}
+	return nil
 }
 
 func lowerCase(str string) string {

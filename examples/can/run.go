@@ -4,13 +4,26 @@ import (
 	"github.com/JessonChan/cango"
 )
 
-type PageController struct {
-	cango.URI `value:"/blog/{blogName}/article/{articleId}-{pageId}.json"`
-	name      string
+type SnowController struct {
+	cango.URI `value:"/weather/{day}/how-heavy/{heavy}"`
+	Day       string
+	Heavy     string
+}
+
+func (s *SnowController) Snowing(param struct {
+	cango.URI `value:"/snowing/{color}.json"`
+	Color     int
+}) interface{} {
+	return map[string]interface{}{
+		"day":   s.Day,
+		"heavy": s.Heavy,
+		"color": param.Color,
+		"show":  true,
+	}
 }
 
 func main() {
-	can := cango.Can{}
-	can.Route(&PageController{})
-	// can.Run(cango.Addr{Port: 8081})
+	can := cango.NewCan()
+	can.Route(&SnowController{})
+	can.Run(cango.Addr{Port: 8081})
 }
