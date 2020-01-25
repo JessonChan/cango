@@ -3,8 +3,6 @@ package cango
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,17 +42,15 @@ var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rt, statusCode := can.Do(r)
-	rw.WriteHeader(int(statusCode))
-
 	mv, ok := rt.(ModelView)
 	if ok {
-		tpl := template.New(mv.Tpl)
-		bs, _ := ioutil.ReadFile(can.viewRootPath + mv.Tpl)
-		_, _ = tpl.Parse(string(bs))
-		_ = tpl.Execute(rw, mv.Model)
+		tpl := can.lookupTpl(mv.Tpl)
+		if tpl != nil {
+			_ = tpl.Execute(rw, mv.Model)
+		}
 		return
 	}
-
+	rw.WriteHeader(int(statusCode))
 	if rt == nil {
 		_, _ = rw.Write([]byte("{}"))
 		return
@@ -105,7 +101,7 @@ func getViewRootPath(as []interface{}) string {
 	if err != nil {
 		return os.Args[0]
 	}
-	return abs
+	return filepath.Dir(abs)
 }
 
 var rootRouter = mux.NewRouter()
