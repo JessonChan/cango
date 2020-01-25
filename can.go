@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 
@@ -99,7 +101,11 @@ func getViewRootPath(as []interface{}) string {
 			return view.RootPath
 		}
 	}
-	return "."
+	abs, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		return os.Args[0]
+	}
+	return abs
 }
 
 var rootRouter = mux.NewRouter()

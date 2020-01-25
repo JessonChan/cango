@@ -47,5 +47,5 @@ func (s *SnowController) Raining(param struct {
 func main() {
 	can := cango.NewCan()
 	can.Route(&SnowController{})
-	can.Run(cango.Addr{Port: 8081}, cango.View{RootPath: "/Users/jessonchan/code/go/path/src/github.com/JessonChan/cango/examples/can"})
+	can.Run(cango.Addr{Port: 8081})
 }
