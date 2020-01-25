@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 )
 
 type Can struct {
@@ -166,6 +167,8 @@ func assignValue(value reflect.Value, vars map[string]string) {
 
 type StatusCode int
 
+var decoder = schema.NewDecoder()
+
 func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
 	match := &mux.RouteMatch{}
 	rootRouter.Match(req, match)
@@ -186,8 +189,26 @@ func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
 
+	// post 或 put 方法
+	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
+	if func(methods []string, err error) bool {
+		if err != nil {
+			return false
+		}
+		for _, m := range methods {
+			if m == http.MethodPost {
+				return true
+			}
+		}
+		return false
+	}(match.Route.GetMethods()) {
+		_ = req.ParseForm()
+		_ = decoder.Decode(mt.Addr().Interface(), req.PostForm)
+	}
+
 	assignValue(ct.Elem(), match.Vars)
 	assignValue(mt, match.Vars)
+
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed
