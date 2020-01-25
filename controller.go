@@ -21,6 +21,11 @@ type ModelView struct {
 	Model interface{}
 }
 
+type Redirect struct {
+	Url  string
+	Code int
+}
+
 type httpMethod interface {
 }
 

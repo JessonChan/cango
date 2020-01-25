@@ -41,13 +41,18 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rt, statusCode := can.Do(r)
-	mv, ok := rt.(ModelView)
-	if ok {
+	rt, statusCode := can.do(r)
+
+	switch rt.(type) {
+	case ModelView:
+		mv := rt.(ModelView)
 		tpl := can.lookupTpl(mv.Tpl)
 		if tpl != nil {
 			_ = tpl.Execute(rw, mv.Model)
 		}
+		return
+	case Redirect:
+		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
 		return
 	}
 	rw.WriteHeader(int(statusCode))
@@ -161,7 +166,7 @@ func assignValue(value reflect.Value, vars map[string]string) {
 
 type StatusCode int
 
-func (can *Can) Do(req *http.Request) (interface{}, StatusCode) {
+func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
 	match := &mux.RouteMatch{}
 	rootRouter.Match(req, match)
 	if match.MatchErr != nil {
@@ -217,16 +222,17 @@ func upperCase(str string) string {
 
 var methodMap = map[string]reflect.Method{}
 
-func (can *Can) RouteWithPrefix(prefix string, uris ...URI) {
+func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
 		can.route(prefix, uri)
 	}
+	return can
 }
 
 const emptyPrefix = ""
 
-func (can *Can) Route(uris ...URI) {
-	can.RouteWithPrefix(emptyPrefix, uris...)
+func (can *Can) Route(uris ...URI) *Can {
+	return can.RouteWithPrefix(emptyPrefix, uris...)
 }
 
 func (can *Can) route(prefix string, uri URI) {

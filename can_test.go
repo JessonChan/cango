@@ -82,7 +82,7 @@ func TestCan_Do(t *testing.T) {
 				srv: tt.fields.srv,
 			}
 			can.Route(&PageController{})
-			rt, statusCode := can.Do(tt.args.req)
+			rt, statusCode := can.do(tt.args.req)
 			t.Log(rt, statusCode)
 		})
 	}
