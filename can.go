@@ -42,7 +42,7 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rt, statusCode := can.do(r)
+	rt, statusCode := can.serve(r)
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
 		_, _ = rw.Write([]byte(nil))
@@ -170,7 +170,7 @@ type StatusCode int
 
 var decoder = schema.NewDecoder()
 
-func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
+func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 	match := &mux.RouteMatch{}
 	rootRouter.Match(req, match)
 	if match.MatchErr != nil {
