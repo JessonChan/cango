@@ -4,16 +4,21 @@ import (
 	"net/http"
 )
 
+type WebRequest struct {
+	*http.Request
+	localHolder map[string]interface{}
+}
+
 type URI interface {
-	Request() *http.Request
+	Request() WebRequest
 }
 
 type context struct {
-	request *http.Request
+	WebRequest
 }
 
-func (c *context) Request() *http.Request {
-	return c.request
+func (c *context) Request() WebRequest {
+	return c.WebRequest
 }
 
 type ModelView struct {
