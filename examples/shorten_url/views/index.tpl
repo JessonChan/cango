@@ -6,7 +6,7 @@
 </head>
 
 <body>
-<form action="/dwz" method="post">
+<form action="/dwz/314?helpMsg=help" method="post">
     <p>输入URL: <input type="text" name="urlLink"/></p>
     <p>输入名称: <input type="text" name="urlName"/></p>
     <input type="submit" value="提交"/>

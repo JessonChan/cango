@@ -189,25 +189,29 @@ func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
 
-	// post 或 put 方法
+	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
 	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
 	if func(methods []string, err error) bool {
 		if err != nil {
 			return false
 		}
 		for _, m := range methods {
-			if m == http.MethodPost {
+			switch m {
+			case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
 				return true
+			default:
+				return false
 			}
 		}
 		return false
 	}(match.Route.GetMethods()) {
 		_ = req.ParseForm()
-		_ = decoder.Decode(mt.Addr().Interface(), req.PostForm)
+		_ = decoder.Decode(mt.Addr().Interface(), req.Form)
 	}
 
-	assignValue(ct.Elem(), match.Vars)
-	assignValue(mt, match.Vars)
+	vars := toValues(match.Vars)
+	_ = decoder.Decode(ct.Interface(), vars)
+	_ = decoder.Decode(mt.Addr().Interface(), vars)
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
 	if len(vs) == 0 {
@@ -217,6 +221,14 @@ func (can *Can) do(req *http.Request) (interface{}, StatusCode) {
 		return vs[0].Elem().Interface(), http.StatusOK
 	}
 	return vs[0].Interface(), http.StatusOK
+}
+func toValues(m map[string]string) map[string][]string {
+	mm := make(map[string][]string, len(m))
+	for k, v := range m {
+		mm[k] = make([]string, 1)
+		mm[k][0] = v
+	}
+	return mm
 }
 
 func lowerCase(str string) string {

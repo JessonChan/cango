@@ -10,4 +10,5 @@
 名字是：{{.Name}}
 原地址：{{.Olink}}
 短链接：http://localhost/t/{{.Slink}}
+<a href="/dwz/admin_____login">查看全部</>
 </body>

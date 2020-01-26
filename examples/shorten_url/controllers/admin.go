@@ -21,10 +21,12 @@ func (a *AdminController) Form(params struct {
 	return cango.ModelView{Tpl: "/views/index.tpl"}
 }
 func (a *AdminController) Submit(params struct {
-	cango.URI
+	cango.URI `value:"/{submitId}"`
 	cango.PostMethod
-	UrlLink string
-	UrlName string
+	UrlLink  string
+	UrlName  string
+	SubmitId int
+	HelpMsg  string
 }) interface{} {
 	su := models.Insert(params.UrlLink, params.UrlName)
 	var model interface{}
