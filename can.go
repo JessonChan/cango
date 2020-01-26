@@ -43,7 +43,11 @@ var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rt, statusCode := can.do(r)
-
+	if rt == nil {
+		rw.WriteHeader(int(statusCode))
+		_, _ = rw.Write([]byte(nil))
+		return
+	}
 	switch rt.(type) {
 	case ModelView:
 		mv := rt.(ModelView)
@@ -56,11 +60,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
 		return
 	}
+
 	rw.WriteHeader(int(statusCode))
-	if rt == nil {
-		_, _ = rw.Write([]byte("{}"))
-		return
-	}
 	bs, err := responseHandler(rt)
 	if err == nil {
 		_, _ = rw.Write(bs)
