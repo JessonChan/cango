@@ -63,6 +63,7 @@ func Insert(info, name string) *ShortenUrl {
 	var su ShortenUrl
 	su.Id = int64(len(urlMap) + 1)
 	su.Url = info
+	// todo 短缩算法
 	su.UniqueId = fmt.Sprint(len(urlMap))
 	su.Name = name
 	urlMap[su.UniqueId] = su
