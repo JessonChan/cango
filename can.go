@@ -155,9 +155,6 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 	fs, _ := can.filterMap[match.Route.GetName()]
 	if len(fs) > 0 {
 		for _, f := range fs {
-			if f == nil {
-				continue
-			}
 			f.PreHandle(req)
 		}
 		// do filter
