@@ -28,12 +28,7 @@ func (can *Can) filter(f Filter, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("filter controller must be ptr")
 	}
-	fs := can.filterMap[rp.String()]
-	if len(fs) == 0 {
-		fs = make([]Filter, 1)
-	}
-	fs = append(fs, f)
-	can.filterMap[rp.String()] = fs
+	can.filterMap[rp.String()] = append(can.filterMap[rp.String()], f)
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {

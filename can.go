@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -25,6 +27,7 @@ type ctrlEntry struct {
 	prefix string
 	vl     reflect.Value
 	ctrl   URI
+	tim    int64
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -32,7 +35,7 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		filterMap:  make(map[string][]Filter, 1),
+		filterMap:  map[string][]Filter{},
 		methodMap:  map[string]reflect.Method{},
 		rootRouter: mux.NewRouter(),
 		ctrlMap:    map[string]ctrlEntry{},
@@ -262,11 +265,22 @@ func (can *Can) route(prefix string, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("route controller must be ptr")
 	}
-	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri}
+	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
+type sortCtrlEntry []ctrlEntry
+
+func (u sortCtrlEntry) Len() int           { return len(u) }
+func (u sortCtrlEntry) Less(i, j int) bool { return u[i].tim < u[j].tim }
+func (u sortCtrlEntry) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
+
 func (can *Can) buildRoute() {
+	var ces []ctrlEntry
 	for _, ce := range can.ctrlMap {
+		ces = append(ces, ce)
+	}
+	sort.Sort(sortCtrlEntry(ces))
+	for _, ce := range ces {
 		can.buildSingleRoute(ce)
 	}
 }
