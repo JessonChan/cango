@@ -18,7 +18,14 @@ type Can struct {
 	viewRootPath string
 	rootRouter   *mux.Router
 	methodMap    map[string]reflect.Method
-	filtersMap   map[string][]Filter
+	filterMap    map[string][]Filter
+	ctrlMap      map[string]ctrlEntry
+}
+
+type ctrlEntry struct {
+	prefix string
+	vl     reflect.Value
+	ctrl   URI
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -26,9 +33,10 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		filtersMap: make(map[string][]Filter, 1),
+		filterMap:  make(map[string][]Filter, 1),
 		methodMap:  map[string]reflect.Method{},
 		rootRouter: mux.NewRouter(),
+		ctrlMap:    map[string]ctrlEntry{},
 	}
 }
 
@@ -86,6 +94,8 @@ func (can *Can) Run(as ...interface{}) {
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
 	can.viewRootPath = getViewRootPath(as)
+	can.buildRoute()
+
 	startChan := make(chan interface{}, 1)
 	var err error
 	go func() { err = can.srv.ListenAndServe() }()
@@ -183,7 +193,7 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 	if match.MatchErr != nil {
 		return nil, http.StatusNotFound
 	}
-	fs, _ := can.filtersMap[match.Route.GetName()]
+	fs, _ := can.filterMap[match.Route.GetName()]
 	if len(fs) > 0 {
 		for _, f := range fs {
 			if f == nil {
@@ -227,10 +237,11 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 		_ = req.ParseForm()
 		_ = decoder.Decode(mt.Addr().Interface(), req.Form)
 	}
-
-	vars := toValues(match.Vars)
-	_ = decoder.Decode(ct.Interface(), vars)
-	_ = decoder.Decode(mt.Addr().Interface(), vars)
+	if len(match.Vars) > 0 {
+		vars := toValues(match.Vars)
+		_ = decoder.Decode(ct.Interface(), vars)
+		_ = decoder.Decode(mt.Addr().Interface(), vars)
+	}
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
 	if len(vs) == 0 {
@@ -290,6 +301,20 @@ func (can *Can) route(prefix string, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("route controller must be prt")
 	}
+	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri}
+}
+
+func (can *Can) buildRoute() {
+	for _, ce := range can.ctrlMap {
+		can.buildSingleRoute(ce)
+	}
+}
+
+func (can *Can) buildSingleRoute(ce ctrlEntry) {
+	prefix := ce.prefix
+	rp := ce.vl
+	uri := ce.ctrl
+
 	urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Interface())
 	urlStr = prefix + urlStr
 	tvp := reflect.TypeOf(uri)
@@ -315,7 +340,7 @@ func (can *Can) route(prefix string, uri URI) {
 				case uriType:
 					route.Path(urlStr + f.Tag.Get("value"))
 					can.methodMap[routerName] = m
-					can.filtersMap[routerName] = can.filtersMap[rp.String()]
+					can.filterMap[routerName] = can.filterMap[rp.String()]
 				}
 				m, ok := httpMethodMap[f.Type]
 				if ok {

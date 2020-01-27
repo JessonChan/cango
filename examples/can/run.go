@@ -80,5 +80,6 @@ func main() {
 	can.Filter(&LogFilter{}, &SnowController{}).
 		Filter(&StatFilter{}, &SnowController{}).
 		Route(&SnowController{}).
+		RouteWithPrefix("/api/v2", &SnowController{}).
 		Run(cango.Addr{Port: 8081})
 }

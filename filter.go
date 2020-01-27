@@ -28,12 +28,12 @@ func (can *Can) filter(f Filter, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("route controller must be prt")
 	}
-	fs := can.filtersMap[rp.String()]
+	fs := can.filterMap[rp.String()]
 	if len(fs) == 0 {
 		fs = make([]Filter, 1)
 	}
 	fs = append(fs, f)
-	can.filtersMap[rp.String()] = fs
+	can.filterMap[rp.String()] = fs
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {
