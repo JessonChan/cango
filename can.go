@@ -129,24 +129,6 @@ func getViewRootPath(as []interface{}) string {
 	return filepath.Dir(abs)
 }
 
-/*
-	methods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
-	for _, m := range methods {
-		fmt.Printf("	reflect.TypeOf((*%sMethod)(nil)).Elem(): http.Method%s,\n", m, m)
-	}
-*/
-
-var httpMethodMap = map[reflect.Type]string{
-	reflect.TypeOf((*GetMethod)(nil)).Elem():     http.MethodGet,
-	reflect.TypeOf((*PostMethod)(nil)).Elem():    http.MethodPost,
-	reflect.TypeOf((*HeadMethod)(nil)).Elem():    http.MethodHead,
-	reflect.TypeOf((*PutMethod)(nil)).Elem():     http.MethodPut,
-	reflect.TypeOf((*PatchMethod)(nil)).Elem():   http.MethodPatch,
-	reflect.TypeOf((*DeleteMethod)(nil)).Elem():  http.MethodDelete,
-	reflect.TypeOf((*OptionsMethod)(nil)).Elem(): http.MethodOptions,
-	reflect.TypeOf((*TraceMethod)(nil)).Elem():   http.MethodTrace,
-}
-
 type StatusCode int
 
 var decoder = schema.NewDecoder()
@@ -199,7 +181,9 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 		return false
 	}(match.Route.GetMethods()) {
 		_ = req.ParseForm()
-		_ = decoder.Decode(mt.Addr().Interface(), req.Form)
+		if len(req.Form) > 0 {
+			_ = decoder.Decode(mt.Addr().Interface(), req.Form)
+		}
 	}
 	if len(match.Vars) > 0 {
 		vars := toValues(match.Vars)

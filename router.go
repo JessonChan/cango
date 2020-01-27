@@ -64,7 +64,6 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	rp := ce.vl
 	uri := ce.ctrl
 
-	// urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Interface())
 	urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Type())
 	urlStr = prefix + urlStr
 	tvp := reflect.TypeOf(uri)
