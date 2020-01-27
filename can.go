@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -131,8 +129,6 @@ func getViewRootPath(as []interface{}) string {
 	return filepath.Dir(abs)
 }
 
-var uriType = reflect.TypeOf((*URI)(nil)).Elem()
-
 /*
 	methods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
 	for _, m := range methods {
@@ -149,24 +145,6 @@ var httpMethodMap = map[reflect.Type]string{
 	reflect.TypeOf((*DeleteMethod)(nil)).Elem():  http.MethodDelete,
 	reflect.TypeOf((*OptionsMethod)(nil)).Elem(): http.MethodOptions,
 	reflect.TypeOf((*TraceMethod)(nil)).Elem():   http.MethodTrace,
-}
-
-// urlStr get uri from tag value
-func (can *Can) urlStr(uri interface{}) (string, string) {
-	typ := reflect.TypeOf(uri)
-	if typ.Kind() != reflect.Struct {
-		panic(uri)
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if f.PkgPath != "" {
-			continue
-		}
-		if f.Type == uriType {
-			return f.Tag.Get("value"), typ.Name()
-		}
-	}
-	return "", ""
 }
 
 type StatusCode int
@@ -245,88 +223,4 @@ func toValues(m map[string]string) map[string][]string {
 		mm[k][0] = v
 	}
 	return mm
-}
-
-func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
-	for _, uri := range uris {
-		can.route(prefix, uri)
-	}
-	return can
-}
-
-const emptyPrefix = ""
-
-func (can *Can) Route(uris ...URI) *Can {
-	return can.RouteWithPrefix(emptyPrefix, uris...)
-}
-
-func (can *Can) route(prefix string, uri URI) {
-	rp := reflect.ValueOf(uri)
-	if rp.Kind() != reflect.Ptr {
-		panic("route controller must be ptr")
-	}
-	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
-}
-
-type sortCtrlEntry []ctrlEntry
-
-func (u sortCtrlEntry) Len() int           { return len(u) }
-func (u sortCtrlEntry) Less(i, j int) bool { return u[i].tim < u[j].tim }
-func (u sortCtrlEntry) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
-
-func (can *Can) buildRoute() {
-	var ces []ctrlEntry
-	for _, ce := range can.ctrlMap {
-		ces = append(ces, ce)
-	}
-	sort.Sort(sortCtrlEntry(ces))
-	for _, ce := range ces {
-		can.buildSingleRoute(ce)
-	}
-}
-
-func (can *Can) buildSingleRoute(ce ctrlEntry) {
-	prefix := ce.prefix
-	rp := ce.vl
-	uri := ce.ctrl
-
-	urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Interface())
-	urlStr = prefix + urlStr
-	tvp := reflect.TypeOf(uri)
-	for i := 0; i < tvp.NumMethod(); i++ {
-		m := tvp.Method(i)
-		if m.PkgPath != "" {
-			continue
-		}
-		for i := 0; i < m.Type.NumIn(); i++ {
-			in := m.Type.In(i)
-			if in.Kind() != reflect.Struct {
-				continue
-			}
-			routerName := ctlName + "." + m.Name
-			route := can.rootRouter.Name(routerName)
-			var httpMethods []string
-			for j := 0; j < in.NumField(); j++ {
-				f := in.Field(j)
-				if f.PkgPath != "" {
-					panic("could not use unexpected filed in param:" + f.Name)
-				}
-				switch f.Type {
-				case uriType:
-					route.Path(urlStr + f.Tag.Get("value"))
-					can.methodMap[routerName] = m
-					can.filterMap[routerName] = can.filterMap[rp.String()]
-				}
-				m, ok := httpMethodMap[f.Type]
-				if ok {
-					httpMethods = append(httpMethods, m)
-				}
-			}
-			// default method is get
-			if len(httpMethods) == 0 {
-				httpMethods = append(httpMethods, http.MethodGet)
-			}
-			route.Methods(httpMethods...)
-		}
-	}
 }
