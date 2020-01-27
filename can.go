@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -165,22 +164,6 @@ func (can *Can) urlStr(uri interface{}) (string, string) {
 		}
 	}
 	return "", ""
-}
-
-func assignValue(value reflect.Value, vars map[string]string) {
-	for k, v := range vars {
-		f := value.FieldByName(upperCase(k))
-		if f.IsValid() == false {
-			continue
-		}
-		switch f.Kind() {
-		case reflect.String:
-			f.Set(reflect.ValueOf(v))
-		case reflect.Int:
-			i, _ := strconv.ParseInt(v, 10, 0)
-			f.SetInt(i)
-		}
-	}
 }
 
 type StatusCode int
