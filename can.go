@@ -282,7 +282,7 @@ func (can *Can) Route(uris ...URI) *Can {
 func (can *Can) route(prefix string, uri URI) {
 	rp := reflect.ValueOf(uri)
 	if rp.Kind() != reflect.Ptr {
-		panic("route controller must be prt")
+		panic("route controller must be ptr")
 	}
 	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri}
 }
