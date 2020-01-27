@@ -244,28 +244,6 @@ func toValues(m map[string]string) map[string][]string {
 	return mm
 }
 
-func lowerCase(str string) string {
-	if str == "" {
-		return str
-	}
-	bs := []byte(str)
-	if 'A' <= bs[0] && bs[0] <= 'Z' {
-		bs[0] += 'a' - 'A'
-	}
-	return string(bs)
-}
-
-func upperCase(str string) string {
-	if str == "" {
-		return str
-	}
-	bs := []byte(str)
-	if 'a' <= bs[0] && bs[0] <= 'z' {
-		bs[0] -= 'a' - 'A'
-	}
-	return string(bs)
-}
-
 func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
 		can.route(prefix, uri)
