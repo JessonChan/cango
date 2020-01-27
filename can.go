@@ -338,25 +338,3 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 		}
 	}
 }
-
-func parseTag(tag string) (vars map[int]string) {
-	if tag == "" {
-		return
-	}
-	vars = map[int]string{}
-	segNum := 0
-	lastBit := tag[0]
-	segBegin := 0
-	for i := 0; i < len(tag); i++ {
-		v := tag[i]
-		if lastBit == '{' {
-			segNum++
-			segBegin = i
-		}
-		if v == '}' {
-			vars[segNum] = tag[segBegin:i]
-		}
-		lastBit = v
-	}
-	return
-}

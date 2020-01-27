@@ -269,26 +269,6 @@ func Test_lowerCase(t *testing.T) {
 	}
 }
 
-func Test_parseTag(t *testing.T) {
-	type args struct {
-		tag string
-	}
-	tests := []struct {
-		name     string
-		args     args
-		wantVars map[int]string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotVars := parseTag(tt.args.tag); !reflect.DeepEqual(gotVars, tt.wantVars) {
-				t.Errorf("parseTag() = %v, want %v", gotVars, tt.wantVars)
-			}
-		})
-	}
-}
-
 func Test_upperCase(t *testing.T) {
 	type args struct {
 		str string
