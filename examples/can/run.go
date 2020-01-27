@@ -1,6 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/JessonChan/cango"
 )
 
@@ -44,8 +49,36 @@ func (s *SnowController) Raining(param struct {
 	}
 }
 
+type LogFilter struct {
+	cango.Filter
+}
+
+func (m *LogFilter) PreHandle(r *http.Request) interface{} {
+	fmt.Println(time.Now().Format("2006-03-02 15:04:05"), r.Method, r.URL)
+	return nil
+}
+
+var count struct {
+	sync.RWMutex
+	cnt int64
+}
+
+type StatFilter struct {
+	cango.Filter
+}
+
+func (m *StatFilter) PreHandle(r *http.Request) interface{} {
+	count.Lock()
+	count.cnt++
+	fmt.Println("web page visit count total:", count.cnt)
+	count.Unlock()
+	return nil
+}
+
 func main() {
 	can := cango.NewCan()
-	can.Route(&SnowController{})
-	can.Run(cango.Addr{Port: 8081})
+	can.Filter(&LogFilter{}, &SnowController{}).
+		Filter(&StatFilter{}, &SnowController{}).
+		Route(&SnowController{}).
+		Run(cango.Addr{Port: 8081})
 }

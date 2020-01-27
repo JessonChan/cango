@@ -13,3 +13,32 @@
 // limitations under the License.
 
 package cango
+
+import (
+	"net/http"
+	"reflect"
+)
+
+type Filter interface {
+	PreHandle(req *http.Request) interface{}
+}
+
+func (can *Can) filter(f Filter, uri URI) {
+	rp := reflect.ValueOf(uri)
+	if rp.Kind() != reflect.Ptr {
+		panic("route controller must be prt")
+	}
+	fs := can.filtersMap[rp.String()]
+	if len(fs) == 0 {
+		fs = make([]Filter, 1)
+	}
+	fs = append(fs, f)
+	can.filtersMap[rp.String()] = fs
+}
+
+func (can *Can) Filter(f Filter, uris ...URI) *Can {
+	for _, uri := range uris {
+		can.filter(f, uri)
+	}
+	return can
+}

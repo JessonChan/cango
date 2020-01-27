@@ -16,12 +16,20 @@ import (
 type Can struct {
 	srv          *http.Server
 	viewRootPath string
+	rootRouter   *mux.Router
+	methodMap    map[string]reflect.Method
+	filtersMap   map[string][]Filter
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
 
 func NewCan() *Can {
-	return &Can{srv: &http.Server{Addr: defaultAddr.String()}}
+	return &Can{
+		srv:        &http.Server{Addr: defaultAddr.String()},
+		filtersMap: make(map[string][]Filter, 1),
+		methodMap:  map[string]reflect.Method{},
+		rootRouter: mux.NewRouter(),
+	}
 }
 
 type Addr struct {
@@ -111,7 +119,6 @@ func getViewRootPath(as []interface{}) string {
 	return filepath.Dir(abs)
 }
 
-var rootRouter = mux.NewRouter()
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
 
 /*
@@ -172,11 +179,22 @@ var decoder = schema.NewDecoder()
 
 func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 	match := &mux.RouteMatch{}
-	rootRouter.Match(req, match)
+	can.rootRouter.Match(req, match)
 	if match.MatchErr != nil {
 		return nil, http.StatusNotFound
 	}
-	m, ok := methodMap[match.Route.GetName()]
+	fs, _ := can.filtersMap[match.Route.GetName()]
+	if len(fs) > 0 {
+		for _, f := range fs {
+			if f == nil {
+				continue
+			}
+			f.PreHandle(req)
+		}
+		// do filter
+	}
+
+	m, ok := can.methodMap[match.Route.GetName()]
 	if ok == false {
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
@@ -254,8 +272,6 @@ func upperCase(str string) string {
 	return string(bs)
 }
 
-var methodMap = map[string]reflect.Method{}
-
 func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
 		can.route(prefix, uri)
@@ -288,7 +304,7 @@ func (can *Can) route(prefix string, uri URI) {
 				continue
 			}
 			routerName := ctlName + "." + m.Name
-			route := rootRouter.Name(routerName)
+			route := can.rootRouter.Name(routerName)
 			var httpMethods []string
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)
@@ -298,7 +314,8 @@ func (can *Can) route(prefix string, uri URI) {
 				switch f.Type {
 				case uriType:
 					route.Path(urlStr + f.Tag.Get("value"))
-					methodMap[routerName] = m
+					can.methodMap[routerName] = m
+					can.filtersMap[routerName] = can.filtersMap[rp.String()]
 				}
 				m, ok := httpMethodMap[f.Type]
 				if ok {
