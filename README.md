@@ -34,4 +34,5 @@ func (c *Controller)Comment(param struct{
 
 定义一个map来存放路由方法，由于路由方法第一个参数就是controller本身，所以可以很好的还原现场，实现调用.  
 
-
+## 过滤器设计
+过滤器要支持两种URL匹配风格，一种就是在工程已经实现的，基于controller去匹配，另外一种就是通过tag来定义，如实现最通用的AntPath
