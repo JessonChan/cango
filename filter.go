@@ -26,7 +26,7 @@ type Filter interface {
 func (can *Can) filter(f Filter, uri URI) {
 	rp := reflect.ValueOf(uri)
 	if rp.Kind() != reflect.Ptr {
-		panic("route controller must be prt")
+		panic("filter controller must be prt")
 	}
 	fs := can.filterMap[rp.String()]
 	if len(fs) == 0 {
