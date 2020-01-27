@@ -65,6 +65,7 @@ var count struct {
 
 type StatFilter struct {
 	cango.Filter
+	*SnowController
 }
 
 func (m *StatFilter) PreHandle(r *http.Request) interface{} {
@@ -78,7 +79,7 @@ func (m *StatFilter) PreHandle(r *http.Request) interface{} {
 func main() {
 	can := cango.NewCan()
 	can.Filter(&LogFilter{}, &SnowController{}).
-		Filter(&StatFilter{}, &SnowController{}).
+		Filter(&StatFilter{}).
 		Route(&SnowController{}).
 		RouteWithPrefix("/api/v2", &SnowController{}).
 		Run(cango.Addr{Port: 8081})

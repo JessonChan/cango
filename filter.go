@@ -36,6 +36,21 @@ func (can *Can) filter(f Filter, uri URI) {
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {
+	rp := reflect.ValueOf(f)
+	if rp.Kind() == reflect.Ptr {
+		rp = rp.Elem()
+	}
+	for i := 0; i < rp.NumField(); i++ {
+		tp := rp.Field(i).Type()
+		if tp.Kind() != reflect.Ptr {
+			// todo warning
+			continue
+		}
+		if tp.Implements(uriType) {
+			uris = append(uris, rp.Field(i).Interface().(URI))
+		}
+	}
+
 	for _, uri := range uris {
 		can.filter(f, uri)
 	}
