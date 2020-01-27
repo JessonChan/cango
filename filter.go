@@ -22,6 +22,9 @@ import (
 type Filter interface {
 	// todo 通过返回值 判断filter是否继续，以及是否提前结束请求
 	PreHandle(req *http.Request) interface{}
+	// todo
+	// PostHandle()
+	// AfterHandled()
 }
 
 func (can *Can) filter(f Filter, uri URI) {
