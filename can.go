@@ -34,13 +34,6 @@ type Can struct {
 	ctrlMap      map[string]ctrlEntry
 }
 
-type ctrlEntry struct {
-	prefix string
-	vl     reflect.Value
-	ctrl   URI
-	tim    int64
-}
-
 var defaultAddr = Addr{Host: "", Port: 8080}
 
 func NewCan() *Can {
@@ -58,8 +51,14 @@ type Addr struct {
 	Port int
 }
 
-type View struct {
-	RootPath string
+type Opts struct {
+	TplRootPath string
+	// root path for static file,like .css .js .jpg .png
+	StaticRootPath string
+	// static file request path prefix like "/static/css..." "/file/js"
+	StaticRequestPrefix string
+	// static file request path suffix like ".css" ".js"
+	StaticRequestSuffix string
 }
 
 func (addr Addr) String() string {
@@ -134,8 +133,8 @@ func getAddr(as []interface{}) Addr {
 
 func getViewRootPath(as []interface{}) string {
 	for _, v := range as {
-		if view, ok := v.(View); ok {
-			return view.RootPath
+		if view, ok := v.(Opts); ok {
+			return view.TplRootPath
 		}
 	}
 	abs, err := filepath.Abs(os.Args[0])
