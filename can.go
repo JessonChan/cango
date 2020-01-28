@@ -109,15 +109,18 @@ func (can *Can) Run(as ...interface{}) {
 	can.viewRootPath = getViewRootPath(as)
 	can.buildRoute()
 
-	startChan := make(chan interface{}, 1)
-	var err error
-	go func() { err = can.srv.ListenAndServe() }()
+	startChan := make(chan error, 1)
+	go func() {
+		info("cango start success @ " + addr.String())
+		err := can.srv.ListenAndServe()
+		if err != nil {
+			startChan <- err
+		}
+	}()
+	err := <-startChan
 	if err != nil {
-		fmt.Println("cango start failed @ " + addr.String())
 		panic(err)
 	}
-	fmt.Println("cango start success @ " + addr.String())
-	<-startChan
 }
 
 func getAddr(as []interface{}) Addr {
