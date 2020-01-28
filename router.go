@@ -42,6 +42,13 @@ func (can *Can) route(prefix string, uri URI) {
 	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
+type ctrlEntry struct {
+	prefix string
+	vl     reflect.Value
+	ctrl   URI
+	tim    int64
+}
+
 type sortCtrlEntry []ctrlEntry
 
 func (u sortCtrlEntry) Len() int           { return len(u) }
