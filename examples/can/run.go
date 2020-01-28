@@ -14,10 +14,9 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/JessonChan/cango"
 )
@@ -67,7 +66,7 @@ type LogFilter struct {
 }
 
 func (m *LogFilter) PreHandle(r *http.Request) interface{} {
-	fmt.Println(time.Now().Format("2006-03-02 15:04:05"), r.Method, r.URL)
+	log.Println(r.Method, r.URL)
 	return nil
 }
 
@@ -84,12 +83,13 @@ type StatFilter struct {
 func (m *StatFilter) PreHandle(r *http.Request) interface{} {
 	count.Lock()
 	count.cnt++
-	fmt.Println("web page visit count total:", count.cnt)
+	log.Println("web page visit count total:", count.cnt)
 	count.Unlock()
 	return nil
 }
 
 func main() {
+	log.SetPrefix("RUN ")
 	can := cango.NewCan()
 	can.Filter(&LogFilter{}, &SnowController{}).
 		Filter(&StatFilter{}).

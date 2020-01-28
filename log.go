@@ -16,6 +16,7 @@ package cango
 import (
 	"fmt"
 	"log"
+	"os"
 )
 
 const (
@@ -28,10 +29,11 @@ const (
 )
 
 var logLevel = 0
+var logger = log.New(os.Stdout, "CANGO ", log.LstdFlags)
 
 func line(level int, v ...interface{}) {
 	if level >= logLevel {
-		log.Println(v...)
+		logger.Println(v...)
 	}
 }
 
