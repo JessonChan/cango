@@ -29,12 +29,12 @@ var once sync.Once
 
 func (can *Can) initView() {
 	rootTpl = template.New("")
-	_ = filepath.Walk(can.viewRootPath, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		if strings.HasSuffix(path, ".tpl") {
-			name := strings.TrimPrefix(path, can.viewRootPath)
+			name := strings.TrimPrefix(path, can.tplRootPath)
 			bs, _ := ioutil.ReadFile(path)
 			_, _ = rootTpl.New(name).Parse(string(bs))
 		}

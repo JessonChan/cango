@@ -26,12 +26,12 @@ import (
 )
 
 type Can struct {
-	srv          *http.Server
-	viewRootPath string
-	rootRouter   *mux.Router
-	methodMap    map[string]reflect.Method
-	filterMap    map[string][]Filter
-	ctrlMap      map[string]ctrlEntry
+	srv         *http.Server
+	tplRootPath string
+	rootRouter  *mux.Router
+	methodMap   map[string]reflect.Method
+	filterMap   map[string][]Filter
+	ctrlMap     map[string]ctrlEntry
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -105,7 +105,7 @@ func (can *Can) Run(as ...interface{}) {
 	}
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
-	can.viewRootPath = getViewRootPath(as)
+	can.tplRootPath = getViewRootPath(as)
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
