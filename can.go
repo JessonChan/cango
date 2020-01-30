@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -53,12 +54,6 @@ type Addr struct {
 
 type Opts struct {
 	TplRootPath string
-	// root path for static file,like .css .js .jpg .png
-	StaticRootPath string
-	// static file request path prefix like "/static/css..." "/file/js"
-	StaticRequestPrefix string
-	// static file request path suffix like ".css" ".js"
-	StaticRequestSuffix string
 }
 
 func (addr Addr) String() string {
@@ -70,6 +65,10 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseHandler responseTypeHandler = json.Marshal
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/static/") {
+		http.ServeFile(rw, r, can.tplRootPath+r.URL.Path)
+		return
+	}
 	rt, statusCode := can.serve(r)
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
