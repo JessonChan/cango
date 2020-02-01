@@ -51,9 +51,9 @@ type ctrlEntry struct {
 
 type sortCtrlEntry []ctrlEntry
 
-func (u sortCtrlEntry) Len() int           { return len(u) }
-func (u sortCtrlEntry) Less(i, j int) bool { return u[i].tim < u[j].tim }
-func (u sortCtrlEntry) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
+func (s sortCtrlEntry) Len() int           { return len(s) }
+func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
+func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func (can *Can) buildRoute() {
 	var ces []ctrlEntry
