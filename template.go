@@ -25,9 +25,14 @@ import (
 
 var rootTpl *template.Template
 
-var once sync.Once
+var tplOnce sync.Once
 
-func (can *Can) initView() {
+func (can *Can) RegTplFunc(name string, fn interface{}) *Can {
+	can.tplFuncMap[name] = fn
+	return can
+}
+
+func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -36,15 +41,15 @@ func (can *Can) initView() {
 		if strings.HasSuffix(path, ".tpl") {
 			name := strings.TrimPrefix(path, can.tplRootPath)
 			bs, _ := ioutil.ReadFile(path)
-			_, _ = rootTpl.New(name).Parse(string(bs))
+			_, _ = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
 		}
 		return nil
 	})
 }
 
 func (can *Can) lookupTpl(name string) *template.Template {
-	once.Do(func() {
-		can.initView()
+	tplOnce.Do(func() {
+		can.initTpl()
 	})
 	return rootTpl.Lookup(name)
 }
