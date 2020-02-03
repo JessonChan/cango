@@ -33,6 +33,7 @@ type Can struct {
 	filterMap           map[string][]Filter
 	ctrlMap             map[string]ctrlEntry
 	staticRequestPrefix string
+	tplFuncMap          map[string]interface{}
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -44,6 +45,7 @@ func NewCan() *Can {
 		methodMap:  map[string]reflect.Method{},
 		rootRouter: newGorillaMux(),
 		ctrlMap:    map[string]ctrlEntry{},
+		tplFuncMap: map[string]interface{}{},
 	}
 }
 
@@ -88,8 +90,12 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		mv := rt.(ModelView)
 		tpl := can.lookupTpl(mv.Tpl)
 		if tpl != nil {
-			_ = tpl.Execute(rw, mv.Model)
+			err := tpl.Execute(rw, mv.Model)
+			if err != nil {
+				canError("template error", err)
+			}
 		}
+		canError("template not find", mv.Tpl, mv.Model)
 		return
 	case Redirect:
 		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
@@ -118,7 +124,7 @@ func (can *Can) Run(as ...interface{}) {
 
 	startChan := make(chan error, 1)
 	go func() {
-		info("cango start success @ " + addr.String())
+		canInfo("cango start success @ " + addr.String())
 		err := can.srv.ListenAndServe()
 		if err != nil {
 			startChan <- err
