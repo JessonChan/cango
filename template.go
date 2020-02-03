@@ -40,8 +40,16 @@ func (can *Can) initTpl() {
 		}
 		if strings.HasSuffix(path, ".tpl") {
 			name := strings.TrimPrefix(path, can.tplRootPath)
-			bs, _ := ioutil.ReadFile(path)
-			_, _ = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
+			bs, err := ioutil.ReadFile(path)
+			if err != nil {
+				canError(err)
+				return err
+			}
+			_, err = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
+			if err != nil {
+				canError(err)
+				return err
+			}
 		}
 		return nil
 	})
