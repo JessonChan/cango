@@ -89,13 +89,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	case ModelView:
 		mv := rt.(ModelView)
 		tpl := can.lookupTpl(mv.Tpl)
-		if tpl != nil {
-			err := tpl.Execute(rw, mv.Model)
-			if err != nil {
-				canError("template error", err)
-			}
+		if tpl == nil {
+			canError("template not find", mv.Tpl, mv.Model)
+			return
 		}
-		canError("template not find", mv.Tpl, mv.Model)
+		err := tpl.Execute(rw, mv.Model)
+		if err != nil {
+			canError("template error", err)
+		}
 		return
 	case Redirect:
 		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
