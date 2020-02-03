@@ -3,6 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
 <table border="1">
@@ -15,7 +16,7 @@
 {{range .Slice}}
     <tr>
         <td>{{.Name}}</td>
-        <td>/t/{{.UniqueId}}</td>
+        <td class="special">/t/{{.UniqueId}}</td>
         <td>{{.Url}}</td>
         <td>{{.Count}}</td>
     </tr>

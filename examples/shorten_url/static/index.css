@@ -1,0 +1,18 @@
+tr {
+    border: 2px solid #ffffff;
+}
+
+.special {
+    color: darkblue;
+    text-decoration: underline;
+    background-color: lightgreen;
+}
+a:link {
+    color: darkblue;
+}
+a:hover{
+    text-decoration: none;
+}
+a:visited{
+    color: purple;
+}
