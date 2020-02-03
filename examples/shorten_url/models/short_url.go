@@ -15,8 +15,10 @@ package models
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
+	"time"
 )
 
 var urlMap = map[string]ShortenUrl{
@@ -53,9 +55,9 @@ func GetUrl(uid string) string {
 
 type ShortenList []ShortenUrl
 
-func (u ShortenList) Len() int           { return len(u) }
-func (u ShortenList) Less(i, j int) bool { return u[i].Id < u[j].Id }
-func (u ShortenList) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
+func (s ShortenList) Len() int           { return len(s) }
+func (s ShortenList) Less(i, j int) bool { return s[i].Id < s[j].Id }
+func (s ShortenList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func GetAll() []ShortenUrl {
 	ss := make([]ShortenUrl, len(urlMap))
@@ -74,10 +76,30 @@ func Insert(info, name string) *ShortenUrl {
 		return nil
 	}
 	var su ShortenUrl
+	rd := rand.New(rand.NewSource(time.Now().Unix()))
 	su.Id = int64(len(urlMap) + 1)
 	su.Url = info
-	// todo 短缩算法
-	su.UniqueId = fmt.Sprint(len(urlMap))
+	// todo 短缩算法高可用，此只有演示用途
+	su.UniqueId = fmt.Sprintf("%c%c%c%c", rand.Int31n(26)+'a', rand.Int31n(26)+'A', rand.Int31n(26)+'a', rand.Int31n(26)+'A')
+	su.UniqueId = func(len int) string {
+		var bs []byte
+		for {
+			for i := 0; i < len; i++ {
+				bs = append(bs, byte(rd.Int31n(26)+(func() int32 {
+					if rand.Int31n(2) == 0 {
+						return 'a'
+					}
+					return 'A'
+				}())))
+			}
+			_, ok := urlMap[string(bs)]
+			if ok {
+				continue
+			}
+			break
+		}
+		return string(bs)
+	}(rd.Intn(3) + 3)
 	su.Name = name
 	urlMap[su.UniqueId] = su
 	return &su
