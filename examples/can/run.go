@@ -89,7 +89,7 @@ func (m *StatFilter) PreHandle(r *http.Request) interface{} {
 }
 
 func main() {
-	log.SetPrefix("RUN ")
+	log.SetPrefix("  RUN ")
 	can := cango.NewCan()
 	can.Filter(&LogFilter{}, &SnowController{}).
 		Filter(&StatFilter{}).
