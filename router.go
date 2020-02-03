@@ -108,7 +108,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)
 				if f.PkgPath != "" {
-					panic("could not use unexpected filed in param:" + f.Name)
+					canError("could not use unexpected filed in param:" + f.Name)
 				}
 				switch f.Type {
 				case uriType:
