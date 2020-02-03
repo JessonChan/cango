@@ -26,12 +26,13 @@ import (
 )
 
 type Can struct {
-	srv         *http.Server
-	tplRootPath string
-	rootRouter  CanMux
-	methodMap   map[string]reflect.Method
-	filterMap   map[string][]Filter
-	ctrlMap     map[string]ctrlEntry
+	srv                 *http.Server
+	tplRootPath         string
+	rootRouter          CanMux
+	methodMap           map[string]reflect.Method
+	filterMap           map[string][]Filter
+	ctrlMap             map[string]ctrlEntry
+	staticRequestPrefix string
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -52,7 +53,11 @@ type Addr struct {
 }
 
 type Opts struct {
-	TplRootPath string
+	RootPath string
+}
+
+type StaticOpts struct {
+	RequestPrefix string
 }
 
 func (addr Addr) String() string {
@@ -68,7 +73,7 @@ func (can *Can) SetMux(mux CanMux) {
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/static/") {
+	if strings.HasPrefix(r.URL.Path, can.staticRequestPrefix) {
 		http.ServeFile(rw, r, can.tplRootPath+r.URL.Path)
 		return
 	}
@@ -107,7 +112,8 @@ func (can *Can) Run(as ...interface{}) {
 	}
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
-	can.tplRootPath = getViewRootPath(as)
+	can.tplRootPath = getRootPath(as)
+	can.staticRequestPrefix = getStaticRequestPrefix(as)
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
@@ -133,10 +139,10 @@ func getAddr(as []interface{}) Addr {
 	return defaultAddr
 }
 
-func getViewRootPath(as []interface{}) string {
+func getRootPath(as []interface{}) string {
 	for _, v := range as {
-		if view, ok := v.(Opts); ok {
-			return view.TplRootPath
+		if opts, ok := v.(Opts); ok {
+			return opts.RootPath
 		}
 	}
 	abs, err := filepath.Abs(os.Args[0])
@@ -144,6 +150,19 @@ func getViewRootPath(as []interface{}) string {
 		return os.Args[0]
 	}
 	return filepath.Dir(abs)
+}
+
+func getStaticRequestPrefix(as []interface{}) string {
+	for _, v := range as {
+		if opts, ok := v.(StaticOpts); ok {
+			opts.RequestPrefix = filepath.Clean(opts.RequestPrefix)
+			if strings.HasPrefix(opts.RequestPrefix, "/") {
+				return opts.RequestPrefix
+			}
+			return "/" + opts.RequestPrefix
+		}
+	}
+	return "/static"
 }
 
 type StatusCode int
