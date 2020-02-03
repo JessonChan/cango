@@ -22,14 +22,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 )
 
 type Can struct {
 	srv         *http.Server
 	tplRootPath string
-	rootRouter  *mux.Router
+	rootRouter  CanMux
 	methodMap   map[string]reflect.Method
 	filterMap   map[string][]Filter
 	ctrlMap     map[string]ctrlEntry
@@ -42,7 +41,7 @@ func NewCan() *Can {
 		srv:        &http.Server{Addr: defaultAddr.String()},
 		filterMap:  map[string][]Filter{},
 		methodMap:  map[string]reflect.Method{},
-		rootRouter: mux.NewRouter(),
+		rootRouter: newGorillaMux(),
 		ctrlMap:    map[string]ctrlEntry{},
 	}
 }
@@ -63,6 +62,10 @@ func (addr Addr) String() string {
 type responseTypeHandler func(interface{}) ([]byte, error)
 
 var responseHandler responseTypeHandler = json.Marshal
+
+func (can *Can) SetMux(mux CanMux) {
+	can.rootRouter = mux
+}
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/static/") {
@@ -148,12 +151,11 @@ type StatusCode int
 var decoder = schema.NewDecoder()
 
 func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
-	match := &mux.RouteMatch{}
-	can.rootRouter.Match(req, match)
-	if match.MatchErr != nil {
+	match := can.rootRouter.Match(req)
+	if match.Error() != nil {
 		return nil, http.StatusNotFound
 	}
-	fs, _ := can.filterMap[match.Route.GetName()]
+	fs, _ := can.filterMap[match.Route().GetName()]
 	if len(fs) > 0 {
 		for _, f := range fs {
 			f.PreHandle(req)
@@ -161,7 +163,7 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 		// do filter
 	}
 
-	m, ok := can.methodMap[match.Route.GetName()]
+	m, ok := can.methodMap[match.Route().GetName()]
 	if ok == false {
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
@@ -190,16 +192,15 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 			}
 		}
 		return false
-	}(match.Route.GetMethods()) {
+	}(match.Route().GetMethods()) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
 			_ = decoder.Decode(mt.Addr().Interface(), req.Form)
 		}
 	}
-	if len(match.Vars) > 0 {
-		vars := toValues(match.Vars)
-		_ = decoder.Decode(ct.Interface(), vars)
-		_ = decoder.Decode(mt.Addr().Interface(), vars)
+	if len(match.GetVars()) > 0 {
+		_ = decoder.Decode(ct.Interface(), match.GetVars())
+		_ = decoder.Decode(mt.Addr().Interface(), match.GetVars())
 	}
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})

@@ -21,6 +21,24 @@ import (
 	"time"
 )
 
+type CanMux interface {
+	NewRouter(name string) CanRouter
+	Match(req *http.Request) CanMatcher
+}
+
+type CanRouter interface {
+	Path(ps string)
+	Methods(ms ...string)
+	GetName() string
+	GetMethods() ([]string, error)
+}
+
+type CanMatcher interface {
+	Error() error
+	Route() CanRouter
+	GetVars() map[string][]string
+}
+
 const emptyPrefix = ""
 
 func (can *Can) Route(uris ...URI) *Can {
@@ -85,7 +103,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				continue
 			}
 			routerName := ctlName + "." + m.Name
-			route := can.rootRouter.Name(routerName)
+			route := can.rootRouter.NewRouter(routerName)
 			var httpMethods []string
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)
