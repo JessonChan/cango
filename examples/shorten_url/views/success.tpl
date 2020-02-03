@@ -9,6 +9,6 @@
 刚刚生成的短链为<br/>
 名字是：{{.Name}}
 原地址：{{.Olink}}
-短链接：http://localhost/t/{{.Slink}}
+短链接：http://{{localHost}/t/{{.Slink}}
 <a href="/dwz/admin_____login">查看全部</>
 </body>

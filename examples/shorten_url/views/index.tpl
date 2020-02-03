@@ -11,5 +11,5 @@
     <p>输入名称: <input type="text" name="urlName"/></p>
     <input type="submit" value="提交"/>
 </form>
-<a href="/dwz/admin_____login">查看全部</>
+<a href="/dwz/admin_____login">查看全部</a>
 </body>

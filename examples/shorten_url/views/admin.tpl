@@ -16,14 +16,14 @@
 {{range .Slice}}
     <tr>
         <td>{{.Name}}</td>
-        <td class="special">/t/{{.UniqueId}}</td>
+        <td class="special"><a href="http://{{localHost}}/t/{{.UniqueId}}"> /t/{{.UniqueId}} </a></td>
         <td>{{.Url}}</td>
         <td>{{.Count}}</td>
     </tr>
 {{end}}
 </table>
 
-<a href="/dwz">添加链接</>
+<a href="/dwz">添加链接</a>
 
 </body>
 </html>
