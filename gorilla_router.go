@@ -27,7 +27,7 @@ func (gm *gorillaMatcher) Error() error {
 	return gm.RouteMatch.MatchErr
 }
 func (gm *gorillaMatcher) Route() CanRouter {
-	return &gorillaRouter{gm.RouteMatch.Route}
+	return &gorillaRouter{Route: gm.RouteMatch.Route}
 }
 
 func (gm *gorillaMatcher) GetVars() map[string][]string {
@@ -39,14 +39,24 @@ type gorillaMux struct {
 }
 type gorillaRouter struct {
 	*mux.Route
+	path    string
+	methods []string
 }
 
 func (gr *gorillaRouter) Path(path string) {
+	gr.path = path
 	gr.Route.Path(path)
+}
+func (gr *gorillaRouter) GetPath() string {
+	return gr.path
+}
+func (gr *gorillaRouter) GetMethods() []string {
+	return gr.methods
 }
 
 func (gr *gorillaRouter) Methods(ms ...string) {
 	gr.Route.Methods(ms...)
+	gr.methods = ms
 }
 
 func newGorillaMux() *gorillaMux {
@@ -54,7 +64,7 @@ func newGorillaMux() *gorillaMux {
 }
 
 func (gm *gorillaMux) NewRouter(name string) CanRouter {
-	return &gorillaRouter{gm.Name(name)}
+	return &gorillaRouter{Route: gm.Name(name)}
 }
 func (gm *gorillaMux) Match(req *http.Request) CanMatcher {
 	match := &mux.RouteMatch{}

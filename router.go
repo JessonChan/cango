@@ -30,7 +30,8 @@ type CanRouter interface {
 	Path(ps string)
 	Methods(ms ...string)
 	GetName() string
-	GetMethods() ([]string, error)
+	GetMethods() []string
+	GetPath() string
 }
 
 type CanMatcher interface {
@@ -126,6 +127,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				httpMethods = append(httpMethods, http.MethodGet)
 			}
 			route.Methods(httpMethods...)
+			canDebug(route.GetName(), route.GetPath(), route.GetMethods())
 		}
 	}
 }

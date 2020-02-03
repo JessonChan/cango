@@ -204,10 +204,8 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
 	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
-	if func(methods []string, err error) bool {
-		if err != nil {
-			return false
-		}
+	// todo 性能提升
+	if func(methods []string) bool {
 		for _, m := range methods {
 			switch m {
 			case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
