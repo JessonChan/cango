@@ -39,25 +39,25 @@ func InitLogger(rw io.Writer, prefix string, flag int) {
 	logger = log.New(rw, prefix, flag)
 }
 
-func line(level int, v ...interface{}) {
+func canLine(level int, v ...interface{}) {
 	if level >= logLevel {
 		logger.Println(v...)
 	}
 }
 
-func debug(v ...interface{}) {
-	line(DEBUG, v...)
+func canDebug(v ...interface{}) {
+	canLine(DEBUG, v...)
 }
 
-func info(v ...interface{}) {
-	line(INFO, v...)
+func canInfo(v ...interface{}) {
+	canLine(INFO, v...)
 }
-func warn(v ...interface{}) {
-	line(WARN, v...)
+func canWarn(v ...interface{}) {
+	canLine(WARN, v...)
 }
-func err(v ...interface{}) {
-	line(ERROR, v...)
+func canError(v ...interface{}) {
+	canLine(ERROR, v...)
 }
-func fatal(v ...interface{}) {
+func canFatal(v ...interface{}) {
 	panic(fmt.Sprint(v...))
 }
