@@ -21,13 +21,14 @@ import (
 
 type gorillaMatcher struct {
 	*mux.RouteMatch
+	CanRouter
 }
 
 func (gm *gorillaMatcher) Error() error {
 	return gm.RouteMatch.MatchErr
 }
 func (gm *gorillaMatcher) Route() CanRouter {
-	return &gorillaRouter{Route: gm.RouteMatch.Route}
+	return gm.CanRouter
 }
 
 func (gm *gorillaMatcher) GetVars() map[string][]string {
@@ -36,6 +37,7 @@ func (gm *gorillaMatcher) GetVars() map[string][]string {
 
 type gorillaMux struct {
 	*mux.Router
+	routerMap map[*mux.Route]CanRouter
 }
 type gorillaRouter struct {
 	*mux.Route
@@ -60,14 +62,16 @@ func (gr *gorillaRouter) Methods(ms ...string) {
 }
 
 func newGorillaMux() *gorillaMux {
-	return &gorillaMux{mux.NewRouter()}
+	return &gorillaMux{Router: mux.NewRouter(), routerMap: map[*mux.Route]CanRouter{}}
 }
 
 func (gm *gorillaMux) NewRouter(name string) CanRouter {
-	return &gorillaRouter{Route: gm.Name(name)}
+	gr := &gorillaRouter{Route: gm.Name(name)}
+	gm.routerMap[gr.Route] = gr
+	return gr
 }
 func (gm *gorillaMux) Match(req *http.Request) CanMatcher {
 	match := &mux.RouteMatch{}
 	gm.Router.Match(req, match)
-	return &gorillaMatcher{match}
+	return &gorillaMatcher{match, gm.routerMap[match.Route]}
 }
