@@ -84,7 +84,7 @@ func Insert(info, name string) *ShortenUrl {
 		for {
 			for i := 0; i < len; i++ {
 				bs = append(bs, byte(rd.Int31n(26)+(func() int32 {
-					if rand.Int31n(2) == 0 {
+					if rd.Int31n(2) == 0 {
 						return 'a'
 					}
 					return 'A'
