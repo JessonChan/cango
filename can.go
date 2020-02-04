@@ -33,6 +33,7 @@ type Can struct {
 	filterMap           map[string][]Filter
 	ctrlMap             map[string]ctrlEntry
 	staticRequestPrefix string
+	tplSuffix           string
 	tplFuncMap          map[string]interface{}
 }
 
@@ -60,6 +61,7 @@ type Opts struct {
 
 type StaticOpts struct {
 	RequestPrefix string
+	TplSuffix     string
 }
 
 func (addr Addr) String() string {
@@ -120,7 +122,9 @@ func (can *Can) Run(as ...interface{}) {
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
 	can.tplRootPath = getRootPath(as)
-	can.staticRequestPrefix = getStaticRequestPrefix(as)
+	staticOpts := getStaticOpts(as)
+	can.staticRequestPrefix = staticOpts.RequestPrefix
+	can.tplSuffix = staticOpts.TplSuffix
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
@@ -159,17 +163,23 @@ func getRootPath(as []interface{}) string {
 	return filepath.Dir(abs)
 }
 
-func getStaticRequestPrefix(as []interface{}) string {
+func getStaticOpts(as []interface{}) StaticOpts {
 	for _, v := range as {
 		if opts, ok := v.(StaticOpts); ok {
-			opts.RequestPrefix = filepath.Clean(opts.RequestPrefix)
-			if strings.HasPrefix(opts.RequestPrefix, "/") {
-				return opts.RequestPrefix
+			if opts.RequestPrefix == "" {
+				opts.RequestPrefix = "/static"
 			}
-			return "/" + opts.RequestPrefix
+			opts.RequestPrefix = filepath.Clean(opts.RequestPrefix)
+			if strings.HasPrefix(opts.RequestPrefix, "/") == false {
+				opts.RequestPrefix = "/" + opts.RequestPrefix
+			}
+			if opts.TplSuffix == "" {
+				opts.TplSuffix = ".tpl"
+			}
+			return opts
 		}
 	}
-	return "/static"
+	return StaticOpts{RequestPrefix: "/static", TplSuffix: ".tpl"}
 }
 
 type StatusCode int

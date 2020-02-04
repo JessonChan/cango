@@ -38,7 +38,7 @@ func (can *Can) initTpl() {
 		if info.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(path, ".tpl") {
+		if strings.HasSuffix(path, can.tplSuffix) {
 			name := strings.TrimPrefix(path, can.tplRootPath)
 			bs, err := ioutil.ReadFile(path)
 			if err != nil {
