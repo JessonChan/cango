@@ -42,13 +42,14 @@ func (a *AdminController) Submit(params struct {
 	HelpMsg  string
 }) interface{} {
 	su := models.Insert(params.UrlLink, params.UrlName)
-	var model interface{}
-	if su != nil {
-		model = map[string]interface{}{
-			"Name":  su.Name,
-			"Olink": su.Url,
-			"Slink": su.UniqueId,
-		}
+	model := map[string]interface{}{
+		"Name":  params.UrlName,
+		"Olink": params.UrlLink,
 	}
+	if su == nil {
+		model["Message"] = "人品太差"
+		return cango.ModelView{Tpl: "/views/fail.tpl", Model: model}
+	}
+	model["Slink"] = su.UniqueId
 	return cango.ModelView{Tpl: "/views/success.tpl", Model: model}
 }
