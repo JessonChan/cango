@@ -14,7 +14,6 @@
 package models
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -80,7 +79,6 @@ func Insert(info, name string) *ShortenUrl {
 	su.Id = int64(len(urlMap) + 1)
 	su.Url = info
 	// todo 短缩算法高可用，此只有演示用途
-	su.UniqueId = fmt.Sprintf("%c%c%c%c", rand.Int31n(26)+'a', rand.Int31n(26)+'A', rand.Int31n(26)+'a', rand.Int31n(26)+'A')
 	su.UniqueId = func(len int) string {
 		var bs []byte
 		for {
