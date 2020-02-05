@@ -19,10 +19,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type gorillaMatcher struct {
-	*mux.RouteMatch
-	CanRouter
-}
+type (
+	gorillaMux struct {
+		*mux.Router
+		routerMap map[*mux.Route]CanRouter
+	}
+	gorillaRouter struct {
+		*mux.Route
+		path    string
+		methods []string
+	}
+	gorillaMatcher struct {
+		*mux.RouteMatch
+		CanRouter
+	}
+)
 
 func (gm *gorillaMatcher) Error() error {
 	return gm.RouteMatch.MatchErr
@@ -33,16 +44,6 @@ func (gm *gorillaMatcher) Route() CanRouter {
 
 func (gm *gorillaMatcher) GetVars() map[string][]string {
 	return toValues(gm.Vars)
-}
-
-type gorillaMux struct {
-	*mux.Router
-	routerMap map[*mux.Route]CanRouter
-}
-type gorillaRouter struct {
-	*mux.Route
-	path    string
-	methods []string
 }
 
 func (gr *gorillaRouter) Path(path string) {

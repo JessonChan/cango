@@ -21,24 +21,26 @@ import (
 	"time"
 )
 
-type CanMux interface {
-	NewRouter(name string) CanRouter
-	Match(req *http.Request) CanMatcher
-}
+type (
+	CanMux interface {
+		NewRouter(name string) CanRouter
+		Match(req *http.Request) CanMatcher
+	}
 
-type CanRouter interface {
-	Path(ps string)
-	Methods(ms ...string)
-	GetName() string
-	GetMethods() []string
-	GetPath() string
-}
+	CanRouter interface {
+		Path(ps string)
+		Methods(ms ...string)
+		GetName() string
+		GetMethods() []string
+		GetPath() string
+	}
 
-type CanMatcher interface {
-	Error() error
-	Route() CanRouter
-	GetVars() map[string][]string
-}
+	CanMatcher interface {
+		Error() error
+		Route() CanRouter
+		GetVars() map[string][]string
+	}
+)
 
 const emptyPrefix = ""
 
