@@ -14,7 +14,6 @@
 package cango
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,6 +21,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/JessonChan/jsun"
 	"github.com/gorilla/schema"
 )
 
@@ -70,7 +70,7 @@ func (addr Addr) String() string {
 
 type responseTypeHandler func(interface{}) ([]byte, error)
 
-var responseHandler responseTypeHandler = json.Marshal
+var responseHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
 func (can *Can) SetMux(mux CanMux) {
 	can.rootRouter = mux

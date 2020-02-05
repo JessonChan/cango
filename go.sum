@@ -1,4 +1,8 @@
+github.com/JessonChan/jsun v0.0.0-20200205155906-39d85bb58a34 h1:9ce+ikVErQ8YCZtsWLq9yc80svqXTBEMLOmbtf5Q1OE=
+github.com/JessonChan/jsun v0.0.0-20200205155906-39d85bb58a34/go.mod h1:OK2/qpG2dVcQtCwB2KXhwGMbbIv+8TR85n1NKveRh9Y=
 github.com/gorilla/mux v1.7.3 h1:gnP5JzjVOuiZD07fKKToCAOjS0yOpj/qPETTXCCS6hw=
 github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/schema v1.1.0 h1:CamqUDOFUBqzrvxuz2vEwo8+SUdwsluFh7IlzJh30LY=
 github.com/gorilla/schema v1.1.0/go.mod h1:kgLaKoK1FELgZqMAVxx/5cbj0kT+57qxUrAlIO2eleU=
+github.com/ompluscator/dynamic-struct v1.2.0 h1:s9Ge7kwWXfQ0eGG7S3LrUIv5/isJN7V1oGS1IV/dM+U=
+github.com/ompluscator/dynamic-struct v1.2.0/go.mod h1:ADQ1+6Ox1D+ntuNwTHyl1NvpAqY2lBXPSPbcO4CJdeA=
