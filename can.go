@@ -70,7 +70,7 @@ func (addr Addr) String() string {
 
 type responseTypeHandler func(interface{}) ([]byte, error)
 
-var responseHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
+var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
 func (can *Can) SetMux(mux CanMux) {
 	can.rootRouter = mux
@@ -106,7 +106,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(int(statusCode))
-	bs, err := responseHandler(rt)
+	bs, err := responseJsonHandler(rt)
 	if err == nil {
 		_, _ = rw.Write(bs)
 	} else {
