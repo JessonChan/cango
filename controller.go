@@ -30,16 +30,16 @@ type URI interface {
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
 var uriName = uriType.Name()
 
-type context struct {
+type uriImpl struct {
 	request *WebRequest
 }
 
-func (c *context) Request() *WebRequest {
+func (c *uriImpl) Request() *WebRequest {
 	return c.request
 }
-func newContext(rw http.ResponseWriter, req *http.Request) *context {
+func newContext(rw http.ResponseWriter, req *http.Request) *uriImpl {
 	// todo sync.Pool
-	return &context{&WebRequest{Request: req, ResponseWriter: rw}}
+	return &uriImpl{&WebRequest{Request: req, ResponseWriter: rw}}
 }
 
 type ModelView struct {
