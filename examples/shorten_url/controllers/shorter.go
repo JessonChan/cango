@@ -28,7 +28,7 @@ func (s *ShorterController) Redirect(params struct {
 }) interface{} {
 	url := models.GetUrl(params.Id)
 	if url == "" {
-		url = "http://www.github.com"
+		url = "http://www.github.com/JessonChan"
 	}
 	return cango.Redirect{Code: 302, Url: url}
 }
