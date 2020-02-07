@@ -210,7 +210,10 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}
 	// controller
 	ct := reflect.New(m.Type.In(0).Elem())
-	ct.Elem().FieldByName(uriName).Set(reflect.ValueOf(newContext(rw, req)))
+	uriFiled := ct.Elem().FieldByName(uriName)
+	if uriFiled.IsValid() {
+		uriFiled.Set(reflect.ValueOf(newContext(rw, req)))
+	}
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
 
