@@ -134,8 +134,6 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	}
 }
 
-var uriType = reflect.TypeOf((*URI)(nil)).Elem()
-
 // urlStr get uri from tag value
 func (can *Can) urlStr(typ reflect.Type) (string, string) {
 	for i := 0; i < typ.NumField(); i++ {

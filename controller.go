@@ -19,20 +19,27 @@ import (
 )
 
 type WebRequest struct {
-	*http.Request
-	localHolder map[string]interface{}
+	ResponseWriter http.ResponseWriter
+	Request        *http.Request
 }
 
 type URI interface {
-	Request() WebRequest
+	Request() *WebRequest
 }
+
+var uriType = reflect.TypeOf((*URI)(nil)).Elem()
+var uriName = uriType.Name()
 
 type context struct {
-	WebRequest
+	request *WebRequest
 }
 
-func (c *context) Request() WebRequest {
-	return c.WebRequest
+func (c *context) Request() *WebRequest {
+	return c.request
+}
+func newContext(rw http.ResponseWriter, req *http.Request) *context {
+	// todo sync.Pool
+	return &context{&WebRequest{Request: req, ResponseWriter: rw}}
 }
 
 type ModelView struct {

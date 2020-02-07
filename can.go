@@ -81,7 +81,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		http.ServeFile(rw, r, can.tplRootPath+r.URL.Path)
 		return
 	}
-	rt, statusCode := can.serve(r)
+	rt, statusCode := can.serve(rw, r)
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
 		_, _ = rw.Write([]byte(nil))
@@ -186,7 +186,7 @@ type StatusCode int
 
 var decoder = schema.NewDecoder()
 
-func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
+func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
 	match := can.rootRouter.Match(req)
 	if match.Error() != nil {
 		return nil, http.StatusNotFound
@@ -210,6 +210,7 @@ func (can *Can) serve(req *http.Request) (interface{}, StatusCode) {
 	}
 	// controller
 	ct := reflect.New(m.Type.In(0).Elem())
+	ct.Elem().FieldByName(uriName).Set(reflect.ValueOf(newContext(rw, req)))
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
 
