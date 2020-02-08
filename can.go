@@ -114,6 +114,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	case Redirect:
 		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
 		return
+	case Content:
+		code := rt.(Content).Code
+		if code == 0 {
+			code = 200
+		}
+		rw.WriteHeader(code)
+		_, _ = rw.Write([]byte(rt.(Content).String))
+		return
 	}
 
 	rw.WriteHeader(int(statusCode))
