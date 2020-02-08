@@ -204,6 +204,8 @@ type StatusCode int
 var decoder = schema.NewDecoder()
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
+	// todo sure?
+	req.URL.Path = filepath.Clean(req.URL.Path)
 	match := can.rootRouter.Match(req)
 	if match.Error() != nil {
 		return nil, http.StatusNotFound
