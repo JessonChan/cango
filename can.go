@@ -245,11 +245,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	// controller
 	ct := reflect.New(m.Type.In(0).Elem())
 	uriFiled := ct.Elem().FieldByName(uriName)
+	context := newContext(rw, req)
 	if uriFiled.IsValid() {
-		uriFiled.Set(reflect.ValueOf(newContext(rw, req)))
+		uriFiled.Set(reflect.ValueOf(context))
 	}
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
+	uriFiled = mt.FieldByName(uriName)
+	if uriFiled.IsValid() {
+		uriFiled.Set(reflect.ValueOf(context))
+	}
 
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
 	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
