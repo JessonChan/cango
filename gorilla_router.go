@@ -14,7 +14,9 @@
 package cango
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -22,16 +24,20 @@ import (
 type (
 	gorillaMux struct {
 		*mux.Router
-		routerMap map[*mux.Route]CanRouter
+		routerMap map[string]*gorillaRouter
+		// map path to name
+		pathNameMap map[string]string
 	}
 	gorillaRouter struct {
-		*mux.Route
-		path    string
-		methods []string
+		innerMux *gorillaMux
+		name     string
+		routes   []*mux.Route
+		path     []string
+		methods  []string
 	}
 	gorillaMatcher struct {
 		*mux.RouteMatch
-		CanRouter
+		*gorillaRouter
 	}
 )
 
@@ -39,40 +45,51 @@ func (gm *gorillaMatcher) Error() error {
 	return gm.RouteMatch.MatchErr
 }
 func (gm *gorillaMatcher) Route() CanRouter {
-	return gm.CanRouter
+	return gm.gorillaRouter
 }
 
 func (gm *gorillaMatcher) GetVars() map[string][]string {
 	return toValues(gm.Vars)
 }
 
-func (gr *gorillaRouter) Path(path string) {
-	gr.path = path
-	gr.Route.Path(path)
+func (gr *gorillaRouter) Path(paths ...string) {
+	for k, path := range paths {
+		routerName := fmt.Sprintf("%s-%d", gr.name, k)
+		route := gr.innerMux.Name(routerName)
+		route.Path(path)
+		gr.routes = append(gr.routes, route)
+		gr.innerMux.pathNameMap[routerName] = gr.name
+	}
+	gr.path = paths
+}
+func (gr *gorillaRouter) Methods(ms ...string) {
+	for _, r := range gr.routes {
+		r.Methods(ms...)
+	}
+	gr.methods = ms
+}
+
+func (gr *gorillaRouter) GetName() string {
+	return gr.name
 }
 func (gr *gorillaRouter) GetPath() string {
-	return gr.path
+	return strings.Join(gr.path, ";")
 }
 func (gr *gorillaRouter) GetMethods() []string {
 	return gr.methods
 }
 
-func (gr *gorillaRouter) Methods(ms ...string) {
-	gr.Route.Methods(ms...)
-	gr.methods = ms
-}
-
 func newGorillaMux() *gorillaMux {
-	return &gorillaMux{Router: mux.NewRouter(), routerMap: map[*mux.Route]CanRouter{}}
+	return &gorillaMux{Router: mux.NewRouter(), routerMap: map[string]*gorillaRouter{}, pathNameMap: map[string]string{}}
 }
 
 func (gm *gorillaMux) NewRouter(name string) CanRouter {
-	gr := &gorillaRouter{Route: gm.Name(name)}
-	gm.routerMap[gr.Route] = gr
+	gr := &gorillaRouter{name: name, innerMux: gm}
+	gm.routerMap[name] = gr
 	return gr
 }
 func (gm *gorillaMux) Match(req *http.Request) CanMatcher {
 	match := &mux.RouteMatch{}
 	gm.Router.Match(req, match)
-	return &gorillaMatcher{match, gm.routerMap[match.Route]}
+	return &gorillaMatcher{match, gm.routerMap[gm.pathNameMap[match.Route.GetName()]]}
 }

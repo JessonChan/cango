@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -29,7 +30,7 @@ type (
 	}
 
 	CanRouter interface {
-		Path(ps string)
+		Path(ps ...string)
 		Methods(ms ...string)
 		GetName() string
 		GetMethods() []string
@@ -118,7 +119,11 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				}
 				switch f.Type {
 				case uriType:
-					route.Path(filepath.Clean(urlStr + "/" + f.Tag.Get("value")))
+					var paths []string
+					for _, path := range strings.Split(f.Tag.Get("value"), ";") {
+						paths = append(paths, filepath.Clean(urlStr+"/"+path))
+					}
+					route.Path(paths...)
 					can.methodMap[routerName] = m
 					can.filterMap[routerName] = can.filterMap[rp.String()]
 				}
