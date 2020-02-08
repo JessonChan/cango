@@ -52,6 +52,11 @@ type Redirect struct {
 	Code int
 }
 
+type Content struct {
+	String string
+	Code   int
+}
+
 type httpMethod interface {
 }
 
