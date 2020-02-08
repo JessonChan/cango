@@ -91,5 +91,8 @@ func (gm *gorillaMux) NewRouter(name string) CanRouter {
 func (gm *gorillaMux) Match(req *http.Request) CanMatcher {
 	match := &mux.RouteMatch{}
 	gm.Router.Match(req, match)
+	if match.MatchErr != nil {
+		return &gorillaMatcher{RouteMatch: match}
+	}
 	return &gorillaMatcher{match, gm.routerMap[gm.pathNameMap[match.Route.GetName()]]}
 }
