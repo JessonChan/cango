@@ -108,12 +108,16 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case Redirect:
-		http.Redirect(rw, r, rt.(Redirect).Url, rt.(Redirect).Code)
+		code := rt.(Redirect).Code
+		if code == 0 {
+			code = http.StatusFound
+		}
+		http.Redirect(rw, r, rt.(Redirect).Url, code)
 		return
 	case Content:
 		code := rt.(Content).Code
 		if code == 0 {
-			code = 200
+			code = http.StatusOK
 		}
 		rw.WriteHeader(code)
 		_, _ = rw.Write([]byte(rt.(Content).String))
