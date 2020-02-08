@@ -48,6 +48,7 @@ func (can *Can) Route(uris ...URI) *Can {
 	return can.RouteWithPrefix(emptyPrefix, uris...)
 }
 
+// todo route with suffix and simplify
 func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
 		can.route(prefix, uri)
