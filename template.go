@@ -36,19 +36,36 @@ func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
+			canDebug("walk tpl files ", path, "dir skip")
 			return nil
 		}
 		if strings.HasSuffix(path, can.tplSuffix) {
-			name := strings.TrimPrefix(path, can.tplRootPath)
 			bs, err := ioutil.ReadFile(path)
 			if err != nil {
 				canError(err)
 				return err
 			}
-			_, err = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
-			if err != nil {
-				canError(err)
-				return err
+			names := []string{info.Name(), strings.TrimPrefix(path, can.tplRootPath), strings.TrimPrefix(path, can.rootPath)}
+			cnt := len(names)
+			for i := 0; i < cnt; i++ {
+				name := names[i]
+				if strings.HasPrefix(name, "/") {
+					names = append(names, name[1:])
+				} else {
+					names = append(names, "/"+name)
+				}
+			}
+			for _, name := range names {
+				if can.tplNameMap[name] {
+					continue
+				}
+				can.tplNameMap[name] = true
+				canDebug("walk tpl files ", path, name)
+				_, err = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
+				if err != nil {
+					canError(err)
+					continue
+				}
 			}
 		}
 		return nil

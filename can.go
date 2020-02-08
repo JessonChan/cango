@@ -27,14 +27,18 @@ import (
 
 type Can struct {
 	srv                 *http.Server
+	rootPath            string
 	tplRootPath         string
-	rootRouter          CanMux
-	methodMap           map[string]reflect.Method
-	filterMap           map[string][]Filter
-	ctrlMap             map[string]ctrlEntry
+	staticRootPath      string
 	staticRequestPrefix string
 	tplSuffix           string
-	tplFuncMap          map[string]interface{}
+
+	rootRouter CanMux
+	methodMap  map[string]reflect.Method
+	filterMap  map[string][]Filter
+	ctrlMap    map[string]ctrlEntry
+	tplFuncMap map[string]interface{}
+	tplNameMap map[string]bool
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -42,13 +46,19 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		filterMap:  map[string][]Filter{},
-		methodMap:  map[string]reflect.Method{},
 		rootRouter: newGorillaMux(),
+		methodMap:  map[string]reflect.Method{},
+		filterMap:  map[string][]Filter{},
 		ctrlMap:    map[string]ctrlEntry{},
 		tplFuncMap: map[string]interface{}{},
+		tplNameMap: map[string]bool{},
 	}
 }
+
+const (
+	tplDir    = "/views"
+	staticDir = "/static"
+)
 
 type Addr struct {
 	Host string
@@ -95,6 +105,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			canError("template not find", mv.Tpl, mv.Model)
 			return
 		}
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err := tpl.Execute(rw, mv.Model)
 		if err != nil {
 			canError("template error", err)
@@ -121,7 +132,9 @@ func (can *Can) Run(as ...interface{}) {
 	}
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
-	can.tplRootPath = getRootPath(as)
+	can.rootPath = getRootPath(as)
+	can.tplRootPath = can.rootPath + tplDir
+	can.staticRootPath = can.rootPath + staticDir
 	staticOpts := getStaticOpts(as)
 	can.staticRequestPrefix = staticOpts.RequestPrefix
 	can.tplSuffix = staticOpts.TplSuffix
@@ -155,6 +168,10 @@ func getRootPath(as []interface{}) string {
 		if opts, ok := v.(Opts); ok {
 			return opts.RootPath
 		}
+	}
+	dir, err := os.Getwd()
+	if err == nil {
+		return dir
 	}
 	abs, err := filepath.Abs(os.Args[0])
 	if err != nil {
