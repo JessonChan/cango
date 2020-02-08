@@ -96,8 +96,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	rp := ce.vl
 	uri := ce.ctrl
 
-	urlStr, ctlName := can.urlStr(reflect.Indirect(rp).Type())
-	urlStr = prefix + urlStr
+	urlStrs, ctlName := can.urlStr(reflect.Indirect(rp).Type())
 	tvp := reflect.TypeOf(uri)
 	for i := 0; i < tvp.NumMethod(); i++ {
 		m := tvp.Method(i)
@@ -120,8 +119,10 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				switch f.Type {
 				case uriType:
 					var paths []string
-					for _, path := range strings.Split(f.Tag.Get("value"), ";") {
-						paths = append(paths, filepath.Clean(urlStr+"/"+path))
+					for _, path := range tagUriParse(f.Tag) {
+						for _, urlStr := range urlStrs {
+							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, urlStr, path}, "/")))
+						}
 					}
 					route.Path(paths...)
 					can.methodMap[routerName] = m
@@ -143,15 +144,19 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 }
 
 // urlStr get uri from tag value
-func (can *Can) urlStr(typ reflect.Type) (string, string) {
+func (can *Can) urlStr(typ reflect.Type) ([]string, string) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if f.PkgPath != "" {
 			continue
 		}
 		if f.Type == uriType {
-			return f.Tag.Get("value"), typ.Name()
+			return tagUriParse(f.Tag), typ.Name()
 		}
 	}
-	return "", ""
+	return []string{}, ""
+}
+
+func tagUriParse(tag reflect.StructTag) []string {
+	return strings.Split(tag.Get(uriTagName), ";")
 }
