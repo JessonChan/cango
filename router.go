@@ -45,6 +45,7 @@ type (
 
 const emptyPrefix = ""
 
+// todo route by controller and method Name???
 func (can *Can) Route(uris ...URI) *Can {
 	return can.RouteWithPrefix(emptyPrefix, uris...)
 }
