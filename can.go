@@ -88,7 +88,7 @@ func (can *Can) SetMux(mux CanMux) {
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, can.staticRequestPrefix) {
-		http.ServeFile(rw, r, can.tplRootPath+r.URL.Path)
+		http.ServeFile(rw, r, can.rootPath+r.URL.Path)
 		return
 	}
 	rt, statusCode := can.serve(rw, r)
