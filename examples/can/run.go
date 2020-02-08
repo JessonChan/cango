@@ -42,7 +42,7 @@ func (s *SnowController) Snowing(param struct {
 func (s *SnowController) Wind(param struct {
 	cango.URI `value:"/winding.html"`
 }) interface{} {
-	return cango.ModelView{Tpl: "/view/wind.tpl", Model: map[string]string{
+	return cango.ModelView{Tpl: "/views/wind.tpl", Model: map[string]string{
 		"Day":   s.Day,
 		"Heavy": s.Heavy,
 	}}
