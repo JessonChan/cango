@@ -16,6 +16,7 @@ package cango
 
 import (
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"time"
@@ -116,7 +117,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				}
 				switch f.Type {
 				case uriType:
-					route.Path(urlStr + f.Tag.Get("value"))
+					route.Path(filepath.Clean(urlStr + "/" + f.Tag.Get("value")))
 					can.methodMap[routerName] = m
 					can.filterMap[routerName] = can.filterMap[rp.String()]
 				}
