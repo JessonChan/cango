@@ -57,6 +57,10 @@ type Content struct {
 	Code   int
 }
 
+type StaticFile struct {
+	Path string
+}
+
 type httpMethod interface {
 }
 

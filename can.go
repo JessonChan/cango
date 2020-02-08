@@ -87,10 +87,6 @@ func (can *Can) SetMux(mux CanMux) {
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, can.staticRequestPrefix) {
-		http.ServeFile(rw, r, can.rootPath+r.URL.Path)
-		return
-	}
 	rt, statusCode := can.serve(rw, r)
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
@@ -121,6 +117,9 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		rw.WriteHeader(code)
 		_, _ = rw.Write([]byte(rt.(Content).String))
+		return
+	case StaticFile:
+		http.ServeFile(rw, r, rt.(StaticFile).Path)
 		return
 	}
 
@@ -212,6 +211,11 @@ type StatusCode int
 var decoder = schema.NewDecoder()
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
+	// todo static file should use router match also
+	if strings.HasPrefix(req.URL.Path, can.staticRequestPrefix) {
+		return StaticFile{Path: filepath.Clean(can.rootPath + req.URL.Path)}, http.StatusOK
+	}
+
 	match := can.rootRouter.Match(req)
 	if match.Error() != nil {
 		// todo sure?
