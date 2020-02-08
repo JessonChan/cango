@@ -22,7 +22,7 @@ import (
 )
 
 type SnowController struct {
-	cango.URI `value:"/weather/{day}/how-heavy/{heavy}"`
+	cango.URI `value:"/weather/{day}/how-heavy/{heavy};/weather/how-heavy/{day}/{heavy}"`
 	Day       string
 	Heavy     string
 }
