@@ -31,7 +31,7 @@ type Can struct {
 	tplRootPath         string
 	staticRootPath      string
 	staticRequestPrefix string
-	tplSuffix           string
+	tplSuffix           []string
 
 	rootRouter CanMux
 	methodMap  map[string]reflect.Method
@@ -71,7 +71,7 @@ type Opts struct {
 
 type StaticOpts struct {
 	RequestPrefix string
-	TplSuffix     string
+	TplSuffix     []string
 }
 
 func (addr Addr) String() string {
@@ -201,13 +201,13 @@ func getStaticOpts(as []interface{}) StaticOpts {
 			if strings.HasPrefix(opts.RequestPrefix, "/") == false {
 				opts.RequestPrefix = "/" + opts.RequestPrefix
 			}
-			if opts.TplSuffix == "" {
-				opts.TplSuffix = ".tpl"
+			if len(opts.TplSuffix) == 0 {
+				opts.TplSuffix = []string{".tpl"}
 			}
 			return opts
 		}
 	}
-	return StaticOpts{RequestPrefix: "/static", TplSuffix: ".tpl"}
+	return StaticOpts{RequestPrefix: "/static", TplSuffix: []string{".tpl"}}
 }
 
 type StatusCode int

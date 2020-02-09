@@ -39,7 +39,14 @@ func (can *Can) initTpl() {
 			canDebug("walk tpl files ", path, "dir skip")
 			return nil
 		}
-		if strings.HasSuffix(path, can.tplSuffix) {
+		if func() bool {
+			for _, suffix := range can.tplSuffix {
+				if strings.HasSuffix(path, suffix) {
+					return true
+				}
+			}
+			return false
+		}() {
 			bs, err := ioutil.ReadFile(path)
 			if err != nil {
 				canError(err)
