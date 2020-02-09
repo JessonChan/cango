@@ -232,7 +232,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	fs, _ := can.filterMap[match.Route().GetName()]
 	if len(fs) > 0 {
 		for _, f := range fs {
-			f.PreHandle(req)
+			ri := f.PreHandle(req)
+			if rt, ok := ri.(bool); ok {
+				// 返回为false 这个之后注册的filter失效
+				if rt == false {
+					break
+				}
+			} else {
+				// 如果不是bool类型，提前结束
+				return ri, http.StatusOK
+			}
 		}
 		// do filter
 	}
