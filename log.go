@@ -32,7 +32,7 @@ const (
 var logPrefix = []string{"ZERO", "DEBUG", " INFO", " WARN", "ERROR"}
 
 var logLevel = 0
-var logger = log.New(os.Stdout, "CANGO ", log.LstdFlags)
+var logger = log.New(os.Stdout, "CANGO ", log.LstdFlags|log.Lshortfile)
 
 func InitLogger(rw io.Writer, prefix string, flag int) {
 	if flag == 0 {
@@ -43,7 +43,7 @@ func InitLogger(rw io.Writer, prefix string, flag int) {
 
 func canLine(level int, v ...interface{}) {
 	if level >= logLevel {
-		logger.Output(2, logPrefix[level]+" "+fmt.Sprintln(v...))
+		logger.Output(3, logPrefix[level]+" "+fmt.Sprintln(v...))
 	}
 }
 
