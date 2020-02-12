@@ -42,6 +42,7 @@ func newContext(rw http.ResponseWriter, req *http.Request) *uriImpl {
 	return &uriImpl{&WebRequest{Request: req, ResponseWriter: rw}}
 }
 
+// todo  可以根据路由的uri/方法名等自动查找tpl
 type ModelView struct {
 	Tpl   string
 	Model interface{}
