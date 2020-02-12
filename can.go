@@ -32,6 +32,7 @@ type Can struct {
 	staticRootPath      string
 	staticRequestPrefix string
 	tplSuffix           []string
+	debugTpl            bool
 
 	rootRouter CanMux
 	methodMap  map[string]reflect.Method
@@ -72,6 +73,7 @@ type Opts struct {
 type StaticOpts struct {
 	RequestPrefix string
 	TplSuffix     []string
+	Debug         bool
 }
 
 func (addr Addr) String() string {
@@ -149,6 +151,7 @@ func (can *Can) Run(as ...interface{}) {
 	staticOpts := getStaticOpts(as)
 	can.staticRequestPrefix = staticOpts.RequestPrefix
 	can.tplSuffix = staticOpts.TplSuffix
+	can.debugTpl = staticOpts.Debug
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
