@@ -81,6 +81,7 @@ func (can *Can) initTpl() {
 
 func (can *Can) lookupTpl(name string) *template.Template {
 	if can.debugTpl {
+		rootTpl = nil
 		can.initTpl()
 	} else {
 		tplOnce.Do(func() {
