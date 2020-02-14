@@ -95,7 +95,7 @@ func (can *Can) buildRoute() {
 // todo 如果static存在的文件非常多的时候，这种实现方式会成为巨大的问题
 func (can *Can) buildStaticRoute() {
 	_ = filepath.Walk(can.rootPath+staticDir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
+		if info == nil || info.IsDir() {
 			return nil
 		}
 		can.route(filepath.Clean("/"+strings.TrimPrefix(path, can.rootPath)), &staticController{})

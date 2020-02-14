@@ -35,7 +35,7 @@ func (can *Can) RegTplFunc(name string, fn interface{}) *Can {
 func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
+		if info == nil || info.IsDir() {
 			canDebug("walk tpl files ", path, "dir skip")
 			return nil
 		}
