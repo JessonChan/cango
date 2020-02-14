@@ -89,6 +89,13 @@ func (can *Can) SetMux(mux CanMux) {
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			canError(err)
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
+
 	rt, statusCode := can.serve(rw, r)
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
