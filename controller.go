@@ -28,8 +28,9 @@ type URI interface {
 }
 
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
-var staticControllerType = reflect.TypeOf(&staticController{}).Elem()
+var staticControllerType = reflect.TypeOf(&staticController{})
 var uriName = uriType.Name()
+var staticPathParamName = "Path"
 
 type uriImpl struct {
 	request *WebRequest

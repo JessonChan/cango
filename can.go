@@ -219,11 +219,6 @@ type StatusCode int
 var decoder = schema.NewDecoder()
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	// todo static file should use router match also
-	if strings.HasPrefix(req.URL.Path, can.staticRequestPrefix) {
-		return StaticFile{Path: filepath.Clean(can.rootPath + req.URL.Path)}, http.StatusOK
-	}
-
 	match := can.rootMux.Match(req)
 	if match.Error() != nil {
 		// todo sure?
@@ -275,7 +270,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}
 	// static type
 	if ct.Type() == staticControllerType {
-		uriFiled = mt.FieldByName("Path")
+		uriFiled = mt.FieldByName(staticPathParamName)
 		if uriFiled.IsValid() {
 			uriFiled.Set(reflect.ValueOf(filepath.Clean(can.rootPath + "/" + req.URL.Path)))
 		}
