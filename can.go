@@ -269,6 +269,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		uriFiled.Set(reflect.ValueOf(context))
 	}
 	// static type
+	// todo 不是最好的实现方式
 	if ct.Type() == staticControllerType {
 		uriFiled = mt.FieldByName(staticPathParamName)
 		if uriFiled.IsValid() {
