@@ -99,10 +99,6 @@ func (can *Can) buildStaticRoute() {
 			return nil
 		}
 		can.route(filepath.Clean("/"+strings.TrimPrefix(path, can.rootPath)), &staticController{})
-		// route := can.rootMux.NewRouter("static:" + info.Name())
-		// route.Path(path)
-		// route.Methods(http.MethodGet)
-		// canDebug(route.GetName(), route.GetPath(), route.GetMethods())
 		return nil
 	})
 }
