@@ -67,7 +67,7 @@ type LogFilter struct {
 
 func (m *LogFilter) PreHandle(r *http.Request) interface{} {
 	log.Println(r.Method, r.URL)
-	return nil
+	return true
 }
 
 var count struct {
@@ -85,7 +85,7 @@ func (m *StatFilter) PreHandle(r *http.Request) interface{} {
 	count.cnt++
 	log.Println("web page visit count total:", count.cnt)
 	count.Unlock()
-	return nil
+	return true
 }
 
 func main() {

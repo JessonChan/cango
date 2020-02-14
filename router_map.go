@@ -42,8 +42,6 @@ func newMapMux() *mapMux {
 }
 
 func (m *mapMux) NewRouter(name string) CanRouter {
-	m.routers = map[string]*mapRouter{}
-	m.pathName = map[string]string{}
 	mr := &mapRouter{name: name, innerMux: m, methods: map[string]bool{}}
 	m.routers[name] = mr
 	return mr
