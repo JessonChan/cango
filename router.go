@@ -16,6 +16,7 @@ package cango
 
 import (
 	"net/http"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -91,6 +92,20 @@ func (can *Can) buildRoute() {
 	}
 }
 
+func (can *Can) buildStaticRoute() {
+	_ = filepath.Walk(can.rootPath+staticDir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		can.route(filepath.Clean("/"+strings.TrimPrefix(path, can.rootPath)), &staticController{})
+		// route := can.rootMux.NewRouter("static:" + info.Name())
+		// route.Path(path)
+		// route.Methods(http.MethodGet)
+		// canDebug(route.GetName(), route.GetPath(), route.GetMethods())
+		return nil
+	})
+}
+
 func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	prefix := ce.prefix
 	rp := ce.vl
@@ -109,7 +124,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				continue
 			}
 			routerName := ctlName + "." + m.Name
-			route := can.rootRouter.NewRouter(routerName)
+			route := can.rootMux.NewRouter(routerName)
 			var httpMethods []string
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)

@@ -19,8 +19,8 @@ import (
 )
 
 type WebRequest struct {
-	ResponseWriter http.ResponseWriter
-	Request        *http.Request
+	http.ResponseWriter
+	*http.Request
 }
 
 type URI interface {
@@ -28,6 +28,7 @@ type URI interface {
 }
 
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
+var staticControllerType = reflect.TypeOf(&staticController{}).Elem()
 var uriName = uriType.Name()
 
 type uriImpl struct {

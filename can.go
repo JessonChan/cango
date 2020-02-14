@@ -34,7 +34,7 @@ type Can struct {
 	tplSuffix           []string
 	debugTpl            bool
 
-	rootRouter CanMux
+	rootMux    CanMux
 	methodMap  map[string]reflect.Method
 	filterMap  map[string][]Filter
 	ctrlMap    map[string]ctrlEntry
@@ -47,7 +47,7 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		rootRouter: newGorillaMux(),
+		rootMux:    newCanMux(),
 		methodMap:  map[string]reflect.Method{},
 		filterMap:  map[string][]Filter{},
 		ctrlMap:    map[string]ctrlEntry{},
@@ -85,7 +85,7 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
 func (can *Can) SetMux(mux CanMux) {
-	can.rootRouter = mux
+	can.rootMux = mux
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -152,6 +152,7 @@ func (can *Can) Run(as ...interface{}) {
 	can.staticRequestPrefix = staticOpts.RequestPrefix
 	can.tplSuffix = staticOpts.TplSuffix
 	can.debugTpl = staticOpts.Debug
+	can.buildStaticRoute()
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
@@ -223,11 +224,12 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		return StaticFile{Path: filepath.Clean(can.rootPath + req.URL.Path)}, http.StatusOK
 	}
 
-	match := can.rootRouter.Match(req)
+	match := can.rootMux.Match(req)
 	if match.Error() != nil {
 		// todo sure?
+		// 这样做的目的是防止出现如 //some_url//..//some_para 这样的不规范的地址
 		req.URL.Path = filepath.Clean(req.URL.Path)
-		match = can.rootRouter.Match(req)
+		match = can.rootMux.Match(req)
 		if match.Error() != nil {
 			return nil, http.StatusNotFound
 		}
@@ -270,6 +272,13 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	uriFiled = mt.FieldByName(uriName)
 	if uriFiled.IsValid() {
 		uriFiled.Set(reflect.ValueOf(context))
+	}
+	// static type
+	if ct.Type() == staticControllerType {
+		uriFiled = mt.FieldByName("Path")
+		if uriFiled.IsValid() {
+			uriFiled.Set(reflect.ValueOf(filepath.Clean(can.rootPath + "/" + req.URL.Path)))
+		}
 	}
 
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
