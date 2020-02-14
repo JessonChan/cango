@@ -23,18 +23,10 @@ type (
 		muxSlice   []CanMux
 		gorillaMux *gorillaMux
 		mapMux     *mapMux
-		nameMap    map[string]CanRouter
-		routers    map[string]*canRouter
-		pathName   map[string]string
 	}
 	canRouter struct {
 		mapRouter     CanRouter
 		gorillaRouter CanRouter
-		name          string
-		innerMux      *canMux
-		paths         []string
-		methods       map[string]bool
-		methodSlice   []string
 	}
 )
 
@@ -45,7 +37,6 @@ func newCanMux() *canMux {
 		mapMux:     mm,
 		gorillaMux: gm,
 		muxSlice:   []CanMux{mm, gm},
-		nameMap:    map[string]CanRouter{},
 	}
 }
 
