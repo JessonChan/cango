@@ -19,7 +19,6 @@ type staticController struct {
 
 func (s *staticController) Get(ps struct {
 	URI
-	Path string
 }) StaticFile {
-	return StaticFile{ps.Path}
+	return StaticFile{s.URI.Request().URL.Path}
 }

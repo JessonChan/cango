@@ -128,14 +128,21 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		_, _ = rw.Write([]byte(rt.(Content).String))
 		return
 	case StaticFile:
+		var err error
 		path := rt.(StaticFile).Path
-		_, err := os.Stat(path)
-		if err != nil {
-			canDebug(err)
-			_, err = os.Stat(filepath.Clean(can.rootPath + "/" + path))
-			if err == nil {
-				path = can.rootPath + path
+		// todo 更好的实现 filepath.Clean的性能问题
+		paths := [3]string{filepath.Clean(can.rootPath + staticDir + "/" + path), path, filepath.Clean(can.rootPath + "/" + path)}
+		for _, p := range paths {
+			_, err = os.Stat(p)
+			if err != nil {
+				continue
 			}
+			path = p
+			break
+		}
+		if err != nil {
+			canDebug(err, "can't find the file", rt)
+			// todo 404 default page
 		}
 		http.ServeFile(rw, r, path)
 		return
@@ -279,14 +286,6 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	uriFiled = mt.FieldByName(uriName)
 	if uriFiled.IsValid() {
 		uriFiled.Set(reflect.ValueOf(context))
-	}
-	// static type
-	// todo 不是最好的实现方式
-	if ct.Type() == staticControllerType {
-		uriFiled = mt.FieldByName(staticPathParamName)
-		if uriFiled.IsValid() {
-			uriFiled.Set(reflect.ValueOf(filepath.Clean(can.rootPath + "/" + req.URL.Path)))
-		}
 	}
 
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
