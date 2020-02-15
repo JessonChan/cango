@@ -132,7 +132,16 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		_, _ = rw.Write([]byte(rt.(Content).String))
 		return
 	case StaticFile:
-		http.ServeFile(rw, r, rt.(StaticFile).Path)
+		path := rt.(StaticFile).Path
+		_, err := os.Stat(path)
+		if err != nil {
+			canDebug(err)
+			_, err = os.Stat(filepath.Clean(can.rootPath + "/" + path))
+			if err == nil {
+				path = can.rootPath + path
+			}
+		}
+		http.ServeFile(rw, r, path)
 		return
 	}
 
