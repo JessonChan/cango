@@ -101,6 +101,9 @@ func (can *Can) buildStaticRoute() {
 		can.route(filepath.Clean("/"+strings.TrimPrefix(path, can.rootPath)), &staticController{})
 		return nil
 	})
+	// todo 特殊处理favicon.ico和robots.txt
+	can.route("/favicon.ico", &staticController{})
+	can.route("/robots.txt", &staticController{})
 }
 
 func (can *Can) buildSingleRoute(ce ctrlEntry) {

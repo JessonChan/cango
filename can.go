@@ -84,10 +84,6 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 
 var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
-func (can *Can) SetMux(mux CanMux) {
-	can.rootMux = mux
-}
-
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
