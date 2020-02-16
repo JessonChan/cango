@@ -130,8 +130,11 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	case StaticFile:
 		var err error
 		path := rt.(StaticFile).Path
+		if path[0] != '/' {
+			path = "/" + path
+		}
 		// todo 更好的实现 filepath.Clean的性能问题
-		paths := [3]string{filepath.Clean(can.rootPath + staticDir + "/" + path), path, filepath.Clean(can.rootPath + "/" + path)}
+		paths := [3]string{can.rootPath + path, path, can.rootPath + staticDir + path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
 			if err != nil {
