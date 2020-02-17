@@ -34,8 +34,8 @@ var logPrefix = []string{"ZERO", "DEBUG", " INFO", " WARN", "ERROR"}
 var logLevel = 0
 var logger = log.New(os.Stdout, "CANGO ", log.LstdFlags|log.Lshortfile)
 
-func InitLogger(rw io.Writer, prefix string) {
-	logger = log.New(rw, prefix, log.LstdFlags|log.Lshortfile)
+func InitLogger(rw io.Writer) {
+	logger = log.New(rw, "CANGO ", log.LstdFlags|log.Lshortfile)
 }
 
 func canLine(level int, v ...interface{}) {
