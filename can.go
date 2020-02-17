@@ -162,11 +162,9 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 func (can *Can) Run(as ...interface{}) {
 	addr := getAddr(as)
-	if can.srv == nil {
-		can.srv = &http.Server{}
-	}
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
+	can.srv.ErrorLog = logger
 	can.rootPath = getRootPath(as)
 	can.tplRootPath = can.rootPath + tplDir
 	can.staticRootPath = can.rootPath + staticDir
