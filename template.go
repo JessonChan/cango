@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/JessonChan/canlog"
 )
 
 var rootTpl *template.Template
@@ -36,7 +38,7 @@ func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
 		if info == nil || info.IsDir() {
-			canDebug("walk tpl files ", path, "dir skip")
+			canlog.CanDebug("walk tpl files ", path, "dir skip")
 			return nil
 		}
 		if func() bool {
@@ -49,7 +51,7 @@ func (can *Can) initTpl() {
 		}() {
 			bs, err := ioutil.ReadFile(path)
 			if err != nil {
-				canError(err)
+				canlog.CanError(err)
 				return err
 			}
 			names := []string{info.Name(), strings.TrimPrefix(path, can.tplRootPath), strings.TrimPrefix(path, can.rootPath)}
@@ -67,10 +69,10 @@ func (can *Can) initTpl() {
 					continue
 				}
 				can.tplNameMap[name] = true
-				canDebug("walk tpl files ", path, name)
+				canlog.CanDebug("walk tpl files ", path, name)
 				_, err = rootTpl.New(name).Funcs(can.tplFuncMap).Parse(string(bs))
 				if err != nil {
-					canError(err)
+					canlog.CanError(err)
 					continue
 				}
 			}

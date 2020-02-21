@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
 	"github.com/gorilla/schema"
 )
@@ -103,13 +104,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		mv := rt.(ModelView)
 		tpl := can.lookupTpl(mv.Tpl)
 		if tpl == nil {
-			canError("template not find", mv.Tpl, mv.Model)
+			canlog.CanError("template not find", mv.Tpl, mv.Model)
 			return
 		}
 		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err := tpl.Execute(rw, mv.Model)
 		if err != nil {
-			canError("template error", err)
+			canlog.CanError("template error", err)
 		}
 		return
 	case Redirect:
@@ -144,7 +145,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if err != nil {
-			canDebug(err, "can't find the file", rt)
+			canlog.CanDebug(err, "can't find the file", rt)
 			// todo 404 default page
 		}
 		http.ServeFile(rw, r, path)
@@ -164,7 +165,7 @@ func (can *Can) Run(as ...interface{}) {
 	addr := getAddr(as)
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
-	can.srv.ErrorLog = logger
+	can.srv.ErrorLog = canlog.GetLogger()
 	can.rootPath = getRootPath(as)
 	can.tplRootPath = can.rootPath + tplDir
 	can.staticRootPath = can.rootPath + staticDir
@@ -177,7 +178,7 @@ func (can *Can) Run(as ...interface{}) {
 
 	startChan := make(chan error, 1)
 	go func() {
-		canInfo("cango start success @ " + addr.String())
+		canlog.CanInfo("cango start success @ " + addr.String())
 		err := can.srv.ListenAndServe()
 		if err != nil {
 			startChan <- err

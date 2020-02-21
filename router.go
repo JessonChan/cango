@@ -22,6 +22,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/JessonChan/canlog"
 )
 
 type (
@@ -130,7 +132,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 			for j := 0; j < in.NumField(); j++ {
 				f := in.Field(j)
 				if f.PkgPath != "" {
-					canError("could not use unexpected filed in param:" + f.Name)
+					canlog.CanError("could not use unexpected filed in param:" + f.Name)
 				}
 				switch f.Type {
 				case uriType:
@@ -154,7 +156,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				httpMethods = append(httpMethods, http.MethodGet)
 			}
 			route.Methods(httpMethods...)
-			canDebug(route.GetName(), route.GetPath(), route.GetMethods())
+			canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 		}
 	}
 }
