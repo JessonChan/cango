@@ -330,6 +330,8 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}
 	return vs[0].Interface(), http.StatusOK
 }
+
+// todo 实现decoder
 func toValues(m map[string]string) map[string][]string {
 	mm := make(map[string][]string, len(m))
 	for k, v := range m {
