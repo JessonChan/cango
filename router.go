@@ -84,6 +84,9 @@ func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
 func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func (can *Can) buildRoute() {
+	for uri, _ := range uriRegMap {
+		can.route("", uri)
+	}
 	var ces []ctrlEntry
 	for _, ce := range can.ctrlMap {
 		ces = append(ces, ce)

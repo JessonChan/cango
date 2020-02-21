@@ -22,16 +22,10 @@ type AdminController struct {
 	cango.URI `value:"/dwz"`
 }
 
-func (a *AdminController) Get(params struct {
-	cango.URI `value:"/admin_____login"`
-}) interface{} {
-	return cango.ModelView{Tpl: "/views/admin.tpl", Model: map[string]interface{}{"Slice": models.GetAll()}}
-}
-
-func (a *AdminController) Form(params struct {
+func (a *AdminController) AddURL(params struct {
 	cango.URI
 }) interface{} {
-	return cango.ModelView{Tpl: "/views/index.tpl"}
+	return cango.ModelView{Tpl: "/views/add.tpl"}
 }
 func (a *AdminController) Submit(params struct {
 	cango.URI `value:"/{submitId}"`
