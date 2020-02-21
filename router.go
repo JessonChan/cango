@@ -112,7 +112,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	rp := ce.vl
 	uri := ce.ctrl
 
-	urlStrs, ctlName := can.urlStr(reflect.Indirect(rp).Type())
+	strUrls, ctlName := can.urlStr(reflect.Indirect(rp).Type())
 	tvp := reflect.TypeOf(uri)
 	for i := 0; i < tvp.NumMethod(); i++ {
 		m := tvp.Method(i)
@@ -136,8 +136,8 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 				case uriType:
 					var paths []string
 					for _, path := range tagUriParse(f.Tag) {
-						for _, urlStr := range urlStrs {
-							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, urlStr, path}, "/")))
+						for _, strUrl := range strUrls {
+							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
 						}
 					}
 					route.Path(paths...)
