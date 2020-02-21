@@ -83,13 +83,12 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 				continue
 			}
 
-			pattSeg := router.words
 			// 如果是变量，肯定符合
-			if pattSeg[k].isVar {
+			if router.words[k].isVar {
 				continue
 			}
 			// 如果不是变量，判断是不是相等
-			if pattSeg[k].key == elem {
+			if router.words[k].key == elem {
 				continue
 			}
 			// 两种情况都不是，不符合
@@ -142,9 +141,9 @@ func (fr *fastRouter) Path(ps ...string) {
 	for k, path := range ps {
 		routerName := fmt.Sprintf("%v-%d", fr.name, k)
 		fr.innerMux.pathNameMap[routerName] = fr.name
-		patt := &fastPatten{name: routerName, pattern: path}
-		patt.words, patt.varIdx, patt.hasVar = elementsToWords(parsePath(path))
-		fr.pattens = append(fr.pattens, patt)
+		patten := &fastPatten{name: routerName, pattern: path}
+		patten.words, patten.varIdx, patten.hasVar = elementsToWords(parsePath(path))
+		fr.pattens = append(fr.pattens, patten)
 	}
 	fr.paths = ps
 }
