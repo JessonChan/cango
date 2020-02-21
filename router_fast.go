@@ -38,7 +38,7 @@ type (
 	fastPatten struct {
 		name      string
 		pattern   string
-		seg       []word
+		words     []word
 		varIdx    []int
 		hasVar    bool
 		methodMap map[string]bool
@@ -67,29 +67,29 @@ func (fm *fastMux) NewRouter(name string) CanRouter {
 }
 
 func (fm *fastMux) doMatch(method, url string) *fastMatcher {
-	segs := parsePath(url)
+	elements := parsePath(url)
 	stopMap := map[*fastPatten]bool{}
 
-	for k, seg := range segs {
+	for k, elem := range elements {
 		for _, router := range fm.methodRouterArrMap[method] {
 			if stopMap[router] {
 				continue
 			}
-			// len(segs) 和 len(pattSeg) 如果在不是变量情况下，肯定是一样长的
+			// len(elements) 和 len(pattSeg) 如果在不是变量情况下，肯定是一样长的
 			// 如果存在变量情况下呢？
 
-			if len(router.seg) != len(segs) {
+			if len(router.words) != len(elements) {
 				stopMap[router] = true
 				continue
 			}
 
-			pattSeg := router.seg
+			pattSeg := router.words
 			// 如果是变量，肯定符合
 			if pattSeg[k].isVar {
 				continue
 			}
 			// 如果不是变量，判断是不是相等
-			if pattSeg[k].key == seg {
+			if pattSeg[k].key == elem {
 				continue
 			}
 			// 两种情况都不是，不符合
@@ -116,7 +116,7 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 		}
 		vars := map[string]string{}
 		for _, id := range router.varIdx {
-			vars[router.seg[id].key] = segs[id]
+			vars[router.words[id].key] = elements[id]
 		}
 		fm := &fastMatcher{
 			router: fm.routers[fm.pathNameMap[router.name]],
@@ -143,7 +143,7 @@ func (fr *fastRouter) Path(ps ...string) {
 		routerName := fmt.Sprintf("%v-%d", fr.name, k)
 		fr.innerMux.pathNameMap[routerName] = fr.name
 		patt := &fastPatten{name: routerName, pattern: path}
-		patt.seg, patt.varIdx, patt.hasVar = pathToWord(parsePath(path))
+		patt.words, patt.varIdx, patt.hasVar = elementsToWords(parsePath(path))
 		fr.pattens = append(fr.pattens, patt)
 	}
 	fr.paths = ps
@@ -175,20 +175,20 @@ func (fm *fastMatcher) GetVars() map[string][]string {
 	return fm.vars
 }
 
-func pathToWord(seg []string) ([]word, []int, bool) {
-	words := make([]word, len(seg))
+func elementsToWords(elements []string) ([]word, []int, bool) {
+	words := make([]word, len(elements))
 	hasVar := false
-	idx := make([]int, len(seg))
+	idx := make([]int, len(elements))
 	j := 0
-	for i := 0; i < len(seg); i++ {
-		if []byte(seg[i])[0] == '{' && []byte(seg[i])[len(seg[i])-1] == '}' {
+	for i := 0; i < len(elements); i++ {
+		if []byte(elements[i])[0] == '{' && []byte(elements[i])[len(elements[i])-1] == '}' {
 			hasVar = true
-			words[i] = word{key: seg[i][1 : len(seg[i])-1], isVar: true}
+			words[i] = word{key: elements[i][1 : len(elements[i])-1], isVar: true}
 			idx[j] = i
 			j++
 			continue
 		}
-		words[i] = word{key: seg[i], isVar: false}
+		words[i] = word{key: elements[i], isVar: false}
 	}
 	return words, idx, hasVar
 }
