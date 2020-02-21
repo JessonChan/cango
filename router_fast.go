@@ -196,6 +196,7 @@ func elementsToWords(elements []string) ([]word, []int, bool) {
 func parsePath(url string) []string {
 	// todo : clean & split in only one loop
 	url = filepath.Clean(url)
+	// todo : 如果是 /a/b/c/ 是不是要等价于 /a/b/c 呢？
 	if url == "" || url == "/" {
 		return []string{"/"}
 	}
