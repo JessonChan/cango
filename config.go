@@ -7,6 +7,7 @@ import (
 	"github.com/JessonChan/canlog"
 )
 
+// todo 支持对于can全局配置的文件化设定
 func initConfig(configPath string) {
 	bs, err := ioutil.ReadFile(configPath)
 	if err != nil {
