@@ -243,6 +243,7 @@ func getStaticOpts(as []interface{}) StaticOpts {
 
 type StatusCode int
 
+// todo 自己实现schema 支持更多特性，尤其是用tag实现赋值、验证等
 var decoder = schema.NewDecoder()
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
