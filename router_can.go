@@ -20,28 +20,28 @@ import (
 
 type (
 	canMux struct {
-		muxSlice   []CanMux
-		gorillaMux *gorillaMux
-		mapMux     *mapMux
+		muxSlice []CanMux
+		fastMux  *fastMux
+		mapMux   *mapMux
 	}
 	canRouter struct {
-		mapRouter     CanRouter
-		gorillaRouter CanRouter
+		mapRouter  CanRouter
+		fastRouter CanRouter
 	}
 )
 
 func newCanMux() *canMux {
 	mm := newMapMux()
-	gm := newGorillaMux()
+	gm := newFastMux()
 	return &canMux{
-		mapMux:     mm,
-		gorillaMux: gm,
-		muxSlice:   []CanMux{mm, gm},
+		mapMux:   mm,
+		fastMux:  gm,
+		muxSlice: []CanMux{mm, gm},
 	}
 }
 
 func (m *canMux) NewRouter(name string) CanRouter {
-	return &canRouter{mapRouter: m.mapMux.NewRouter(name), gorillaRouter: m.gorillaMux.NewRouter(name)}
+	return &canRouter{mapRouter: m.mapMux.NewRouter(name), fastRouter: m.fastMux.NewRouter(name)}
 }
 func (m *canMux) Match(req *http.Request) CanMatcher {
 	for _, v := range m.muxSlice {
@@ -54,12 +54,12 @@ func (m *canMux) Match(req *http.Request) CanMatcher {
 
 func (m *canRouter) Path(ps ...string) {
 	m.mapRouter.Path(ps...)
-	m.gorillaRouter.Path(ps...)
+	m.fastRouter.Path(ps...)
 }
 
 func (m *canRouter) Methods(ms ...string) {
 	m.mapRouter.Methods(ms...)
-	m.gorillaRouter.Methods(ms...)
+	m.fastRouter.Methods(ms...)
 }
 func (m *canRouter) GetName() string {
 	return m.mapRouter.GetName()

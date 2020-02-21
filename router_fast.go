@@ -132,7 +132,7 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 func (fm *fastMux) Match(req *http.Request) CanMatcher {
 	cm := fm.doMatch(req.Method, req.URL.Path)
 	if cm == nil {
-		return &fastMatcher{err: errors.New("not found")}
+		return &fastMatcher{err: errors.New("can't find the path")}
 	}
 	return cm
 }
