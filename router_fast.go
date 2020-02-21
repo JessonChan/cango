@@ -36,12 +36,13 @@ type (
 		methods  []string
 	}
 	fastPatten struct {
-		name      string
-		pattern   string
-		words     []word
-		varIdx    []int
-		hasVar    bool
-		methodMap map[string]bool
+		name       string
+		pattern    string
+		words      []word
+		varIdx     []int
+		hasVar     bool
+		methodMap  map[string]bool
+		isWildcard bool
 	}
 	fastMatcher struct {
 		err    error
@@ -51,8 +52,9 @@ type (
 )
 
 type word struct {
-	key   string
-	isVar bool
+	key        string
+	isVar      bool
+	isWildcard bool
 }
 
 func newFastMux() *fastMux {
@@ -71,28 +73,46 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 	stopMap := map[*fastPatten]bool{}
 
 	for k, elem := range elements {
-		for _, router := range fm.methodRouterArrMap[method] {
-			if stopMap[router] {
+		for _, pattern := range fm.methodRouterArrMap[method] {
+			if stopMap[pattern] {
 				continue
 			}
-			// len(elements) 和 len(pattSeg) 如果在不是变量情况下，肯定是一样长的
-			// 如果存在变量情况下呢？
+			// todo wildcard逻辑要加进来
+			if pattern.isWildcard {
+				if len(pattern.words) >= k {
+					if pattern.words[k].isWildcard {
+						continue
+					}
+					// 如果是变量，肯定符合
+					if pattern.words[k].isVar {
+						continue
+					}
+					// 如果不是变量，判断是不是相等
+					if pattern.words[k].key == elem {
+						continue
+					}
+					// 两种情况都不是，不符合
+					stopMap[pattern] = true
+					continue
+				} else {
 
-			if len(router.words) != len(elements) {
-				stopMap[router] = true
+				}
+			}
+			if len(pattern.words) != len(elements) {
+				stopMap[pattern] = true
 				continue
 			}
 
 			// 如果是变量，肯定符合
-			if router.words[k].isVar {
+			if pattern.words[k].isVar {
 				continue
 			}
 			// 如果不是变量，判断是不是相等
-			if router.words[k].key == elem {
+			if pattern.words[k].key == elem {
 				continue
 			}
 			// 两种情况都不是，不符合
-			stopMap[router] = true
+			stopMap[pattern] = true
 		}
 	}
 	diff := len(fm.methodRouterArrMap[method]) - len(stopMap)
@@ -142,7 +162,7 @@ func (fr *fastRouter) Path(ps ...string) {
 		routerName := fmt.Sprintf("%v-%d", fr.name, k)
 		fr.innerMux.pathNameMap[routerName] = fr.name
 		patten := &fastPatten{name: routerName, pattern: path}
-		patten.words, patten.varIdx, patten.hasVar = elementsToWords(parsePath(path))
+		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
 		fr.pattens = append(fr.pattens, patten)
 	}
 	fr.paths = ps
@@ -174,22 +194,31 @@ func (fm *fastMatcher) GetVars() map[string][]string {
 	return fm.vars
 }
 
-func elementsToWords(elements []string) ([]word, []int, bool) {
+func elementsToWords(elements []string) ([]word, []int, bool, bool) {
 	words := make([]word, len(elements))
 	hasVar := false
 	idx := make([]int, len(elements))
+	isWildcard := false
 	j := 0
-	for i := 0; i < len(elements); i++ {
-		if []byte(elements[i])[0] == '{' && []byte(elements[i])[len(elements[i])-1] == '}' {
+	for i, elem := range elements {
+		if elem == "*" {
+			words[i] = word{isWildcard: true}
+			isWildcard = true
+			continue
+		}
+		// todo 如果这个word就是{}呢？
+		// todo 也就是说地址是/a/{}/b/c 这种的话不会被当做变量
+		// todo 如果真实需要注册的地址就是/a/{name}/b/c 应该怎么办？
+		if strings.HasSuffix(elem, "{") && strings.HasSuffix(elem, "}") {
 			hasVar = true
-			words[i] = word{key: elements[i][1 : len(elements[i])-1], isVar: true}
+			words[i] = word{key: elem[1 : len(elem)-1], isVar: true}
 			idx[j] = i
 			j++
 			continue
 		}
-		words[i] = word{key: elements[i], isVar: false}
+		words[i] = word{key: elem, isVar: false}
 	}
-	return words, idx, hasVar
+	return words, idx, hasVar, isWildcard
 }
 
 func parsePath(url string) []string {
