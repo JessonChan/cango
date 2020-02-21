@@ -1,5 +1,5 @@
 # cango
-cango 是一个实验性的web开发框架，支持模板和模板，高效的使用golang的tag特性，将路由定义、变量赋值和更多的操作通过在tag中定义。
+cango 是一个实验性的web开发框架，支持restful和mvc编程，高效的使用golang的tag特性，将路由定义、路由变量赋值和更多的操作通过在tag中定义。
 
 
 ## 路由设计
@@ -28,11 +28,5 @@ func (c *Controller)Comment(param struct{
 4、所有的路由方法有且只有第一个返回值做为是restful的返回值，如果没有返回值则返回{}
 
 ## 路由设计具体实现漫谈  
-以GET方法为例说明。  
-从Controller中抽离出路由urlC和变量列表varsC，从Controller中抽离出方法路由urlM和变量列表varsM，则urlC+urlM为路由方法最终的路由，varsC+varsM为路由方法最终的变量列表。
-当某个已知的路由来时，先使用gorilla/mux包Match出指定的控制器和方法，通过反射将控制器进行初始化、通过反射对路由方法的唯一参数进行初始化，然后使用反射进行调用。
-
-定义一个map来存放路由方法，由于路由方法第一个参数就是controller本身，所以可以很好的还原现场，实现调用.  
 
 ## 过滤器设计
-过滤器要支持两种URL匹配风格，一种就是在工程已经实现的，基于controller去匹配，另外一种就是通过tag来定义，如实现最通用的AntPath
