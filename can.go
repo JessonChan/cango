@@ -47,7 +47,7 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		rootMux:    newCanMux(),
+		rootMux:    newFastMux(),
 		methodMap:  map[string]reflect.Method{},
 		filterMap:  map[string][]Filter{},
 		ctrlMap:    map[string]ctrlEntry{},
@@ -85,12 +85,12 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := recover(); err != nil {
-			canError(err)
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
-	}()
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		canError(err)
+	// 		rw.WriteHeader(http.StatusInternalServerError)
+	// 	}
+	// }()
 
 	rt, statusCode := can.serve(rw, r)
 	if rt == nil {

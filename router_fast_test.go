@@ -31,7 +31,7 @@ func Test_parseString(t *testing.T) {
 }
 
 func Test_parseString_01(t *testing.T) {
-	mux := newMux()
+	mux := newFastMux()
 	router := mux.newRouter("snow")
 	router.path("/weather/{day}/././how-heavy/{heavy}/snowing/{color}.json/")
 	router.methods(http.MethodGet)

@@ -14,71 +14,76 @@
 package cango
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
 	"path/filepath"
 	"strings"
 )
 
-type fastMux struct {
-	routers   map[string]*fastRouter
-	routerArr []*fastRouter
-}
-
-type fastRouter struct {
-	name      string
-	pattern   string
-	seg       []word
-	methodMap map[string]bool
-}
+type (
+	fastMux struct {
+		routers            map[string]*fastRouter
+		routerArr          []*fastRouter
+		methodRouterArrMap map[string][]*fastPatten
+		pathNameMap        map[string]string
+	}
+	fastRouter struct {
+		innerMux *fastMux
+		name     string
+		pattens  []*fastPatten
+		paths    []string
+		methods  []string
+	}
+	fastPatten struct {
+		name      string
+		pattern   string
+		seg       []word
+		varIdx    []int
+		hasVar    bool
+		methodMap map[string]bool
+	}
+	fastMatcher struct {
+		err    error
+		router *fastRouter
+		vars   map[string][]string
+	}
+)
 
 type word struct {
 	key   string
 	isVar bool
 }
 
-func newMux() *fastMux {
-	return &fastMux{routers: map[string]*fastRouter{}}
+func newFastMux() *fastMux {
+	return &fastMux{routers: map[string]*fastRouter{}, methodRouterArrMap: map[string][]*fastPatten{}, pathNameMap: map[string]string{}}
 }
 
-func (fm *fastMux) newRouter(name string) *fastRouter {
-	fr := &fastRouter{name: name, seg: []word{}, methodMap: map[string]bool{}}
+func (fm *fastMux) NewRouter(name string) CanRouter {
+	fr := &fastRouter{innerMux: fm, name: name}
 	fm.routers[name] = fr
 	fm.routerArr = append(fm.routerArr, fr)
 	return fr
 }
 
-type routerPair struct {
-	router *fastRouter
-	vars   map[string][]string
-}
-
-func (fm *fastMux) doMatch(method, url string) {
-	var idx []int
-	// 查找对应方法
-	// todo  定义method 对应的 idx 数组
-	for i := 0; i < len(fm.routers); i++ {
-		if fm.routerArr[i].methodMap[method] {
-			idx = append(idx, i)
-		}
-	}
-	if len(idx) == 0 {
-		// 没有找到
-		return
-	}
-	//
+func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 	segs := parsePath(url)
-	// pattArr := [len(idx)][len(segs)]int{}
-	// pattArr := make([][]int, len(idx))
-	// for i := 0; i < len(idx); i++ {
-	// 	pattArr[i] = make([]int, len(segs))
-	// }
-	stopMap := map[int]bool{}
+	stopMap := map[*fastPatten]bool{}
+
 	for k, seg := range segs {
-		for _, id := range idx {
-			if stopMap[id] {
+		for _, router := range fm.methodRouterArrMap[method] {
+			if stopMap[router] {
+				continue
+			}
+			// len(segs) 和 len(pattSeg) 如果在不是变量情况下，肯定是一样长的
+			// 如果存在变量情况下呢？
+
+			if len(router.seg) != len(segs) {
+				stopMap[router] = true
 				continue
 			}
 
-			pattSeg := fm.routerArr[id].seg
+			pattSeg := router.seg
 			// 如果是变量，肯定符合
 			if pattSeg[k].isVar {
 				continue
@@ -88,76 +93,112 @@ func (fm *fastMux) doMatch(method, url string) {
 				continue
 			}
 			// 两种情况都不是，不符合
-			stopMap[id] = true
+			stopMap[router] = true
 		}
 	}
-}
-
-func (fm *fastMux) match(method string, url string) *routerPair {
-	pair := &routerPair{vars: map[string][]string{}}
-	frs := make([]*fastRouter, len(fm.routers))
-	seg := parsePath(url)
-	idx := 0
-	// method 要对应上
-	for _, fr := range fm.routers {
-		// todo fix: url 和 pattern 有可能包含不一样的seg
-		if fr.methodMap[method] && len(seg) == len(fr.seg) {
-			frs[idx] = fr
-			idx++
+	diff := len(fm.methodRouterArrMap[method]) - len(stopMap)
+	switch diff {
+	case 0:
+		// 没有找到
+		return nil
+	case 1:
+		// 找到了
+		var router *fastPatten
+		for _, v := range fm.methodRouterArrMap[method] {
+			if stopMap[v] {
+				continue
+			}
+			router = v
+			break
 		}
-	}
-	if idx == 0 {
+		if router == nil {
+			return nil
+		}
+		vars := map[string]string{}
+		for _, id := range router.varIdx {
+			vars[router.seg[id].key] = segs[id]
+		}
+		fm := &fastMatcher{
+			router: fm.routers[fm.pathNameMap[router.name]],
+			vars:   toValues(vars),
+		}
+		return fm
+	default:
+		// 找到多个
+		// todo 选最接近的
+		// todo 这里可以随机选一个
 		return nil
 	}
-	for i := 0; i < len(frs); i++ {
-		fr := frs[i]
-		find := false
-		for j := 0; j < len(seg); j++ {
-			if fr.seg[j].isVar {
-				pair.vars[fr.seg[j].key] = []string{seg[j]}
-				find = true
-				continue
-			}
-			if fr.seg[j].key == seg[j] {
-				find = true
-				continue
-			}
-			find = false
-		}
-		if find {
-			pair.router = fr
-			return pair
-		}
+}
+func (fm *fastMux) Match(req *http.Request) CanMatcher {
+	cm := fm.doMatch(req.Method, req.URL.Path)
+	if cm == nil {
+		return &fastMatcher{err: errors.New("not found")}
 	}
-	return nil
+	return cm
 }
 
-func (fr *fastRouter) path(pattern string) {
-	fr.pattern = pattern
-	fr.seg = pathToWord(parsePath(pattern))
+func (fr *fastRouter) Path(ps ...string) {
+	for k, path := range ps {
+		routerName := fmt.Sprintf("%v-%d", fr.name, k)
+		fr.innerMux.pathNameMap[routerName] = fr.name
+		patt := &fastPatten{name: routerName, pattern: path}
+		patt.seg, patt.varIdx, patt.hasVar = pathToWord(parsePath(path))
+		fr.pattens = append(fr.pattens, patt)
+	}
+	fr.paths = ps
 }
 
-func (fr *fastRouter) methods(ms ...string) {
+func (fr *fastRouter) Methods(ms ...string) {
 	for _, v := range ms {
-		fr.methodMap[v] = true
+		fr.innerMux.methodRouterArrMap[v] = append(fr.innerMux.methodRouterArrMap[v], fr.pattens...)
 	}
+	fr.methods = ms
+}
+func (fr *fastRouter) GetName() string {
+	return fr.name
+}
+func (fr *fastRouter) GetMethods() []string {
+	return fr.methods
+}
+func (fr *fastRouter) GetPath() string {
+	return strings.Join(fr.paths, ";")
 }
 
-func pathToWord(seg []string) []word {
+func (fm *fastMatcher) Error() error {
+	return fm.err
+}
+func (fm *fastMatcher) Route() CanRouter {
+	return fm.router
+}
+func (fm *fastMatcher) GetVars() map[string][]string {
+	return fm.vars
+}
+
+func pathToWord(seg []string) ([]word, []int, bool) {
 	words := make([]word, len(seg))
+	hasVar := false
+	idx := make([]int, len(seg))
+	j := 0
 	for i := 0; i < len(seg); i++ {
 		if []byte(seg[i])[0] == '{' && []byte(seg[i])[len(seg[i])-1] == '}' {
+			hasVar = true
 			words[i] = word{key: seg[i][1 : len(seg[i])-1], isVar: true}
+			idx[j] = i
+			j++
 			continue
 		}
 		words[i] = word{key: seg[i], isVar: false}
 	}
-	return words
+	return words, idx, hasVar
 }
 
 func parsePath(url string) []string {
 	// todo : clean & split in only one loop
 	url = filepath.Clean(url)
+	if url == "" || url == "/" {
+		return []string{"/"}
+	}
 	return strings.FieldsFunc(url, func(r rune) bool {
 		if r == '/' || r == '.' {
 			return true
