@@ -20,20 +20,18 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
 )
 
 type Can struct {
-	srv                 *http.Server
-	rootPath            string
-	tplRootPath         string
-	staticRootPath      string
-	staticRequestPrefix string
-	tplSuffix           []string
-	debugTpl            bool
+	srv            *http.Server
+	rootPath       string
+	tplRootPath    string
+	staticRootPath string
+	tplSuffix      []string
+	debugTpl       bool
 
 	rootMux    CanMux
 	methodMap  map[string]reflect.Method
@@ -58,7 +56,7 @@ func NewCan() *Can {
 }
 
 const (
-	tplDir    = "/views"
+	tplDir    = "/view"
 	staticDir = "/static"
 )
 
@@ -72,9 +70,8 @@ type Opts struct {
 }
 
 type StaticOpts struct {
-	RequestPrefix string
-	TplSuffix     []string
-	Debug         bool
+	TplSuffix []string
+	Debug     bool
 }
 
 func (addr Addr) String() string {
@@ -90,6 +87,7 @@ func InitLogger(rw io.Writer) {
 }
 
 var uriRegMap = map[URI]bool{}
+var filterRegMap = map[Filter]bool{}
 
 // todo with prefix???
 // todo with can app Name ???
@@ -98,14 +96,19 @@ func RegisterURI(uri URI) bool {
 	return true
 }
 
+func RegisterFilter(filter Filter) bool {
+	filterRegMap[filter] = true
+	return true
+}
+
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := recover(); err != nil {
-			// todo 打印所有的调用路径
-			canlog.CanError(err)
-			rw.WriteHeader(http.StatusInternalServerError)
-		}
-	}()
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		// todo 打印所有的调用路径
+	// 		canlog.CanError(err)
+	// 		rw.WriteHeader(http.StatusInternalServerError)
+	// 	}
+	// }()
 
 	rt, statusCode := can.serve(rw, r)
 	if rt == nil {
@@ -181,13 +184,14 @@ func (can *Can) Run(as ...interface{}) {
 	can.srv.Handler = can
 	can.srv.ErrorLog = canlog.GetLogger()
 	can.rootPath = getRootPath(as)
+	// todo 路径可以自由配置
 	can.tplRootPath = can.rootPath + tplDir
 	can.staticRootPath = can.rootPath + staticDir
 	staticOpts := getStaticOpts(as)
-	can.staticRequestPrefix = staticOpts.RequestPrefix
 	can.tplSuffix = staticOpts.TplSuffix
 	can.debugTpl = staticOpts.Debug
 	can.buildStaticRoute()
+	can.buildFilter()
 	can.buildRoute()
 
 	startChan := make(chan error, 1)
@@ -233,20 +237,13 @@ func getRootPath(as []interface{}) string {
 func getStaticOpts(as []interface{}) StaticOpts {
 	for _, v := range as {
 		if opts, ok := v.(StaticOpts); ok {
-			if opts.RequestPrefix == "" {
-				opts.RequestPrefix = "/static"
-			}
-			opts.RequestPrefix = filepath.Clean(opts.RequestPrefix)
-			if strings.HasPrefix(opts.RequestPrefix, "/") == false {
-				opts.RequestPrefix = "/" + opts.RequestPrefix
-			}
 			if len(opts.TplSuffix) == 0 {
 				opts.TplSuffix = []string{".tpl"}
 			}
 			return opts
 		}
 	}
-	return StaticOpts{RequestPrefix: "/static", TplSuffix: []string{".tpl"}}
+	return StaticOpts{TplSuffix: []string{".tpl"}}
 }
 
 type StatusCode int
