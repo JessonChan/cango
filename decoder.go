@@ -48,6 +48,7 @@ const (
 	strSliceFlag = 1
 )
 
+// todo clean the code
 func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
