@@ -84,6 +84,6 @@ func (m *mapMatch) Error() error {
 func (m *mapMatch) Route() CanRouter {
 	return m.innerRouter
 }
-func (m *mapMatch) GetVars() map[string][]string {
-	return map[string][]string{}
+func (m *mapMatch) GetVars() map[string]string {
+	return map[string]string{}
 }

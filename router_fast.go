@@ -49,7 +49,7 @@ type (
 	fastMatcher struct {
 		err    error
 		router *fastRouter
-		vars   map[string][]string
+		vars   map[string]string
 	}
 )
 
@@ -130,7 +130,7 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 		}
 		fm := &fastMatcher{
 			router: fm.routers[fm.pathNameMap[router.name]],
-			vars:   toValues(vars),
+			vars:   vars,
 		}
 		return fm
 	default:
@@ -186,7 +186,7 @@ func (fm *fastMatcher) Error() error {
 func (fm *fastMatcher) Route() CanRouter {
 	return fm.router
 }
-func (fm *fastMatcher) GetVars() map[string][]string {
+func (fm *fastMatcher) GetVars() map[string]string {
 	return fm.vars
 }
 

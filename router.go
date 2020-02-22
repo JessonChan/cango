@@ -43,7 +43,7 @@ type (
 	CanMatcher interface {
 		Error() error
 		Route() CanRouter
-		GetVars() map[string][]string
+		GetVars() map[string]string
 	}
 )
 

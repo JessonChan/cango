@@ -14,7 +14,6 @@
 package cango
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 )
@@ -52,7 +51,7 @@ const (
 func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
-		fmt.Printf("%#v,%v\n", f, rv.Type().Field(i))
+
 		if f.Kind() == reflect.Ptr {
 			f = reflect.Indirect(f)
 		}
@@ -118,11 +117,17 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 }
 
 func filedName(f reflect.StructField, tagName string) []string {
-	tag := f.Tag.Get(tagName)
-	if tag != "" {
-		return []string{tag}
+	if tagName != "" {
+		tag := f.Tag.Get(tagName)
+		if tag != "" {
+			return []string{tag}
+		}
 	}
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
+}
+
+func notTagName(f reflect.StructField) []string {
+	return filedName(f, "")
 }
 
 // lowercase

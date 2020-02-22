@@ -322,12 +322,13 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}(match.Route().GetMethods()) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
-			_ = decoder.Decode(mt.Addr().Interface(), req.Form)
+			decodeForm(req.Form, ct.Interface(), notTagName)
+			decodeForm(req.Form, mt.Addr().Interface(), notTagName)
 		}
 	}
 	if len(match.GetVars()) > 0 {
-		_ = decoder.Decode(ct.Interface(), match.GetVars())
-		_ = decoder.Decode(mt.Addr().Interface(), match.GetVars())
+		decode(match.GetVars(), ct.Interface(), notTagName)
+		decode(match.GetVars(), mt.Addr().Interface(), notTagName)
 	}
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
@@ -338,14 +339,4 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		return vs[0].Elem().Interface(), http.StatusOK
 	}
 	return vs[0].Interface(), http.StatusOK
-}
-
-// todo 实现decoder
-func toValues(m map[string]string) map[string][]string {
-	mm := make(map[string][]string, len(m))
-	for k, v := range m {
-		mm[k] = make([]string, 1)
-		mm[k][0] = v
-	}
-	return mm
 }
