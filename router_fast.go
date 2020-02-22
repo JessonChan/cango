@@ -205,7 +205,7 @@ func elementsToWords(elements []string) ([]word, []int, bool, bool) {
 		// todo 如果这个word就是{}呢？
 		// todo 也就是说地址是/a/{}/b/c 这种的话不会被当做变量
 		// todo 如果真实需要注册的地址就是/a/{name}/b/c 应该怎么办？
-		if strings.HasSuffix(elem, "{") && strings.HasSuffix(elem, "}") {
+		if strings.HasPrefix(elem, "{") && strings.HasSuffix(elem, "}") {
 			hasVar = true
 			words[i] = word{key: elem[1 : len(elem)-1], isVar: true}
 			idx[j] = i
