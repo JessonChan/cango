@@ -17,6 +17,8 @@ import (
 	"net/http"
 )
 
+// todo session 可以直接集成在请求参数中
+
 type sessionStore interface {
 	New(r *http.Request, name string)
 	Get(r *http.Request, name string) (*session, error)
