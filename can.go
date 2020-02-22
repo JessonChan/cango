@@ -318,13 +318,13 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}(match.Route().GetMethods()) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
-			decodeForm(req.Form, ct.Interface(), notTagName)
-			decodeForm(req.Form, mt.Addr().Interface(), notTagName)
+			decodeForm(req.Form, ct.Interface())
+			decodeForm(req.Form, mt.Addr().Interface())
 		}
 	}
 	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), ct.Interface(), notTagName)
-		decode(match.GetVars(), mt.Addr().Interface(), notTagName)
+		decode(match.GetVars(), ct.Interface())
+		decode(match.GetVars(), mt.Addr().Interface())
 	}
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})

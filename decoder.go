@@ -21,26 +21,26 @@ import (
 var timeType = reflect.TypeOf(time.Time{})
 
 // todo 缓存v struct结构
-func decode(holder map[string]string, v interface{}, filedName func(reflect.StructField) []string) {
+func decode(holder map[string]string, v interface{}, filedName ...func(reflect.StructField) []string) {
 	checkSet(stringFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
 	}, v, filedName)
 }
-func decodeForm(holder map[string][]string, v interface{}, filedName func(field reflect.StructField) []string) {
+func decodeForm(holder map[string][]string, v interface{}, filedName ...func(field reflect.StructField) []string) {
 	checkSet(strSliceFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
 	}, v, filedName)
 }
 
-func checkSet(flag int, holder func(string) (interface{}, bool), v interface{}, filedName func(field reflect.StructField) []string) {
+func checkSet(flag int, holder func(string) (interface{}, bool), v interface{}, filedName []func(field reflect.StructField) []string) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
 	rv = reflect.Indirect(rv)
-	setValue(flag, holder, rv, filedName)
+	setValue(flag, holder, rv, append(filedName, notTagName)[0])
 }
 
 const (
