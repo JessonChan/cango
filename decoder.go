@@ -90,26 +90,26 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			case stringFlag:
 				set(stringFlag)
 			case strSliceFlag:
-				if set(strSliceFlag) == false {
-					for _, key := range name {
-						if str, ok := holder(key); ok && len(str.([]string)) != 0 {
-							// 判断f 是何类型  基本类型的话 直接取str的第一个元素，结束
-							// 如果是 slice的话，MakeSlices
-							if f.Kind() == reflect.Slice {
-								sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
-								kind := sv.Index(0).Kind()
-								if sv.Index(0).Type() == timeType {
-									kind = timeTypeKind
-								}
-								if converter, ok := converters[kind]; ok {
-									for idx, vs := range str.([]string) {
-										sv.Index(idx).Set(converter(vs))
-									}
-								}
-								f.Set(sv)
-							}
-							break
+				if set(strSliceFlag) {
+					continue
+				}
+				if f.Kind() != reflect.Slice {
+					continue
+				}
+				for _, key := range name {
+					if str, ok := holder(key); ok && len(str.([]string)) != 0 {
+						sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
+						kind := sv.Index(0).Kind()
+						if sv.Index(0).Type() == timeType {
+							kind = timeTypeKind
 						}
+						if converter, ok := converters[kind]; ok {
+							for idx, vs := range str.([]string) {
+								sv.Index(idx).Set(converter(vs))
+							}
+						}
+						f.Set(sv)
+						break
 					}
 				}
 			}

@@ -30,8 +30,8 @@ type Person struct {
 type Persons struct {
 	Name     []string
 	Age      []int
-	Height   []float32
-	Birthday []time.Time `cookie:"birth"`
+	Height   float32
+	Birthday time.Time `cookie:"birth"`
 	School
 }
 
