@@ -13,4 +13,7 @@
 // limitations under the License.
 package cango
 
-const uriTagName = "value"
+const (
+	uriTagName    string = "value"
+	cookieTagName string = "cookie"
+)
