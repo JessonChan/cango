@@ -188,7 +188,7 @@ func (can *Can) Run(as ...interface{}) {
 	can.staticRequestPrefix = staticOpts.RequestPrefix
 	can.tplSuffix = staticOpts.TplSuffix
 	can.debugTpl = staticOpts.Debug
-	can.buildStaticRoute()
+	// can.buildStaticRoute()
 	can.buildRoute()
 
 	startChan := make(chan error, 1)

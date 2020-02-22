@@ -36,13 +36,15 @@ type (
 		methods  []string
 	}
 	fastPatten struct {
-		name       string
-		pattern    string
-		words      []word
-		varIdx     []int
-		hasVar     bool
-		methodMap  map[string]bool
-		isWildcard bool
+		name          string
+		pattern       string
+		words         []word
+		varIdx        []int
+		hasVar        bool
+		methodMap     map[string]bool
+		isWildcard    bool
+		wildcardLeft  string
+		wildcardRight string
 	}
 	fastMatcher struct {
 		err    error
@@ -78,24 +80,13 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 				continue
 			}
 			// todo wildcard逻辑要加进来
+			// todo /login/*.html 如果为 /log/*html则不行，通配符必须在两个分隔符之前
+			// todo 为了简化，先约定只允许有一个通配符，并且通配符pattern不允许再有路径变量
+			// todo 通配符逻辑统一
 			if pattern.isWildcard {
-				if len(pattern.words) >= k {
-					if pattern.words[k].isWildcard {
-						continue
-					}
-					// 如果是变量，肯定符合
-					if pattern.words[k].isVar {
-						continue
-					}
-					// 如果不是变量，判断是不是相等
-					if pattern.words[k].key == elem {
-						continue
-					}
-					// 两种情况都不是，不符合
-					stopMap[pattern] = true
+				// todo 效率提升
+				if strings.HasPrefix(url, pattern.wildcardLeft) && strings.HasSuffix(url, pattern.wildcardRight) {
 					continue
-				} else {
-
 				}
 			}
 			if len(pattern.words) != len(elements) {
@@ -163,6 +154,11 @@ func (fr *fastRouter) Path(ps ...string) {
 		fr.innerMux.pathNameMap[routerName] = fr.name
 		patten := &fastPatten{name: routerName, pattern: path}
 		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
+		if patten.isWildcard {
+			ss := strings.Split(path, "*")
+			patten.wildcardLeft = ss[0]
+			patten.wildcardRight = ss[1]
+		}
 		fr.pattens = append(fr.pattens, patten)
 	}
 	fr.paths = ps
