@@ -298,6 +298,54 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
 	}
+	if m.Type.NumIn() == 1 {
+
+		if m.Type.In(0) == uriType {
+			vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
+			if len(vs) == 0 {
+				return nil, http.StatusMethodNotAllowed
+			}
+			if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
+				return vs[0].Elem().Interface(), http.StatusOK
+			}
+			return vs[0].Interface(), http.StatusOK
+		}
+		if m.Type.In(0).Implements(uriType) {
+			mt := reflect.New(m.Type.In(0)).Elem()
+			uriFiled := mt.FieldByName(uriName)
+			if uriFiled.IsValid() {
+				uriFiled.Set(reflect.ValueOf(newContext(rw, req)))
+			}
+			if func(methods []string) bool {
+				for _, m := range methods {
+					switch m {
+					case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
+						return true
+					default:
+						return false
+					}
+				}
+				return false
+			}(match.Route().GetMethods()) {
+				_ = req.ParseForm()
+				if len(req.Form) > 0 {
+					decodeForm(req.Form, mt.Addr().Interface())
+				}
+			}
+			if len(match.GetVars()) > 0 {
+				decode(match.GetVars(), mt.Addr().Interface())
+			}
+			vs := m.Func.Call([]reflect.Value{mt})
+			if len(vs) == 0 {
+				return nil, http.StatusMethodNotAllowed
+			}
+			if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
+				return vs[0].Elem().Interface(), http.StatusOK
+			}
+			return vs[0].Interface(), http.StatusOK
+		}
+	}
+
 	if m.Type.NumIn() == 1 && m.Type.In(0) == uriType {
 		vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
 		if len(vs) == 0 {
