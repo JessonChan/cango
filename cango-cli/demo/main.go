@@ -1,16 +1,15 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	// "github.com/JessonChan/canlog"
 
+	"github.com/JessonChan/canlog"
+
 	"github.com/JessonChan/cango"
 )
-
-// CanCtrl AND  VisitFilter
 
 type CanCtrl struct {
 	cango.URI `value:"/"`
@@ -57,16 +56,14 @@ type VisitFilter struct {
 var _ = cango.RegisterFilter(&VisitFilter{})
 
 func (v *VisitFilter) PreHandle(req *http.Request) interface{} {
-	// canlog.CanDebug(req.Method, req.URL.Path)
-	log.Println(req.Method, req.URL.Path)
+	canlog.CanDebug(req.Method, req.URL.Path)
 	return true
 }
 
 func main() {
-	// better use canlog
 	// canlog.SetWriter(canlog.NewFileWriter("/tmp/cango-app.log"), "App")
-	// cango.InitLogger(canlog.GetLogger().Writer())
-	cango.InitLogger(os.Stdout)
+	canlog.SetWriter(os.Stdout, "App")
+	cango.InitLogger(canlog.GetLogger().Writer())
 	cango.
 		NewCan().
 		RegTplFunc("buttonValue", func() string {
