@@ -71,11 +71,20 @@ func (can *Can) route(prefix string, uri URI) {
 	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
-func (can *Can) RouteFunc(fn interface{}) *Can {
+func (can *Can) RouteFunc(fns ...interface{}) *Can {
+	return can.RouteFuncWithPrefix(emptyPrefix, fns...)
+}
+func (can *Can) RouteFuncWithPrefix(prefix string, fns ...interface{}) *Can {
+	for _, fn := range fns {
+		can.routeFunc(prefix, fn)
+	}
+	return can
+}
+func (can *Can) routeFunc(prefix string, fn interface{}) {
 	fv := reflect.ValueOf(fn)
 	if fv.Kind() != reflect.Func {
 		canlog.CanInfo("can't router func with ", fv.Kind())
-		return can
+		return
 	}
 	funcMethod := reflect.Method{
 		Name:    runtime.FuncForPC(fv.Pointer()).Name(),
@@ -84,8 +93,7 @@ func (can *Can) RouteFunc(fn interface{}) *Can {
 		Func:    fv,
 		Index:   0,
 	}
-	can.routeMethod("", funcMethod, "RouteFunc."+funcMethod.Name, nil, nil)
-	return can
+	can.routeMethod(prefix, funcMethod, "RouteFunc."+funcMethod.Name, nil, nil)
 }
 
 type ctrlEntry struct {
