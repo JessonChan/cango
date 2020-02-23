@@ -88,11 +88,11 @@ func (m *StatFilter) PreHandle(r *http.Request) interface{} {
 	return true
 }
 
-type P struct {
+func Ping(struct {
 	cango.URI `value:"/ping"`
-}
-
-func Ping(uri cango.URI) interface{} {
+	cango.PostMethod
+	cango.GetMethod
+}) interface{} {
 	return map[string]string{
 		"pong": "ok",
 	}
@@ -104,7 +104,7 @@ func main() {
 	can.Filter(&LogFilter{}, &SnowController{}).
 		Filter(&StatFilter{}).
 		Route(&SnowController{}).
-		RouteFunc("/ping", "GET", Ping).
+		RouteFunc(Ping).
 		RouteWithPrefix("/api/v2", &SnowController{}).
 		Run(cango.Addr{Port: 8081})
 }

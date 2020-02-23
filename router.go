@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -70,16 +71,20 @@ func (can *Can) route(prefix string, uri URI) {
 	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
-func (can *Can) RouteFunc(path string, method string, fn func(uri URI) interface{}) *Can {
+func (can *Can) RouteFunc(fn interface{}) *Can {
 	fv := reflect.ValueOf(fn)
+	if fv.Kind() != reflect.Func {
+		canlog.CanInfo("can't router func with ", fv.Kind())
+		return can
+	}
 	funcMethod := reflect.Method{
-		Name:    fv.Type().Name(),
+		Name:    runtime.FuncForPC(fv.Pointer()).Name(),
 		PkgPath: "",
 		Type:    fv.Type(),
 		Func:    fv,
 		Index:   0,
 	}
-	can.funcName(funcMethod, "RouterFunc", nil, path, nil)
+	can.routeMethod("", funcMethod, "RouteFunc."+funcMethod.Name, nil, nil)
 	return can
 }
 
@@ -144,18 +149,18 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 		}
 		filters := can.filterMap[rp.String()]
 		routerName := ctlName + "." + m.Name
-		can.funcName(m, routerName, strUrls, prefix, filters)
+		can.routeMethod(prefix, m, routerName, strUrls, filters)
 	}
 }
 
-func (can *Can) funcName(m reflect.Method, routerName string, strUrls []string, prefix string, filters []Filter) {
+func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string, filters []Filter) {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
 			if in.Kind() == reflect.Interface && in == uriType {
 				route := can.rootMux.NewRouter(routerName)
 				route.Path(prefix)
-				route.Methods("GET")
+				route.Methods(http.MethodGet)
 				can.methodMap[routerName] = m
 				can.filterMap[routerName] = filters
 				canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
