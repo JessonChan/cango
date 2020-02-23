@@ -93,13 +93,14 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 		Func:    fv,
 		Index:   0,
 	}
-	can.routeMethod(prefix, funcMethod, "RouteFunc."+funcMethod.Name, nil, nil)
+	can.ctrlMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, vl: fv, fn: funcMethod, tim: time.Now().Unix()}
 }
 
 type ctrlEntry struct {
 	prefix string
 	vl     reflect.Value
-	ctrl   URI
+	ctrl   interface{}
+	fn     reflect.Method
 	tim    int64
 }
 
@@ -147,17 +148,22 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	prefix := ce.prefix
 	rp := ce.vl
 	uri := ce.ctrl
-
-	strUrls, ctlName := can.urlStr(reflect.Indirect(rp).Type())
-	tvp := reflect.TypeOf(uri)
-	for i := 0; i < tvp.NumMethod(); i++ {
-		m := tvp.Method(i)
-		if m.PkgPath != "" {
-			continue
+	fn := ce.fn
+	switch rp.Kind() {
+	case reflect.Ptr:
+		strUrls, ctlName := can.urlStr(reflect.Indirect(rp).Type())
+		tvp := reflect.TypeOf(uri)
+		for i := 0; i < tvp.NumMethod(); i++ {
+			m := tvp.Method(i)
+			if m.PkgPath != "" {
+				continue
+			}
+			filters := can.filterMap[rp.String()]
+			routerName := ctlName + "." + m.Name
+			can.routeMethod(prefix, m, routerName, strUrls, filters)
 		}
-		filters := can.filterMap[rp.String()]
-		routerName := ctlName + "." + m.Name
-		can.routeMethod(prefix, m, routerName, strUrls, filters)
+	case reflect.Func:
+		can.routeMethod(prefix, fn, "RouteFunc."+fn.Name, nil, nil)
 	}
 }
 
