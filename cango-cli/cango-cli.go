@@ -67,8 +67,9 @@ func main() {
 			return nil
 		})
 		sort.Strings(fileNames)
+		selfName := "./cango-cli.go"
 		self := func() string {
-			self, err := ioutil.ReadFile("./cango-cli.go")
+			self, err := ioutil.ReadFile(selfName)
 			if err != nil {
 				log.Println(err)
 				return ""
@@ -89,7 +90,7 @@ func main() {
 			}
 			return builder[:len(builder)]
 		}() + repeat(8) + self[selfSuffix:]
-		err := ioutil.WriteFile("./cango-cli_bak.go", []byte(content), os.ModePerm)
+		err := ioutil.WriteFile(selfName, []byte(content), os.ModePerm)
 		if err != nil {
 			log.Println(err)
 		}
