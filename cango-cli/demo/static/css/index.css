@@ -1,3 +1,10 @@
-. rebeccapurple{
+.darkblue {
+    color: darkblue;
+}
+
+a:link {
+}
+
+a:hover {
     color: rebeccapurple;
 }
