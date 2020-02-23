@@ -37,7 +37,7 @@ func main() {
 	}
 	switch strings.ToLower(os.Args[1]) {
 	case "create":
-		dirNames := []string{"controller", "filter", "manager", "model", "static/css", "static/js", "util", "view"}
+		dirNames := []string{"controller", "filter", "manager", "model", "static/css", "static/js", "util", "views"}
 		for _, dir := range dirNames {
 			_ = os.MkdirAll(dir, os.ModePerm)
 		}

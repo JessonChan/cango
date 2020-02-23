@@ -56,7 +56,7 @@ func NewCan() *Can {
 }
 
 const (
-	tplDir    = "/view"
+	tplDir    = "/views"
 	staticDir = "/static"
 )
 
