@@ -55,23 +55,27 @@ func NewCan() *Can {
 	}
 }
 
-const (
-	tplDir    = "/view"
-	staticDir = "/static"
-)
-
 type Addr struct {
 	Host string
 	Port int
 }
 
 type Opts struct {
-	RootPath string
+	RootPath  string
+	TplDir    string
+	StaticDir string
+	TplSuffix []string
+	DebugTpl  bool
 }
 
-type StaticOpts struct {
-	TplSuffix []string
-	Debug     bool
+var defaultTplSuffix = []string{".tpl", ".html"}
+
+var defaultOpts = Opts{
+	RootPath:  getRootPath(),
+	TplDir:    "/view",
+	StaticDir: "/static",
+	TplSuffix: defaultTplSuffix,
+	DebugTpl:  false,
 }
 
 func (addr Addr) String() string {
@@ -183,13 +187,13 @@ func (can *Can) Run(as ...interface{}) {
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
 	can.srv.ErrorLog = canlog.GetLogger()
-	can.rootPath = getRootPath(as)
+	opts := getOpts(as)
+	can.rootPath = opts.RootPath
 	// todo 路径可以自由配置
-	can.tplRootPath = can.rootPath + tplDir
-	can.staticRootPath = can.rootPath + staticDir
-	staticOpts := getStaticOpts(as)
-	can.tplSuffix = staticOpts.TplSuffix
-	can.debugTpl = staticOpts.Debug
+	can.tplRootPath = can.rootPath + opts.TplDir
+	can.staticRootPath = can.rootPath + opts.StaticDir
+	can.tplSuffix = opts.TplSuffix
+	can.debugTpl = opts.DebugTpl
 	can.buildStaticRoute()
 	can.buildFilter()
 	can.buildRoute()
@@ -217,12 +221,37 @@ func getAddr(as []interface{}) Addr {
 	return defaultAddr
 }
 
-func getRootPath(as []interface{}) string {
+func getOpts(as []interface{}) Opts {
+	newOpts := copyOpts()
 	for _, v := range as {
 		if opts, ok := v.(Opts); ok {
-			return opts.RootPath
+			if opts.RootPath != "" {
+				newOpts.RootPath = opts.RootPath
+			}
+			if opts.TplDir != "" {
+				newOpts.TplDir = opts.TplDir
+			}
+			if opts.StaticDir != "" {
+				newOpts.StaticDir = opts.StaticDir
+			}
+			if len(opts.TplSuffix) != 0 {
+				newOpts.TplSuffix = opts.TplSuffix
+			}
+			newOpts.DebugTpl = opts.DebugTpl
 		}
 	}
+	return defaultOpts
+}
+func copyOpts() Opts {
+	return Opts{
+		RootPath:  defaultOpts.RootPath,
+		TplDir:    defaultOpts.TplDir,
+		StaticDir: defaultOpts.StaticDir,
+		TplSuffix: append(defaultTplSuffix),
+		DebugTpl:  false,
+	}
+}
+func getRootPath() string {
 	dir, err := os.Getwd()
 	if err == nil {
 		return dir
@@ -232,18 +261,6 @@ func getRootPath(as []interface{}) string {
 		return os.Args[0]
 	}
 	return filepath.Dir(abs)
-}
-
-func getStaticOpts(as []interface{}) StaticOpts {
-	for _, v := range as {
-		if opts, ok := v.(StaticOpts); ok {
-			if len(opts.TplSuffix) == 0 {
-				opts.TplSuffix = []string{".tpl"}
-			}
-			return opts
-		}
-	}
-	return StaticOpts{TplSuffix: []string{".tpl"}}
 }
 
 type StatusCode int

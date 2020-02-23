@@ -72,5 +72,5 @@ func main() {
 		RegTplFunc("buttonValue", func() string {
 			return "click me!"
 		}).
-		Run(cango.Addr{Port: 8008}, cango.StaticOpts{TplSuffix: []string{".html"}, Debug: true})
+		Run(cango.Addr{Port: 8008}, cango.Opts{TplSuffix: []string{".html"}, DebugTpl: true})
 }
