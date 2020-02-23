@@ -106,13 +106,13 @@ func RegisterFilter(filter Filter) bool {
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		// todo 打印所有的调用路径
-	// 		canlog.CanError(err)
-	// 		rw.WriteHeader(http.StatusInternalServerError)
-	// 	}
-	// }()
+	defer func() {
+		if err := recover(); err != nil {
+			// todo 打印所有的调用路径
+			canlog.CanError(err)
+			rw.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
 
 	rt, statusCode := can.serve(rw, r)
 	if rt == nil {
