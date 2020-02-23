@@ -70,6 +70,19 @@ func (can *Can) route(prefix string, uri URI) {
 	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
+func (can *Can) RouteFunc(path string, method string, fn func(uri URI) interface{}) *Can {
+	fv := reflect.ValueOf(fn)
+	funcMethod := reflect.Method{
+		Name:    fv.Type().Name(),
+		PkgPath: "",
+		Type:    fv.Type(),
+		Func:    fv,
+		Index:   0,
+	}
+	can.funcName(funcMethod, "RouterFunc", nil, path, nil)
+	return can
+}
+
 type ctrlEntry struct {
 	prefix string
 	vl     reflect.Value
@@ -129,43 +142,60 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 		if m.PkgPath != "" {
 			continue
 		}
-		for i := 0; i < m.Type.NumIn(); i++ {
-			in := m.Type.In(i)
-			if in.Kind() != reflect.Struct {
-				continue
+		filters := can.filterMap[rp.String()]
+		routerName := ctlName + "." + m.Name
+		can.funcName(m, routerName, strUrls, prefix, filters)
+	}
+}
+
+func (can *Can) funcName(m reflect.Method, routerName string, strUrls []string, prefix string, filters []Filter) {
+	for i := 0; i < m.Type.NumIn(); i++ {
+		in := m.Type.In(i)
+		if in.Kind() != reflect.Struct {
+			if in.Kind() == reflect.Interface && in == uriType {
+				route := can.rootMux.NewRouter(routerName)
+				route.Path(prefix)
+				route.Methods("GET")
+				can.methodMap[routerName] = m
+				can.filterMap[routerName] = filters
+				canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 			}
-			routerName := ctlName + "." + m.Name
-			route := can.rootMux.NewRouter(routerName)
-			var httpMethods []string
-			for j := 0; j < in.NumField(); j++ {
-				f := in.Field(j)
-				if f.PkgPath != "" {
-					canlog.CanError("could not use unexpected filed in param:" + f.Name)
-				}
-				switch f.Type {
-				case uriType:
-					var paths []string
-					for _, path := range tagUriParse(f.Tag) {
-						for _, strUrl := range strUrls {
-							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
-						}
-					}
-					route.Path(paths...)
-					can.methodMap[routerName] = m
-					can.filterMap[routerName] = can.filterMap[rp.String()]
-				}
-				m, ok := httpMethodMap[f.Type]
-				if ok {
-					httpMethods = append(httpMethods, m)
-				}
-			}
-			// default method is get
-			if len(httpMethods) == 0 {
-				httpMethods = append(httpMethods, http.MethodGet)
-			}
-			route.Methods(httpMethods...)
-			canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
+			continue
 		}
+		route := can.rootMux.NewRouter(routerName)
+		var httpMethods []string
+		for j := 0; j < in.NumField(); j++ {
+			f := in.Field(j)
+			if f.PkgPath != "" {
+				canlog.CanError("could not use unexpected filed in param:" + f.Name)
+			}
+			switch f.Type {
+			case uriType:
+				var paths []string
+				for _, path := range tagUriParse(f.Tag) {
+					if len(strUrls) == 0 {
+						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, path}, "/")))
+						continue
+					}
+					for _, strUrl := range strUrls {
+						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
+					}
+				}
+				route.Path(paths...)
+				can.methodMap[routerName] = m
+				can.filterMap[routerName] = filters
+			}
+			m, ok := httpMethodMap[f.Type]
+			if ok {
+				httpMethods = append(httpMethods, m)
+			}
+		}
+		// default method is get
+		if len(httpMethods) == 0 {
+			httpMethods = append(httpMethods, http.MethodGet)
+		}
+		route.Methods(httpMethods...)
+		canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 	}
 }
 

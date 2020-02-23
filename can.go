@@ -298,6 +298,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
 	}
+	if m.Type.NumIn() == 1 && m.Type.In(0) == uriType {
+		vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
+		if len(vs) == 0 {
+			return nil, http.StatusMethodNotAllowed
+		}
+		if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
+			return vs[0].Elem().Interface(), http.StatusOK
+		}
+		return vs[0].Interface(), http.StatusOK
+	}
 	if m.Type.NumIn() != 2 {
 		// error,method only have one arg
 		return nil, http.StatusMethodNotAllowed
