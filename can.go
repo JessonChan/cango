@@ -156,7 +156,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			path = "/" + path
 		}
 		// todo 更好的实现 filepath.Clean的性能问题
-		paths := [3]string{can.rootPath + path, path, can.rootPath + staticDir + path}
+		paths := [3]string{can.rootPath + path, path, can.staticRootPath + path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
 			if err != nil {
@@ -190,8 +190,8 @@ func (can *Can) Run(as ...interface{}) {
 	opts := getOpts(as)
 	can.rootPath = opts.RootPath
 	// todo 路径可以自由配置
-	can.tplRootPath = can.rootPath + opts.TplDir
-	can.staticRootPath = can.rootPath + opts.StaticDir
+	can.tplRootPath = filepath.Clean(can.rootPath + "/" + opts.TplDir)
+	can.staticRootPath = filepath.Clean(can.rootPath + "/" + opts.StaticDir)
 	can.tplSuffix = opts.TplSuffix
 	can.debugTpl = opts.DebugTpl
 	can.buildStaticRoute()
