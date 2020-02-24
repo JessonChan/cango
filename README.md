@@ -4,17 +4,25 @@
 **cango** **web 开发框架** 区别于其它框架的重要的功能就是基于tag的URI自发现机制，不需要显示的定义路由，让开发人员专注于代码而不需要过分关注路由定义。
 ## 安装
 
-cango需要Go1.12及以上。  
+cango需要Go1.12及以上，配合go mod使用本教程。
 安装cango
 
 ```bash
 go get -u github.com/JessonChan/cango
 ```
+为了更好的了解cango，建议安装`cango-cli`工具
+```bash
+go install github.com/JessonChan/cango-cli
+```
 
 ## Hello, World!
 
-开箱，看看cango最简单的样子。  
-创建一个文件，如app.go，写入下面的代码。
+开箱，看看cango最简单的样子。在终端进入自己熟悉的目录（比如/tmp）执行以下命令：
+```bash
+cango-cli start
+cd start
+```  
+本命令完成的工作是：创建一个文件，如route.go，写入下面的代码。
 ```go
 package main
 
@@ -33,10 +41,10 @@ func main() {
 ```
 
 ```bash
-go run app.go
+go run route.go
 ```
 打开 `http://127.0.0.1:8080`,就会看到`Hello,World!` ，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容 
-上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，代码如下
+上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
 ```go
 package main
 
@@ -69,10 +77,9 @@ func main() {
 ```
 
 ```bash
-go run app.go
+go run route_struct.go
 ```
 打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,Cango!`；
-上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，代码如下
 
 ## 路由简介 
 
@@ -109,7 +116,11 @@ cango.Content
 如果返回值不是以上类型，当前版本的处理逻辑是返回JSON。   
 
 下面的代码为我们展示本小节的所有内容。
-创建app.go和view和static两个文件夹，在view上创建index.html模板，在static创建index.css文件。形式如下：
+在终端执行
+```bash
+cango-cli app
+```
+本命令完成以下工作：创建app.go和view和static两个文件夹，在view上创建index.html模板，在static创建index.css文件。形式如下：
 ```bash
 .
 ├── app.go
@@ -327,3 +338,7 @@ type VisitFilter struct {
 can.Filter(f cango.Filter, uris ...cango.URI)
 cango.RegisterFilter(cango.Filter)
 ```
+
+## 更多例子
+为了更好的理解和使用cango，`cango-cli`中还包含`can`、`short_url`和`demo`三个示例，请自己执行查看。
+另外，可以查看can_blog[http://www.github.com/JessonChan/can_blog]这个简单的博客项目。
