@@ -56,23 +56,22 @@ func main() {
 	case "demo":
 		for k, v := range globalFiles {
 			path := "./" + k
-			dir := path[:func() int {
-				idx := strings.LastIndex(path, "/")
-				if idx == -1 {
-					return len(path)
-				}
-				return idx
-			}()]
+			dir := filepath.Dir(path)
+			base := filepath.Base(path)
+			isDir := !strings.Contains(base, ".")
+			if isDir {
+				dir = path
+			}
 			fileInfo, _ := os.Stat(dir)
 			if fileInfo == nil {
 				err := os.MkdirAll(dir, os.ModePerm)
 				if err != nil {
 					log.Println(err)
 				} else {
-					log.Println("create dir", dir)
+					log.Println("create  dir", dir)
 				}
 			}
-			if strings.Contains(filepath.Base(path), ".") == false {
+			if isDir {
 				continue
 			}
 			newFile, err := os.Create(path)
