@@ -19,10 +19,9 @@ import (
 	"time"
 )
 
-type Converter func(string) reflect.Value
+type Caster func(string) reflect.Value
 
 var (
-	invalidValue = reflect.Value{}
 	boolType     = reflect.Bool
 	float32Type  = reflect.Float32
 	float64Type  = reflect.Float64
@@ -40,119 +39,143 @@ var (
 	timeTypeKind = reflect.Kind(1e5)
 )
 
-var converters = map[reflect.Kind]Converter{
-	boolType:     convertBool,
-	float32Type:  convertFloat32,
-	float64Type:  convertFloat64,
-	intType:      convertInt,
-	int8Type:     convertInt8,
-	int16Type:    convertInt16,
-	int32Type:    convertInt32,
-	int64Type:    convertInt64,
-	stringType:   convertString,
-	uintType:     convertUint,
-	uint8Type:    convertUint8,
-	uint16Type:   convertUint16,
-	uint32Type:   convertUint32,
-	uint64Type:   convertUint64,
-	timeTypeKind: convertTime,
+var casterMap = map[reflect.Kind]Caster{
+	boolType:     castBool,
+	float32Type:  castFloat32,
+	float64Type:  castFloat64,
+	intType:      castInt,
+	int8Type:     castInt8,
+	int16Type:    castInt16,
+	int32Type:    castInt32,
+	int64Type:    castInt64,
+	uintType:     castUint,
+	uint8Type:    castUint8,
+	uint16Type:   castUint16,
+	uint32Type:   castUint32,
+	uint64Type:   castUint64,
+	stringType:   castString,
+	timeTypeKind: castTime,
 }
 
-func convertBool(value string) reflect.Value {
+func castBool(value string) reflect.Value {
 	if value == "on" {
 		return reflect.ValueOf(true)
 	} else if v, err := strconv.ParseBool(value); err == nil {
 		return reflect.ValueOf(v)
 	}
-	return invalidValue
+	return reflect.ValueOf(false)
 }
 
-func convertFloat32(value string) reflect.Value {
+var f32 float32
+
+func castFloat32(value string) reflect.Value {
 	if v, err := strconv.ParseFloat(value, 32); err == nil {
 		return reflect.ValueOf(float32(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(f32)
 }
 
-func convertFloat64(value string) reflect.Value {
+var f64 float64
+
+func castFloat64(value string) reflect.Value {
 	if v, err := strconv.ParseFloat(value, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
-	return invalidValue
+	return reflect.ValueOf(f64)
 }
 
-func convertInt(value string) reflect.Value {
+var i int
+
+func castInt(value string) reflect.Value {
 	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
 		return reflect.ValueOf(int(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(i)
 }
 
-func convertInt8(value string) reflect.Value {
+var i8 int8
+
+func castInt8(value string) reflect.Value {
 	if v, err := strconv.ParseInt(value, 10, 8); err == nil {
 		return reflect.ValueOf(int8(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(i8)
 }
 
-func convertInt16(value string) reflect.Value {
+var i16 int16
+
+func castInt16(value string) reflect.Value {
 	if v, err := strconv.ParseInt(value, 10, 16); err == nil {
 		return reflect.ValueOf(int16(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(i16)
 }
 
-func convertInt32(value string) reflect.Value {
+var i32 int32
+
+func castInt32(value string) reflect.Value {
 	if v, err := strconv.ParseInt(value, 10, 32); err == nil {
 		return reflect.ValueOf(int32(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(i32)
 }
 
-func convertInt64(value string) reflect.Value {
+var i64 int64
+
+func castInt64(value string) reflect.Value {
 	if v, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
-	return invalidValue
+	return reflect.ValueOf(i64)
 }
 
-func convertString(value string) reflect.Value {
+func castString(value string) reflect.Value {
 	return reflect.ValueOf(value)
 }
 
-func convertUint(value string) reflect.Value {
+var u uint
+
+func castUint(value string) reflect.Value {
 	if v, err := strconv.ParseUint(value, 10, 0); err == nil {
 		return reflect.ValueOf(uint(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(u)
 }
 
-func convertUint8(value string) reflect.Value {
+var u8 uint8
+
+func castUint8(value string) reflect.Value {
 	if v, err := strconv.ParseUint(value, 10, 8); err == nil {
 		return reflect.ValueOf(uint8(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(u8)
 }
 
-func convertUint16(value string) reflect.Value {
+var u16 uint16
+
+func castUint16(value string) reflect.Value {
 	if v, err := strconv.ParseUint(value, 10, 16); err == nil {
 		return reflect.ValueOf(uint16(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(u16)
 }
 
-func convertUint32(value string) reflect.Value {
+var u32 uint32
+
+func castUint32(value string) reflect.Value {
 	if v, err := strconv.ParseUint(value, 10, 32); err == nil {
 		return reflect.ValueOf(uint32(v))
 	}
-	return invalidValue
+	return reflect.ValueOf(u32)
 }
 
-func convertUint64(value string) reflect.Value {
+var u64 uint64
+
+func castUint64(value string) reflect.Value {
 	if v, err := strconv.ParseUint(value, 10, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
-	return invalidValue
+	return reflect.ValueOf(u64)
 }
 
 const (
@@ -160,7 +183,7 @@ const (
 	longSimpleTimeFormat  = "2006-01-02 15:04:05"
 )
 
-func convertTime(value string) reflect.Value {
+func castTime(value string) reflect.Value {
 	var layout string
 	if len(value) == 10 {
 		layout = shortSimpleTimeFormat
@@ -169,8 +192,5 @@ func convertTime(value string) reflect.Value {
 		layout = longSimpleTimeFormat
 	}
 	timeTime, _ := time.ParseInLocation(layout, value, time.Local)
-	if timeTime.IsZero() {
-		return invalidValue
-	}
 	return reflect.ValueOf(timeTime)
 }

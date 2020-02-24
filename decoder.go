@@ -69,15 +69,15 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			if kind == reflect.Slice {
 				return false
 			}
-			// todo converter 返回值可能为非法，需要进行检测或者通过返回可用值
-			if converter, ok := converters[kind]; ok {
+			// todo caster 返回值可能为非法，需要进行检测或者通过返回可用值
+			if caster, ok := casterMap[kind]; ok {
 				for _, key := range name {
 					if str, ok := holder(key); ok {
 						switch flag {
 						case stringFlag:
-							f.Set(converter(str.(string)))
+							f.Set(caster(str.(string)))
 						case strSliceFlag:
-							f.Set(converter(str.([]string)[0]))
+							f.Set(caster(str.([]string)[0]))
 						}
 						return true
 					}
@@ -104,7 +104,7 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 						if sv.Index(0).Type() == timeType {
 							kind = timeTypeKind
 						}
-						if converter, ok := converters[kind]; ok {
+						if converter, ok := casterMap[kind]; ok {
 							for idx, vs := range str.([]string) {
 								sv.Index(idx).Set(converter(vs))
 							}
