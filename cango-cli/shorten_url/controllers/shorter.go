@@ -15,17 +15,20 @@ package controllers
 
 import (
 	"github.com/JessonChan/cango"
-	"github.com/JessonChan/cango/examples/shorten_url/models"
+	"github.com/JessonChan/cango/cango-cli/shorten_url/models"
 )
 
-type ListCtrl struct {
-	cango.URI `value:"/;/list"`
+type ShorterController struct {
+	cango.URI
 }
 
-var _ = cango.RegisterURI(&ListCtrl{})
-
-func (a *ListCtrl) Get(params struct {
-	cango.URI
+func (s *ShorterController) Redirect(params struct {
+	cango.URI `value:"/t/{Id}"`
+	Id        string
 }) interface{} {
-	return cango.ModelView{Tpl: "/views/list.tpl", Model: map[string]interface{}{"Slice": models.GetAll()}}
+	url := models.GetUrl(params.Id)
+	if url == "" {
+		url = "http://www.github.com/JessonChan"
+	}
+	return cango.Redirect{Code: 302, Url: url}
 }

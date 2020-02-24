@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/JessonChan/cango"
-	"github.com/JessonChan/cango/examples/shorten_url/controllers"
+	"github.com/JessonChan/cango/cango-cli/shorten_url/controllers"
 )
 
 func main() {

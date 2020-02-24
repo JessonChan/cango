@@ -15,7 +15,7 @@ package controllers
 
 import (
 	"github.com/JessonChan/cango"
-	"github.com/JessonChan/cango/examples/shorten_url/models"
+	"github.com/JessonChan/cango/cango-cli/shorten_url/models"
 )
 
 type AdminController struct {
