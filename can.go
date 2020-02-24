@@ -87,6 +87,7 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 
 var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
+// InitLogger 用来初始化cango的日志writer
 func InitLogger(rw io.Writer) {
 	canlog.SetWriter(rw, "CANGO")
 }
