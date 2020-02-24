@@ -117,6 +117,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}()
 
 	rt, statusCode := can.serve(rw, r)
+	// todo nil是不是可以表示已经在函数内完成了？
 	if rt == nil {
 		rw.WriteHeader(int(statusCode))
 		_, _ = rw.Write([]byte(nil))
@@ -149,7 +150,10 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			code = http.StatusOK
 		}
 		rw.WriteHeader(code)
-		_, _ = rw.Write([]byte(rt.(Content).String))
+		_, err := rw.Write([]byte(rt.(Content).String))
+		if err != nil {
+			canlog.CanError(err)
+		}
 		return
 	case StaticFile:
 		var err error
