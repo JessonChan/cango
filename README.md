@@ -33,24 +33,67 @@ func main() {
 ```
 
 ```bash
-go run server.go
+go run app.go
 ```
-打开 `http://127.0.0.1:8080`,就会看到`Hello,World!`
+打开 `http://127.0.0.1:8080`,就会看到`Hello,World!` ，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容 
+上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，代码如下
+```go
+package main
+
+import "github.com/JessonChan/cango"
+
+type CanApp struct {
+	cango.URI `value:"/hello"`
+}
+
+// 路由定义是方法的 receiver 中定义的
+// 这个方法对应的 /hello
+func (c *CanApp) Hello(cango.URI) interface{} {
+	return cango.Content{String: "Hello,World!"}
+}
+
+// 路由定义为 receiver中的URI tag和 参数列表中的 URI和tag的相加，
+// 这个示例为 /hello/world.html
+func (c *CanApp) World(ps struct {
+	cango.URI `value:"/world.html"`
+}) interface{} {
+	return cango.Content{String: "Hello,Cango!"}
+}
+
+func main() {
+	cango.
+		NewCan().
+		Route(&CanApp{}).
+		Run(cango.Addr{Port: 8080})
+}
+```
+
+```bash
+go run app.go
+```
+打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,Cango!`；
+上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，代码如下
 
 ## 路由简介 
 
-cango中，路由都定义在方法参数上，以上面的例子，只需要定义将cango.URI做为成员引入实现URI接口的函数，就会自动写入路由，路由模式是由tag中的value值来定义的，需要特殊说明的是value值可以使用`;`来定义多个，如上的例子，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容。  
+cango中，路由都定义在方法参数或者结构体上，以上面的例子，只需要定义将cango.URI做为成员引入实现URI接口的函数，就会自动写入路由，路由模式是由tag中的value值来定义的，需要特殊说明的是value值可以使用`;`来定义多个。  
 定义的函数入参为cango.URI类型，出参为interface{}，当前版本必须要返回值的，返回值做为请求的返回依据。
 
 ```go
+// 路由一个方法
 can.RouteFunc(...func(cango.URI)interface{})
+// 定义方法并且带有路由前缀（便于版本、分组等管理）
 can.RouteFuncWithPrefix(prefix, ...func(cango.URI)interface{})
+// 路由结构体上所有的方法
+can.Route(cango.URI)
+// 路由结构体上所有的方法，并使用前缀
+can.RouteWithPrefix(cango.URI)
 ```
-
 * `can` 是cango.NewCan()的实例
 * `cango.URI`是用来保存路由及请求相关数据的。
 * `prefix`是定义在路由上的前缀，使用prefix参数后，路由地址为prefix+URI-Tag-Value，看以下的例子
 * `interface{}` 映射请求的返回值，当前版本支持的类型如下
+
 ```go
 cango.ModelView //返回模板和数据
 cango.StaticFile //文件类型，会调用http.ServeFile,一般用不到
