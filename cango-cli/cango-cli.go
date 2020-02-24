@@ -178,10 +178,11 @@ func bytesFormat(bs []byte) string {
 	return builder
 }
 func repeat(c int) (rs string) {
-	for i := 0; i < c; i++ {
-		rs = rs + " "
-	}
-	return rs
+	return "\t"
+	// for i := 0; i < c; i++ {
+	// 	rs = rs + " "
+	// }
+	// return rs
 }
 
 func splash(path string) string {
