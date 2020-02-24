@@ -146,7 +146,7 @@ func main() {
 		}
 		prefixMarker := "func init() {"
 		suffixMarker := "} // end"
-		spaceCount := 4
+		spaceCount := 1
 		globalFilesName := "globalFiles"
 		selfPrefix := strings.Index(self, prefixMarker)
 		selfSuffix := strings.Index(self, suffixMarker)
@@ -178,11 +178,10 @@ func bytesFormat(bs []byte) string {
 	return builder
 }
 func repeat(c int) (rs string) {
-	return "\t"
-	// for i := 0; i < c; i++ {
-	// 	rs = rs + " "
-	// }
-	// return rs
+	for i := 0; i < c; i++ {
+		rs = rs + "\t`"
+	}
+	return rs
 }
 
 func splash(path string) string {
