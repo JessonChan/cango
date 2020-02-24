@@ -88,6 +88,8 @@ can.RouteFuncWithPrefix(prefix, ...func(cango.URI)interface{})
 can.Route(cango.URI)
 // 路由结构体上所有的方法，并使用前缀
 can.RouteWithPrefix(cango.URI)
+// 在定义struct的时候引入，也这是非常推荐的方法
+var _ = cango.RegisterURI(cango.URI)
 ```
 * `can` 是cango.NewCan()的实例
 * `cango.URI`是用来保存路由及请求相关数据的。
@@ -95,10 +97,14 @@ can.RouteWithPrefix(cango.URI)
 * `interface{}` 映射请求的返回值，当前版本支持的类型如下
 
 ```go
-cango.ModelView //返回模板和数据
-cango.StaticFile //文件类型，会调用http.ServeFile,一般用不到
-cango.Redirect //重定向
-cango.Content //上面的例子中使用，会直接返回Content.String
+// 返回模板和数据
+cango.ModelView 
+// 文件类型，会调用http.ServeFile,一般用不到
+cango.StaticFile 
+// 重定向
+cango.Redirect 
+// 上面的例子中使用，会直接返回Content.String
+cango.Content
 ```
 如果返回值不是以上类型，当前版本的处理逻辑是返回JSON。   
 
@@ -302,17 +308,22 @@ curl  -d ""  http://127.0.0.1:8080/ping/2020/15/white.json
 ```
 也就是定义在路由中的变量
 
-```go
-// GET http://localhost:8080/hello%20world
-
-app.Get("/:value", func(c *fiber.Ctx) {
-  c.Send("Get request with value: " + c.Params("value"))
-  // => Get request with value: hello world
-})
 ```
 
 ### 通配符路由
 当前版本支持在路由中最多包含一个 `*` 通配符的路径，并且通配符路由不能再包含路径变量，定义方法如下
 ```go
 cango.URI `value:"/goto/*"`
+```
+### 过滤器
+当前版本支持前置过滤器。定义如下
+```go 
+type VisitFilter struct {
+	cango.Filter
+}
+```	
+注册方式 
+```go
+can.Filter(f cango.Filter, uris ...cango.URI)
+cango.RegisterFilter(cango.Filter)
 ```
