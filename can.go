@@ -34,25 +34,29 @@ type Can struct {
 	tplSuffix      []string
 	debugTpl       bool
 
-	routeMux   dispatcher
-	methodMap  map[string]reflect.Method
-	filterMap  map[string][]Filter
-	ctrlMap    map[string]ctrlEntry
-	tplFuncMap map[string]interface{}
-	tplNameMap map[string]bool
+	routeMux       dispatcher
+	filterMux      dispatcher
+	methodMap      map[string]reflect.Method
+	filterMap      map[string][]Filter
+	ctrlEntryMap   map[string]ctrlEntry
+	filterEntryMap map[string]filterEntry
+	tplFuncMap     map[string]interface{}
+	tplNameMap     map[string]bool
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
 
 func NewCan() *Can {
 	return &Can{
-		srv:        &http.Server{Addr: defaultAddr.String()},
-		routeMux:   newCanMux(),
-		methodMap:  map[string]reflect.Method{},
-		filterMap:  map[string][]Filter{},
-		ctrlMap:    map[string]ctrlEntry{},
-		tplFuncMap: map[string]interface{}{},
-		tplNameMap: map[string]bool{},
+		srv:            &http.Server{Addr: defaultAddr.String()},
+		routeMux:       newCanMux(),
+		filterMux:      newFastMux(),
+		methodMap:      map[string]reflect.Method{},
+		filterMap:      map[string][]Filter{},
+		ctrlEntryMap:   map[string]ctrlEntry{},
+		filterEntryMap: map[string]filterEntry{},
+		tplFuncMap:     map[string]interface{}{},
+		tplNameMap:     map[string]bool{},
 	}
 }
 
@@ -93,17 +97,11 @@ func InitLogger(rw io.Writer) {
 }
 
 var uriRegMap = map[URI]bool{}
-var filterRegMap = map[Filter]bool{}
 
 // todo with prefix???
 // todo with can app Name ???
 func RegisterURI(uri URI) bool {
 	uriRegMap[uri] = true
-	return true
-}
-
-func RegisterFilter(filter Filter) bool {
-	filterRegMap[filter] = true
 	return true
 }
 
@@ -201,8 +199,9 @@ func (can *Can) Run(as ...interface{}) {
 	can.tplSuffix = opts.TplSuffix
 	can.debugTpl = opts.DebugTpl
 	can.buildStaticRoute()
-	can.buildFilter()
 	can.buildRoute()
+	// 务必要先构建route再去构建filter
+	can.buildFilter()
 
 	startChan := make(chan error, 1)
 	go func() {
@@ -271,23 +270,31 @@ func getRootPath() string {
 
 type StatusCode int
 
-func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	match := can.routeMux.Match(req)
+func doubleMatch(mux dispatcher, req *http.Request) matcher {
+	match := mux.Match(req)
 	if match.Error() != nil {
-		// todo sure?
-		// 这样做的目的是防止出现如 //some_url//..//some_para 这样的不规范的地址
-		req.URL.Path = filepath.Clean(req.URL.Path)
-		match = can.routeMux.Match(req)
-		if match.Error() != nil {
-			return nil, http.StatusNotFound
+		// todo 这里有性能问题
+		originalPath := req.URL.Path
+		req.URL.Path = filepath.Clean(originalPath)
+		if originalPath == req.URL.Path {
+			return match
 		}
+		match = mux.Match(req)
+		req.URL.Path = originalPath
+		return match
 	}
-	fs, _ := can.filterMap[match.Route().GetName()]
-	if len(fs) > 0 {
-		for _, f := range fs {
+	return match
+}
+
+func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
+	filterMatch := doubleMatch(can.filterMux, req)
+	if filterMatch.Error() == nil {
+		filters := can.filterMap[filterMatch.Route().GetName()]
+		for _, f := range filters {
 			ri := f.PreHandle(req)
 			if rt, ok := ri.(bool); ok {
 				// 返回为false 这个之后注册的filter失效
+				// todo 添加filter的执行顺序
 				if rt == false {
 					break
 				}
@@ -296,9 +303,12 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 				return ri, http.StatusOK
 			}
 		}
-		// do filter
 	}
-
+	match := doubleMatch(can.routeMux, req)
+	if match.Error() != nil {
+		canlog.CanError(req.Method, req.URL.Path, match.Error())
+		return nil, http.StatusNotFound
+	}
 	m, ok := can.methodMap[match.Route().GetName()]
 	if ok == false {
 		// error,match failed

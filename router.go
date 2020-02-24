@@ -47,7 +47,7 @@ func (can *Can) route(prefix string, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("route controller must be ptr")
 	}
-	can.ctrlMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
+	can.ctrlEntryMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
 }
 
 func (can *Can) RouteFunc(fns ...interface{}) *Can {
@@ -72,7 +72,7 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 		Func:    fv,
 		Index:   0,
 	}
-	can.ctrlMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, vl: fv, fn: funcMethod, tim: time.Now().Unix()}
+	can.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, vl: fv, fn: funcMethod, tim: time.Now().Unix()}
 }
 
 type ctrlEntry struct {
@@ -94,7 +94,7 @@ func (can *Can) buildRoute() {
 		can.route("", uri)
 	}
 	var ces []ctrlEntry
-	for _, ce := range can.ctrlMap {
+	for _, ce := range can.ctrlEntryMap {
 		ces = append(ces, ce)
 	}
 	sort.Sort(sortCtrlEntry(ces))
@@ -118,6 +118,14 @@ func (can *Can) buildStaticRoute() {
 	can.route("/robots.txt", &staticController{})
 }
 
+type pathMethod struct {
+	rp      reflect.Value
+	paths   []string
+	methods []string
+}
+
+var routeInfoMap = map[string]*pathMethod{}
+
 func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	prefix := ce.prefix
 	rp := ce.vl
@@ -132,16 +140,24 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 			if m.PkgPath != "" {
 				continue
 			}
-			filters := can.filterMap[rp.String()]
+			// filters := can.filterMap[rp.String()]
 			routerName := ctlName + "." + m.Name
-			can.routeMethod(prefix, m, routerName, strUrls, filters)
+			fwd := can.routeMethod(prefix, m, routerName, strUrls, nil)
+			if fwd != nil {
+				//todo 测试
+				routeInfoMap[m.Name] = &pathMethod{
+					rp:      rp,
+					paths:   strings.Split(fwd.GetPath(), ";"),
+					methods: fwd.GetMethods(),
+				}
+			}
 		}
 	case reflect.Func:
 		can.routeMethod(prefix, fn, "RouteFunc."+fn.Name, nil, nil)
 	}
 }
 
-func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string, filters []Filter) {
+func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string, filters []Filter) forwarder {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
@@ -185,11 +201,13 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		}
 		// default method is get
 		if len(httpMethods) == 0 {
-			httpMethods = append(httpMethods, http.MethodGet)
+			httpMethods = []string{http.MethodGet}
 		}
 		route.Methods(httpMethods...)
 		canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
+		return route
 	}
+	return nil
 }
 
 // urlStr get uri from tag value

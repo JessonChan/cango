@@ -51,7 +51,7 @@ func (m *mapDispatcher) Match(req *http.Request) matcher {
 	if ok {
 		return &mapMatcher{innerRouter: r}
 	}
-	return &mapMatcher{err: errors.New("can't find the path")}
+	return &mapMatcher{err: errors.New("map dispatch can't find the path")}
 }
 
 func (m *mapForwarder) Path(ps ...string) {

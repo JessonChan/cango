@@ -15,8 +15,10 @@
 package cango
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 // todo 为什么filter 不使用和URI一样的方式进行注册
@@ -27,10 +29,55 @@ type Filter interface {
 	// AfterHandled()
 }
 
+type MyFilter struct {
+	Filter `value:"/api/*"`
+}
+
+var filterRegMap = map[Filter]bool{}
+
+func RegisterFilter(filter Filter) bool {
+	filterRegMap[filter] = true
+	return true
+}
+
+type filterEntry struct {
+	method reflect.Method
+	f      Filter
+}
+
 func (can *Can) buildFilter() {
-	for fl, _ := range filterRegMap {
-		can.Filter(fl)
+	for filter, _ := range filterRegMap {
+		can.Filter(filter)
 	}
+
+	for _, fe := range can.filterEntryMap {
+		pm := routeInfoMap[fe.method.Name]
+		if pm != nil {
+			can.buildSingleFilter(fe.f, pm.paths, pm.methods)
+		}
+	}
+}
+
+// 会存在一种情况  就是一个path 对应多个filter 这个应该如何体现呢？
+// 也没有关系，我们的
+
+func (can *Can) buildSingleFilter(f Filter, paths []string, methods []string) {
+	if len(paths) == 0 {
+		return
+	}
+	if len(methods) == 0 {
+		methods = []string{http.MethodGet}
+	}
+	fv := reflect.ValueOf(f)
+	if fv.Kind() != reflect.Ptr {
+		panic("filter must be ptr")
+	}
+
+	// 随机生成名字，可以保证不会重复，因为某个filter可以被多次注册
+	fwdName := fmt.Sprint(time.Now().UnixNano())
+	fwd := can.filterMux.NewRouter(fwdName)
+	fwd.Path(paths...)
+	fwd.Methods(methods...)
 }
 
 func (can *Can) filter(f Filter, uri URI) {
@@ -38,7 +85,13 @@ func (can *Can) filter(f Filter, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("filter controller must be ptr")
 	}
-	can.filterMap[rp.String()] = append(can.filterMap[rp.String()], f)
+	for i := 0; i < rp.Type().NumMethod(); i++ {
+		// todo bug here method 会重复
+		can.filterEntryMap[rp.Type().Method(i).Name] = filterEntry{
+			method: rp.Type().Method(i),
+			f:      f,
+		}
+	}
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {

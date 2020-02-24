@@ -70,7 +70,7 @@ func (m *canDispatcher) Match(req *http.Request) matcher {
 			return cm
 		}
 	}
-	return &mapMatcher{err: errors.New("can't find the path")}
+	return &mapMatcher{err: errors.New("can dispatch can't find the path")}
 }
 
 func (m *canForwarder) Path(ps ...string) {

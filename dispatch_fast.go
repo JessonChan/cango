@@ -137,13 +137,14 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		// 找到多个
 		// todo 选最接近的
 		// todo 这里可以随机选一个
+		panic("multi should handle")
 		return nil
 	}
 }
 func (fm *fastDispatcher) Match(req *http.Request) matcher {
 	cm := fm.doMatch(req.Method, req.URL.Path)
 	if cm == nil {
-		return &fastMatcher{err: errors.New("can't find the path")}
+		return &fastMatcher{err: errors.New("fast dispatch can't find the path")}
 	}
 	return cm
 }
