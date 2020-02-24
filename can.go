@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
@@ -108,8 +109,9 @@ func RegisterFilter(filter Filter) bool {
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
-			// todo 打印所有的调用路径
-			canlog.CanError(err)
+			var buf [1024 * 10]byte
+			runtime.Stack(buf[:], false)
+			canlog.CanError(string(buf[0:]))
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
