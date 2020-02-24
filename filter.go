@@ -27,6 +27,12 @@ type Filter interface {
 	// AfterHandled()
 }
 
+func (can *Can) buildFilter() {
+	for fl, _ := range filterRegMap {
+		can.Filter(fl)
+	}
+}
+
 func (can *Can) filter(f Filter, uri URI) {
 	rp := reflect.ValueOf(uri)
 	if rp.Kind() != reflect.Ptr {

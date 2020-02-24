@@ -27,27 +27,6 @@ import (
 	"github.com/JessonChan/canlog"
 )
 
-type (
-	dispatcher interface {
-		NewRouter(name string) forwarder
-		Match(req *http.Request) matcher
-	}
-
-	forwarder interface {
-		Path(ps ...string)
-		Methods(ms ...string)
-		GetName() string
-		GetMethods() []string
-		GetPath() string
-	}
-
-	matcher interface {
-		Error() error
-		Route() forwarder
-		GetVars() map[string]string
-	}
-)
-
 const emptyPrefix = ""
 
 // todo route by controller and method Name???
@@ -110,11 +89,6 @@ func (s sortCtrlEntry) Len() int           { return len(s) }
 func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
 func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
-func (can *Can) buildFilter() {
-	for fl, _ := range filterRegMap {
-		can.Filter(fl)
-	}
-}
 func (can *Can) buildRoute() {
 	for uri, _ := range uriRegMap {
 		can.route("", uri)

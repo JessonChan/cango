@@ -19,6 +19,27 @@ import (
 )
 
 type (
+	dispatcher interface {
+		NewRouter(name string) forwarder
+		Match(req *http.Request) matcher
+	}
+
+	forwarder interface {
+		Path(ps ...string)
+		Methods(ms ...string)
+		GetName() string
+		GetMethods() []string
+		GetPath() string
+	}
+
+	matcher interface {
+		Error() error
+		Route() forwarder
+		GetVars() map[string]string
+	}
+)
+
+type (
 	canDispatcher struct {
 		muxSlice []dispatcher
 		fastMux  *fastDispatcher
