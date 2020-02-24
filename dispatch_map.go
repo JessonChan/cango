@@ -74,7 +74,7 @@ func (m *mapForwarder) GetMethods() []string {
 	return m.methodSlice
 }
 func (m *mapForwarder) GetPath() string {
-	return strings.Join(m.paths, ",")
+	return strings.Join(m.paths, ";")
 }
 
 func (m *mapMatcher) Error() error {

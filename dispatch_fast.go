@@ -113,6 +113,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		return nil
 	case 1:
 		// 找到了
+		// todo 优化找到后的逻辑
 		var router *fastPatten
 		for _, v := range fm.methodRouterArrMap[method] {
 			if stopMap[v] {

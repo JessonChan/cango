@@ -50,12 +50,19 @@ func (can *Can) buildFilter() {
 		can.Filter(filter)
 	}
 
+	// 忽略方法
+	filterPathMap := map[Filter][]string{}
 	for _, fe := range can.filterEntryMap {
 		pm := routeInfoMap[fe.method.Name]
 		if pm != nil {
-			can.buildSingleFilter(fe.f, pm.paths, pm.methods)
+			filterPathMap[fe.f] = append(filterPathMap[fe.f], pm.paths...)
+			// can.buildSingleFilter(fe.f, pm.paths, pm.methods)
 		}
 	}
+	for f, p := range filterPathMap {
+		can.buildSingleFilter(f, p, []string{"GET"})
+	}
+
 }
 
 // 会存在一种情况  就是一个path 对应多个filter 这个应该如何体现呢？
@@ -78,6 +85,7 @@ func (can *Can) buildSingleFilter(f Filter, paths []string, methods []string) {
 	fwd := can.filterMux.NewRouter(fwdName)
 	fwd.Path(paths...)
 	fwd.Methods(methods...)
+	can.filterMap[fwdName] = append(can.filterMap[fwdName], f)
 }
 
 func (can *Can) filter(f Filter, uri URI) {
