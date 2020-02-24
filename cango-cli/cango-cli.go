@@ -67,9 +67,6 @@ func main() {
 		files := map[string]string{}
 		var fileNames []string
 		_ = filepath.Walk("./demo", func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() {
-				return nil
-			}
 			name := strings.TrimPrefix(path, "demo/")
 			fileNames = append(fileNames, name)
 			files[name] = bytes(func() []byte {
