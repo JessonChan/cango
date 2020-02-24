@@ -10,7 +10,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-/examples/shorten_url/shorten
+/cango-cli/shorten_url/shorten
 /cango-cli/cango-cli
 
 # Dependency directories (remove the comment below to include it)
