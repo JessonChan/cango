@@ -20,70 +20,70 @@ import (
 )
 
 type (
-	mapMux struct {
-		routers  map[string]*mapRouter
+	mapDispatcher struct {
+		routers  map[string]*mapForwarder
 		pathName map[string]string
 	}
-	mapRouter struct {
+	mapForwarder struct {
 		name        string
-		innerMux    *mapMux
+		innerMux    *mapDispatcher
 		paths       []string
 		methods     map[string]bool
 		methodSlice []string
 	}
-	mapMatch struct {
-		innerRouter *mapRouter
+	mapMatcher struct {
+		innerRouter *mapForwarder
 		err         error
 	}
 )
 
-func newMapMux() *mapMux {
-	return &mapMux{routers: map[string]*mapRouter{}, pathName: map[string]string{}}
+func newMapMux() *mapDispatcher {
+	return &mapDispatcher{routers: map[string]*mapForwarder{}, pathName: map[string]string{}}
 }
 
-func (m *mapMux) NewRouter(name string) CanRouter {
-	mr := &mapRouter{name: name, innerMux: m, methods: map[string]bool{}}
+func (m *mapDispatcher) NewRouter(name string) forwarder {
+	mr := &mapForwarder{name: name, innerMux: m, methods: map[string]bool{}}
 	m.routers[name] = mr
 	return mr
 }
-func (m *mapMux) Match(req *http.Request) CanMatcher {
+func (m *mapDispatcher) Match(req *http.Request) matcher {
 	r, ok := m.routers[m.pathName[req.URL.Path]]
 	if ok {
-		return &mapMatch{innerRouter: r}
+		return &mapMatcher{innerRouter: r}
 	}
-	return &mapMatch{err: errors.New("can't find the path")}
+	return &mapMatcher{err: errors.New("can't find the path")}
 }
 
-func (m *mapRouter) Path(ps ...string) {
+func (m *mapForwarder) Path(ps ...string) {
 	for _, p := range ps {
 		m.innerMux.pathName[p] = m.name
 	}
 	m.paths = ps
 }
 
-func (m *mapRouter) Methods(ms ...string) {
+func (m *mapForwarder) Methods(ms ...string) {
 	for _, v := range ms {
 		m.methods[v] = true
 	}
 	m.methodSlice = ms
 }
-func (m *mapRouter) GetName() string {
+func (m *mapForwarder) GetName() string {
 	return m.name
 }
-func (m *mapRouter) GetMethods() []string {
+func (m *mapForwarder) GetMethods() []string {
 	return m.methodSlice
 }
-func (m *mapRouter) GetPath() string {
+func (m *mapForwarder) GetPath() string {
 	return strings.Join(m.paths, ",")
 }
 
-func (m *mapMatch) Error() error {
+func (m *mapMatcher) Error() error {
 	return m.err
 }
 
-func (m *mapMatch) Route() CanRouter {
+func (m *mapMatcher) Route() forwarder {
 	return m.innerRouter
 }
-func (m *mapMatch) GetVars() map[string]string {
+func (m *mapMatcher) GetVars() map[string]string {
 	return map[string]string{}
 }

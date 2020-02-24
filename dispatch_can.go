@@ -19,54 +19,54 @@ import (
 )
 
 type (
-	canMux struct {
-		muxSlice []CanMux
-		fastMux  *fastMux
-		mapMux   *mapMux
+	canDispatcher struct {
+		muxSlice []dispatcher
+		fastMux  *fastDispatcher
+		mapMux   *mapDispatcher
 	}
-	canRouter struct {
-		mapRouter  CanRouter
-		fastRouter CanRouter
+	canForwarder struct {
+		mapRouter  forwarder
+		fastRouter forwarder
 	}
 )
 
-func newCanMux() *canMux {
+func newCanMux() *canDispatcher {
 	mm := newMapMux()
 	gm := newFastMux()
-	return &canMux{
+	return &canDispatcher{
 		mapMux:   mm,
 		fastMux:  gm,
-		muxSlice: []CanMux{mm, gm},
+		muxSlice: []dispatcher{mm, gm},
 	}
 }
 
-func (m *canMux) NewRouter(name string) CanRouter {
-	return &canRouter{mapRouter: m.mapMux.NewRouter(name), fastRouter: m.fastMux.NewRouter(name)}
+func (m *canDispatcher) NewRouter(name string) forwarder {
+	return &canForwarder{mapRouter: m.mapMux.NewRouter(name), fastRouter: m.fastMux.NewRouter(name)}
 }
-func (m *canMux) Match(req *http.Request) CanMatcher {
+func (m *canDispatcher) Match(req *http.Request) matcher {
 	for _, v := range m.muxSlice {
 		if cm := v.Match(req); cm.Error() == nil {
 			return cm
 		}
 	}
-	return &mapMatch{err: errors.New("can't find the path")}
+	return &mapMatcher{err: errors.New("can't find the path")}
 }
 
-func (m *canRouter) Path(ps ...string) {
+func (m *canForwarder) Path(ps ...string) {
 	m.mapRouter.Path(ps...)
 	m.fastRouter.Path(ps...)
 }
 
-func (m *canRouter) Methods(ms ...string) {
+func (m *canForwarder) Methods(ms ...string) {
 	m.mapRouter.Methods(ms...)
 	m.fastRouter.Methods(ms...)
 }
-func (m *canRouter) GetName() string {
+func (m *canForwarder) GetName() string {
 	return m.mapRouter.GetName()
 }
-func (m *canRouter) GetMethods() []string {
+func (m *canForwarder) GetMethods() []string {
 	return m.mapRouter.GetMethods()
 }
-func (m *canRouter) GetPath() string {
+func (m *canForwarder) GetPath() string {
 	return m.mapRouter.GetPath()
 }

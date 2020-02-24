@@ -34,7 +34,7 @@ type Can struct {
 	tplSuffix      []string
 	debugTpl       bool
 
-	rootMux    CanMux
+	routeMux   dispatcher
 	methodMap  map[string]reflect.Method
 	filterMap  map[string][]Filter
 	ctrlMap    map[string]ctrlEntry
@@ -47,7 +47,7 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:        &http.Server{Addr: defaultAddr.String()},
-		rootMux:    newFastMux(),
+		routeMux:   newCanMux(),
 		methodMap:  map[string]reflect.Method{},
 		filterMap:  map[string][]Filter{},
 		ctrlMap:    map[string]ctrlEntry{},
@@ -272,12 +272,12 @@ func getRootPath() string {
 type StatusCode int
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	match := can.rootMux.Match(req)
+	match := can.routeMux.Match(req)
 	if match.Error() != nil {
 		// todo sure?
 		// 这样做的目的是防止出现如 //some_url//..//some_para 这样的不规范的地址
 		req.URL.Path = filepath.Clean(req.URL.Path)
-		match = can.rootMux.Match(req)
+		match = can.routeMux.Match(req)
 		if match.Error() != nil {
 			return nil, http.StatusNotFound
 		}

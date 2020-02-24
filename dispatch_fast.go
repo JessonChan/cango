@@ -22,14 +22,14 @@ import (
 )
 
 type (
-	fastMux struct {
-		routers            map[string]*fastRouter
-		routerArr          []*fastRouter
+	fastDispatcher struct {
+		routers            map[string]*fastForwarder
+		routerArr          []*fastForwarder
 		methodRouterArrMap map[string][]*fastPatten
 		pathNameMap        map[string]string
 	}
-	fastRouter struct {
-		innerMux *fastMux
+	fastForwarder struct {
+		innerMux *fastDispatcher
 		name     string
 		pattens  []*fastPatten
 		paths    []string
@@ -48,7 +48,7 @@ type (
 	}
 	fastMatcher struct {
 		err    error
-		router *fastRouter
+		router *fastForwarder
 		vars   map[string]string
 	}
 )
@@ -59,18 +59,18 @@ type word struct {
 	isWildcard bool
 }
 
-func newFastMux() *fastMux {
-	return &fastMux{routers: map[string]*fastRouter{}, methodRouterArrMap: map[string][]*fastPatten{}, pathNameMap: map[string]string{}}
+func newFastMux() *fastDispatcher {
+	return &fastDispatcher{routers: map[string]*fastForwarder{}, methodRouterArrMap: map[string][]*fastPatten{}, pathNameMap: map[string]string{}}
 }
 
-func (fm *fastMux) NewRouter(name string) CanRouter {
-	fr := &fastRouter{innerMux: fm, name: name}
+func (fm *fastDispatcher) NewRouter(name string) forwarder {
+	fr := &fastForwarder{innerMux: fm, name: name}
 	fm.routers[name] = fr
 	fm.routerArr = append(fm.routerArr, fr)
 	return fr
 }
 
-func (fm *fastMux) doMatch(method, url string) *fastMatcher {
+func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 	elements := parsePath(url)
 	stopMap := map[*fastPatten]bool{}
 
@@ -140,7 +140,7 @@ func (fm *fastMux) doMatch(method, url string) *fastMatcher {
 		return nil
 	}
 }
-func (fm *fastMux) Match(req *http.Request) CanMatcher {
+func (fm *fastDispatcher) Match(req *http.Request) matcher {
 	cm := fm.doMatch(req.Method, req.URL.Path)
 	if cm == nil {
 		return &fastMatcher{err: errors.New("can't find the path")}
@@ -148,7 +148,7 @@ func (fm *fastMux) Match(req *http.Request) CanMatcher {
 	return cm
 }
 
-func (fr *fastRouter) Path(ps ...string) {
+func (fr *fastForwarder) Path(ps ...string) {
 	for k, path := range ps {
 		routerName := fmt.Sprintf("%v-%d", fr.name, k)
 		fr.innerMux.pathNameMap[routerName] = fr.name
@@ -164,26 +164,26 @@ func (fr *fastRouter) Path(ps ...string) {
 	fr.paths = ps
 }
 
-func (fr *fastRouter) Methods(ms ...string) {
+func (fr *fastForwarder) Methods(ms ...string) {
 	for _, v := range ms {
 		fr.innerMux.methodRouterArrMap[v] = append(fr.innerMux.methodRouterArrMap[v], fr.pattens...)
 	}
 	fr.methods = ms
 }
-func (fr *fastRouter) GetName() string {
+func (fr *fastForwarder) GetName() string {
 	return fr.name
 }
-func (fr *fastRouter) GetMethods() []string {
+func (fr *fastForwarder) GetMethods() []string {
 	return fr.methods
 }
-func (fr *fastRouter) GetPath() string {
+func (fr *fastForwarder) GetPath() string {
 	return strings.Join(fr.paths, ";")
 }
 
 func (fm *fastMatcher) Error() error {
 	return fm.err
 }
-func (fm *fastMatcher) Route() CanRouter {
+func (fm *fastMatcher) Route() forwarder {
 	return fm.router
 }
 func (fm *fastMatcher) GetVars() map[string]string {

@@ -28,12 +28,12 @@ import (
 )
 
 type (
-	CanMux interface {
-		NewRouter(name string) CanRouter
-		Match(req *http.Request) CanMatcher
+	dispatcher interface {
+		NewRouter(name string) forwarder
+		Match(req *http.Request) matcher
 	}
 
-	CanRouter interface {
+	forwarder interface {
 		Path(ps ...string)
 		Methods(ms ...string)
 		GetName() string
@@ -41,9 +41,9 @@ type (
 		GetPath() string
 	}
 
-	CanMatcher interface {
+	matcher interface {
 		Error() error
-		Route() CanRouter
+		Route() forwarder
 		GetVars() map[string]string
 	}
 )
@@ -172,7 +172,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
 			if in.Kind() == reflect.Interface && in == uriType {
-				route := can.rootMux.NewRouter(routerName)
+				route := can.routeMux.NewRouter(routerName)
 				route.Path(prefix)
 				route.Methods(http.MethodGet)
 				can.methodMap[routerName] = m
@@ -181,7 +181,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			}
 			continue
 		}
-		route := can.rootMux.NewRouter(routerName)
+		route := can.routeMux.NewRouter(routerName)
 		var httpMethods []string
 		for j := 0; j < in.NumField(); j++ {
 			f := in.Field(j)
