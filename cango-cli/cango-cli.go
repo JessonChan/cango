@@ -56,115 +56,131 @@ func main() {
 		showHelp()
 		return
 	}
-	switch strings.ToLower(os.Args[1]) {
-	case "demo":
-		var names []string
-		for k, _ := range globalFiles {
-			names = append(names, k)
-		}
-		sort.Strings(names)
-		for _, name := range names {
-			path := name
-			dir := "./" + filepath.Dir(path)
-			base := filepath.Base(path)
-			isDir := !strings.Contains(base, ".")
-			if isDir {
-				dir = path
-			}
-			fileInfo, _ := os.Stat(dir)
-			if fileInfo == nil {
-				err := os.MkdirAll(dir, os.ModePerm)
+	cmdName := strings.ToLower(os.Args[1])
+	if exeCmd(cmdName) {
+		return
+	}
+	if cmdName == "bootstrap" {
+		bootstrap()
+		return
+	}
+	showHelp()
+}
+
+func showHelp() {
+	fmt.Println("cango-cli demo")
+}
+
+func bootstrap() {
+	files := map[string]string{}
+	var fileNames []string
+	for _, cmdName := range cmdArr {
+		_ = filepath.Walk("./"+cmdName, func(path string, info os.FileInfo, err error) error {
+			name := splash(path) + path
+			fileNames = append(fileNames, name)
+			files[name] = bytesFormat(func() []byte {
+				if info.IsDir() {
+					return []byte{}
+				}
+				bd := strings.Builder{}
+				wr, err := gzip.NewWriterLevel(&bd, gzip.BestCompression)
 				if err != nil {
 					log.Println(err)
-				} else {
-					log.Println("create  dir", dir)
 				}
-			}
-			if isDir {
-				continue
-			}
-			newFile, err := os.Create(path)
-			if err != nil {
-				log.Println(err)
-			}
-			log.Println("create file", path)
-			_, err = newFile.Write(func() []byte {
-				bs, _ := ioutil.ReadAll(func() io.Reader {
-					rd, _ := gzip.NewReader(bytes.NewReader(globalFiles[name]))
-					return rd
-				}())
-				return bs
+				bs, err := ioutil.ReadFile(path)
+				if err != nil {
+					log.Println(err)
+				}
+				_, err = wr.Write(bs)
+				_ = wr.Close()
+				if err != nil {
+					log.Println(err)
+				}
+				return []byte(bd.String())
 			}())
+			return nil
+		})
+		sort.Strings(fileNames)
+	}
+	selfName := "./cango-cli.go"
+	self := func() string {
+		self, err := ioutil.ReadFile(selfName)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+		return string(self)
+	}()
+	if self == "" {
+		return
+	}
+	prefixMarker := "func init() {"
+	suffixMarker := "} // end"
+	spaceCount := 1
+	globalFilesName := "globalFiles"
+	selfPrefix := strings.Index(self, prefixMarker)
+	selfSuffix := strings.Index(self, suffixMarker)
+	content := self[:selfPrefix] + func() string {
+		builder := prefixMarker + "\n"
+		for _, name := range fileNames {
+			builder = builder + repeat(spaceCount) + globalFilesName + "[\"" + name + "\"] = " + files[name] + "\n"
+		}
+		return builder
+	}() + self[selfSuffix:]
+	err := ioutil.WriteFile(selfName, []byte(content), 0666)
+	if err != nil {
+		log.Println(err)
+	}
+}
+func exeCmd(cmd string) (matched bool) {
+	var names []string
+	for k, _ := range globalFiles {
+		if strings.Contains(k, "./"+cmd) {
+			names = append(names, k)
+		}
+	}
+	if len(names) == 0 {
+		return false
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		path := name
+		dir := "./" + filepath.Dir(path)
+		base := filepath.Base(path)
+		isDir := !strings.Contains(base, ".")
+		if isDir {
+			dir = path
+		}
+		fileInfo, _ := os.Stat(dir)
+		if fileInfo == nil {
+			err := os.MkdirAll(dir, os.ModePerm)
 			if err != nil {
 				log.Println(err)
+			} else {
+				log.Println("create  dir", dir)
 			}
-			// log.Println(" write file", path)
-			_ = newFile.Close()
 		}
-	case "bootstrap":
-		files := map[string]string{}
-		var fileNames []string
-		for _, cmdName := range cmdArr {
-			_ = filepath.Walk("./"+cmdName, func(path string, info os.FileInfo, err error) error {
-				name := splash(path) + path
-				fileNames = append(fileNames, name)
-				files[name] = bytesFormat(func() []byte {
-					if info.IsDir() {
-						return []byte{}
-					}
-					bd := strings.Builder{}
-					wr, err := gzip.NewWriterLevel(&bd, gzip.BestCompression)
-					if err != nil {
-						log.Println(err)
-					}
-					bs, err := ioutil.ReadFile(path)
-					if err != nil {
-						log.Println(err)
-					}
-					_, err = wr.Write(bs)
-					_ = wr.Close()
-					if err != nil {
-						log.Println(err)
-					}
-					return []byte(bd.String())
-				}())
-				return nil
-			})
-			sort.Strings(fileNames)
+		if isDir {
+			continue
 		}
-		selfName := "./cango-cli.go"
-		self := func() string {
-			self, err := ioutil.ReadFile(selfName)
-			if err != nil {
-				log.Println(err)
-				return ""
-			}
-			return string(self)
-		}()
-		if self == "" {
-			return
-		}
-		prefixMarker := "func init() {"
-		suffixMarker := "} // end"
-		spaceCount := 1
-		globalFilesName := "globalFiles"
-		selfPrefix := strings.Index(self, prefixMarker)
-		selfSuffix := strings.Index(self, suffixMarker)
-		content := self[:selfPrefix] + func() string {
-			builder := prefixMarker + "\n"
-			for _, name := range fileNames {
-				builder = builder + repeat(spaceCount) + globalFilesName + "[\"" + name + "\"] = " + files[name] + "\n"
-			}
-			return builder
-		}() + self[selfSuffix:]
-		err := ioutil.WriteFile(selfName, []byte(content), 0666)
+		newFile, err := os.Create(path)
 		if err != nil {
 			log.Println(err)
 		}
+		log.Println("create file", path)
+		_, err = newFile.Write(func() []byte {
+			bs, _ := ioutil.ReadAll(func() io.Reader {
+				rd, _ := gzip.NewReader(bytes.NewReader(globalFiles[name]))
+				return rd
+			}())
+			return bs
+		}())
+		if err != nil {
+			log.Println(err)
+		}
+		_ = newFile.Close()
 	}
-}
-func showHelp() {
-	fmt.Println("cango-cli demo")
+	return true
 }
 func bytesFormat(bs []byte) string {
 	if len(bs) == 0 {
@@ -179,7 +195,7 @@ func bytesFormat(bs []byte) string {
 }
 func repeat(c int) (rs string) {
 	for i := 0; i < c; i++ {
-		rs = rs + "\t`"
+		rs = rs + "\t"
 	}
 	return rs
 }
