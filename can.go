@@ -240,7 +240,7 @@ func getOpts(as []interface{}) Opts {
 			newOpts.DebugTpl = opts.DebugTpl
 		}
 	}
-	return defaultOpts
+	return newOpts
 }
 func copyOpts() Opts {
 	return Opts{
