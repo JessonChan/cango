@@ -196,7 +196,6 @@ func (can *Can) Run(as ...interface{}) {
 	can.srv.ErrorLog = canlog.GetLogger()
 	opts := getOpts(as)
 	can.rootPath = opts.RootPath
-	// todo 路径可以自由配置
 	can.tplRootPath = filepath.Clean(can.rootPath + "/" + opts.TplDir)
 	can.staticRootPath = filepath.Clean(can.rootPath + "/" + opts.StaticDir)
 	can.tplSuffix = opts.TplSuffix
