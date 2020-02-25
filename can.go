@@ -38,7 +38,7 @@ type Can struct {
 	filterMux    dispatcher
 	filterMuxMap map[reflect.Type]dispatcher
 	methodMap    map[string]reflect.Method
-	filterMap    map[string]Filter
+	filterMap    map[reflect.Type]Filter
 	ctrlEntryMap map[string]ctrlEntry
 	tplFuncMap   map[string]interface{}
 	tplNameMap   map[string]bool
@@ -291,7 +291,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	for typ, dsp := range can.filterMuxMap {
 		match := doubleMatch(dsp, req)
 		if match.Error() == nil {
-			ri := filterMap[typ].PreHandle(req)
+			ri := can.filterMap[typ].PreHandle(req)
 			if rt, ok := ri.(bool); ok {
 				// todo 这样的设计是不是合理？？？？
 				// 返回为false 这个之后注册的filter失效

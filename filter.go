@@ -35,7 +35,6 @@ type MyFilter struct {
 var filterRegMap = map[Filter]bool{}
 
 var uriFilterMap = map[reflect.Type][]reflect.Type{}
-var filterMap = map[reflect.Type]Filter{}
 
 func RegisterFilter(filter Filter) bool {
 	filterRegMap[filter] = true
@@ -59,10 +58,10 @@ func (can *Can) buildFilter() {
 				for _, pattern := range fn.patterns {
 					if len(urls) > 0 {
 						for _, url := range urls {
-							buildSingleFilter(dsp, filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.methods)
+							buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.methods)
 						}
 					} else {
-						buildSingleFilter(dsp, filterMap[flt], filepath.Clean(pattern.path), pattern.methods)
+						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(pattern.path), pattern.methods)
 					}
 				}
 			}
@@ -102,7 +101,7 @@ func (can *Can) filter(f Filter, uri URI) {
 		return
 	}
 	uriFilterMap[reflect.TypeOf(f)] = append(ts, rp.Type())
-	filterMap[reflect.TypeOf(f)] = f
+	can.filterMap[reflect.TypeOf(f)] = f
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {
