@@ -330,10 +330,10 @@ cango.URI `value:"/goto/*"`
 当前版本支持前置过滤器。定义如下
 ```go 
 type VisitFilter struct {
-	cango.Filter
+	cango.Filter `value:"/*"`
 }
 ```	
-注册方式 
+如上所写，使用tag定义filter路径是最推荐的，但是你也可以根据自己的需要，只注册某些cango.URI，如下所示。
 ```go
 can.Filter(f cango.Filter, uris ...cango.URI)
 cango.RegisterFilter(cango.Filter)
