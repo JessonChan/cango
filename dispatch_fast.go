@@ -22,10 +22,10 @@ import (
 
 type (
 	fastDispatcher struct {
-		routers            map[string]*fastForwarder
-		routerArr          []*fastForwarder
-		methodRouterArrMap map[string][]*fastPatten
-		pathNameMap        map[string]string
+		routers     map[string]*fastForwarder
+		routerArr   []*fastForwarder
+		pathNameMap map[string]string
+		patternMap  map[string]*fastPatten
 	}
 	fastForwarder struct {
 		innerMux   *fastDispatcher
@@ -62,7 +62,7 @@ type word struct {
 var _ = forwarder(&fastForwarder{})
 
 func newFastMux() *fastDispatcher {
-	return &fastDispatcher{routers: map[string]*fastForwarder{}, methodRouterArrMap: map[string][]*fastPatten{}, pathNameMap: map[string]string{}}
+	return &fastDispatcher{routers: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]fastPatten{}}
 }
 
 func (fm *fastDispatcher) NewRouter(name string) forwarder {
@@ -81,9 +81,12 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 	stopMap := map[*fastPatten]bool{}
 
 	for k, elem := range elements {
-		for _, pattern := range fm.methodRouterArrMap[method] {
+		for _, pattern := range fm.patternMap {
 			if stopMap[pattern] {
 				continue
+			}
+			if pattern.methodMap[method] == false {
+				stopMap[pattern] = true
 			}
 			// todo wildcard逻辑要加进来
 			// todo /login/*.html 如果为 /log/*html则不行，通配符必须在两个分隔符之前
@@ -112,7 +115,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 			stopMap[pattern] = true
 		}
 	}
-	diff := len(fm.methodRouterArrMap[method]) - len(stopMap)
+	diff := len(fm.patternMap) - len(stopMap)
 	switch diff {
 	case 0:
 		// 没有找到
@@ -121,7 +124,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		// 找到了
 		// todo 优化找到后的逻辑
 		var router *fastPatten
-		for _, v := range fm.methodRouterArrMap[method] {
+		for _, v := range fm.patternMap {
 			if stopMap[v] {
 				continue
 			}
@@ -171,9 +174,12 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 		fr.patternMap[path] = patten
 	}
 	for _, m := range ms {
+		if patten.methodMap[m] == true {
+			continue
+		}
 		patten.methodMap[m] = true
-		fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], patten)
 	}
+	fr.innerMux.patternMap[path] = patten
 }
 func (fr *fastForwarder) GetName() string {
 	return fr.name

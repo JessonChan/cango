@@ -71,7 +71,7 @@ func (m *canDispatcher) Match(req *http.Request) matcher {
 }
 func (m *canForwarder) PathMethods(path string, ms ...string) {
 	m.mapRouter.PathMethods(path, ms...)
-	m.mapRouter.PathMethods(path, ms...)
+	m.fastRouter.PathMethods(path, ms...)
 }
 func (m *canForwarder) GetName() string {
 	return m.mapRouter.GetName()
