@@ -20,8 +20,8 @@ import (
 
 type (
 	mapDispatcher struct {
-		routers  map[string]*mapForwarder
-		pathName map[string]string
+		forwarders map[string]*mapForwarder
+		pathName   map[string]string
 	}
 	mapForwarder struct {
 		name       string
@@ -42,20 +42,20 @@ type (
 )
 
 func newMapMux() *mapDispatcher {
-	return &mapDispatcher{routers: map[string]*mapForwarder{}, pathName: map[string]string{}}
+	return &mapDispatcher{forwarders: map[string]*mapForwarder{}, pathName: map[string]string{}}
 }
 
-func (m *mapDispatcher) NewRouter(name string) forwarder {
-	mr, ok := m.routers[name]
+func (m *mapDispatcher) NewForwarder(name string) forwarder {
+	mr, ok := m.forwarders[name]
 	if ok {
 		return mr
 	}
 	mr = &mapForwarder{name: name, innerMux: m, patternMap: map[string]*mapPattern{}}
-	m.routers[name] = mr
+	m.forwarders[name] = mr
 	return mr
 }
 func (m *mapDispatcher) Match(req *http.Request) matcher {
-	r, ok := m.routers[m.pathName[req.URL.Path]]
+	r, ok := m.forwarders[m.pathName[req.URL.Path]]
 	if ok && r.patternMap[req.URL.Path].methods[req.Method] {
 		return &mapMatcher{innerRouter: r}
 	}
@@ -82,7 +82,7 @@ func (m *mapMatcher) Error() error {
 	return m.err
 }
 
-func (m *mapMatcher) Route() forwarder {
+func (m *mapMatcher) Forwarder() forwarder {
 	return m.innerRouter
 }
 func (m *mapMatcher) GetVars() map[string]string {

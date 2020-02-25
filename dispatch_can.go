@@ -21,7 +21,7 @@ import (
 
 type (
 	dispatcher interface {
-		NewRouter(name string) forwarder
+		NewForwarder(name string) forwarder
 		Match(req *http.Request) matcher
 	}
 
@@ -32,7 +32,7 @@ type (
 
 	matcher interface {
 		Error() error
-		Route() forwarder
+		Forwarder() forwarder
 		GetVars() map[string]string
 	}
 )
@@ -44,8 +44,8 @@ type (
 		mapMux   *mapDispatcher
 	}
 	canForwarder struct {
-		mapRouter  forwarder
-		fastRouter forwarder
+		mapForwarder  forwarder
+		fastForwarder forwarder
 	}
 )
 
@@ -59,8 +59,8 @@ func newCanMux() *canDispatcher {
 	}
 }
 
-func (m *canDispatcher) NewRouter(name string) forwarder {
-	return &canForwarder{mapRouter: m.mapMux.NewRouter(name), fastRouter: m.fastMux.NewRouter(name)}
+func (m *canDispatcher) NewForwarder(name string) forwarder {
+	return &canForwarder{mapForwarder: m.mapMux.NewForwarder(name), fastForwarder: m.fastMux.NewForwarder(name)}
 }
 func (m *canDispatcher) Match(req *http.Request) matcher {
 	for _, v := range m.muxSlice {
@@ -76,11 +76,11 @@ func isVarPattern(path string) bool {
 }
 
 func (m *canForwarder) PathMethods(path string, ms ...string) {
-	m.mapRouter.PathMethods(path, ms...)
+	m.mapForwarder.PathMethods(path, ms...)
 	if isVarPattern(path) {
-		m.fastRouter.PathMethods(path, ms...)
+		m.fastForwarder.PathMethods(path, ms...)
 	}
 }
 func (m *canForwarder) GetName() string {
-	return m.mapRouter.GetName()
+	return m.mapForwarder.GetName()
 }

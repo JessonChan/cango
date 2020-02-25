@@ -22,10 +22,10 @@ import (
 
 type (
 	fastDispatcher struct {
-		routers     map[string]*fastForwarder
-		routerArr   []*fastForwarder
-		pathNameMap map[string]string
-		patternMap  map[string]*fastPatten
+		forwarders   map[string]*fastForwarder
+		forwarderArr []*fastForwarder
+		pathNameMap  map[string]string
+		patternMap   map[string]*fastPatten
 	}
 	fastForwarder struct {
 		innerMux   *fastDispatcher
@@ -47,9 +47,9 @@ type (
 		wildcardRight string
 	}
 	fastMatcher struct {
-		err    error
-		router *fastForwarder
-		vars   map[string]string
+		err       error
+		forwarder *fastForwarder
+		vars      map[string]string
 	}
 )
 
@@ -62,17 +62,17 @@ type word struct {
 var _ = forwarder(&fastForwarder{})
 
 func newFastMux() *fastDispatcher {
-	return &fastDispatcher{routers: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]*fastPatten{}}
+	return &fastDispatcher{forwarders: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]*fastPatten{}}
 }
 
-func (fm *fastDispatcher) NewRouter(name string) forwarder {
-	ff, ok := fm.routers[name]
+func (fm *fastDispatcher) NewForwarder(name string) forwarder {
+	ff, ok := fm.forwarders[name]
 	if ok {
 		return ff
 	}
 	ff = &fastForwarder{innerMux: fm, name: name, patternMap: map[string]*fastPatten{}}
-	fm.routers[name] = ff
-	fm.routerArr = append(fm.routerArr, ff)
+	fm.forwarders[name] = ff
+	fm.forwarderArr = append(fm.forwarderArr, ff)
 	return ff
 }
 
@@ -123,24 +123,24 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 	case 1:
 		// 找到了
 		// todo 优化找到后的逻辑
-		var router *fastPatten
+		var pattern *fastPatten
 		for _, v := range fm.patternMap {
 			if stopMap[v] {
 				continue
 			}
-			router = v
+			pattern = v
 			break
 		}
-		if router == nil {
+		if pattern == nil {
 			return nil
 		}
 		vars := map[string]string{}
-		for _, id := range router.varIdx {
-			vars[router.words[id].key] = elements[id]
+		for _, id := range pattern.varIdx {
+			vars[pattern.words[id].key] = elements[id]
 		}
 		fm := &fastMatcher{
-			router: fm.routers[fm.pathNameMap[router.name]],
-			vars:   vars,
+			forwarder: fm.forwarders[fm.pathNameMap[pattern.name]],
+			vars:      vars,
 		}
 		return fm
 	default:
@@ -188,8 +188,8 @@ func (fr *fastForwarder) GetName() string {
 func (fm *fastMatcher) Error() error {
 	return fm.err
 }
-func (fm *fastMatcher) Route() forwarder {
-	return fm.router
+func (fm *fastMatcher) Forwarder() forwarder {
+	return fm.forwarder
 }
 func (fm *fastMatcher) GetVars() map[string]string {
 	return fm.vars

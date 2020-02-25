@@ -308,7 +308,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, http.StatusNotFound
 	}
-	m, ok := can.methodMap[match.Route().GetName()]
+	m, ok := can.methodMap[match.Forwarder().GetName()]
 	if ok == false {
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed

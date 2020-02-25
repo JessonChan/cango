@@ -62,7 +62,7 @@ func (can *Can) RouteFuncWithPrefix(prefix string, fns ...interface{}) *Can {
 func (can *Can) routeFunc(prefix string, fn interface{}) {
 	fv := reflect.ValueOf(fn)
 	if fv.Kind() != reflect.Func {
-		canlog.CanInfo("can't router func with ", fv.Kind())
+		canlog.CanInfo("can't forwarder func with ", fv.Kind())
 		return
 	}
 	funcMethod := reflect.Method{
@@ -148,14 +148,14 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
 			if in.Kind() == reflect.Interface && in == uriType {
-				route := can.routeMux.NewRouter(routerName)
+				route := can.routeMux.NewForwarder(routerName)
 				route.PathMethods(prefix, defaultHttpMethods...)
 				can.methodMap[routerName] = m
 				canlog.CanDebug(routerName, prefix, defaultHttpMethods)
 			}
 			continue
 		}
-		route := can.routeMux.NewRouter(routerName)
+		route := can.routeMux.NewForwarder(routerName)
 		var httpMethods []string
 		var paths []string
 		for j := 0; j < in.NumField(); j++ {
