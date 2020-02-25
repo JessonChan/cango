@@ -16,6 +16,7 @@ package cango
 
 import (
 	"net/http"
+	"path/filepath"
 	"reflect"
 )
 
@@ -43,28 +44,39 @@ func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
-	// for typ, flt := range filterStructMap {
-	//
-	// }
+	for typ, flt := range filterStructMap {
+		hs := factoryType(typ)
+		urls, _ := urlStr(typ.Elem())
+		for _, fn := range hs.fns {
+			for _, pattern := range fn.patterns {
+				if len(urls) > 0 {
+					for _, url := range urls {
+						can.buildSingleFilter(flt, filepath.Clean(url+"/"+pattern.path), pattern.methods)
+					}
+				} else {
+					can.buildSingleFilter(flt, filepath.Clean(pattern.path), pattern.methods)
+				}
+			}
+		}
+	}
 }
 
-// func (can *Can) buildSingleFilter(f Filter, paths []string, methods []string) {
-// 	if len(paths) == 0 {
-// 		return
-// 	}
-// 	if len(methods) == 0 {
-// 		methods = []string{http.MethodGet}
-// 	}
-// 	fv := reflect.ValueOf(f)
-// 	if fv.Kind() != reflect.Ptr {
-// 		panic("filter must be ptr")
-// 	}
-//
-// 	fwd := can.filterMux.NewRouter(fv.Type().Name())
-// 	fwd.Path(paths...)
-// 	fwd.Methods(methods...)
-// 	can.filterMap[fwd.GetName()] = f
-// }
+func (can *Can) buildSingleFilter(f Filter, path string, methods []string) {
+	if path == "" {
+		return
+	}
+	if len(methods) == 0 {
+		methods = defaultHttpMethods
+	}
+	fv := reflect.ValueOf(f)
+	if fv.Kind() != reflect.Ptr {
+		panic("filter must be ptr")
+	}
+
+	name := fv.Type().Name()
+	can.filterMux.NewRouter(name).PathMethods(path, methods...)
+	can.filterMap[name] = f
+}
 
 func (can *Can) filter(f Filter, uri URI) {
 	rp := reflect.ValueOf(uri)
