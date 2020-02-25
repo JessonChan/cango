@@ -62,7 +62,7 @@ type word struct {
 var _ = forwarder(&fastForwarder{})
 
 func newFastMux() *fastDispatcher {
-	return &fastDispatcher{routers: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]fastPatten{}}
+	return &fastDispatcher{routers: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]*fastPatten{}}
 }
 
 func (fm *fastDispatcher) NewRouter(name string) forwarder {

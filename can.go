@@ -36,6 +36,7 @@ type Can struct {
 
 	routeMux     dispatcher
 	filterMux    dispatcher
+	filterMuxMap map[reflect.Type]dispatcher
 	methodMap    map[string]reflect.Method
 	filterMap    map[string]Filter
 	ctrlEntryMap map[string]ctrlEntry
@@ -50,6 +51,7 @@ func NewCan() *Can {
 		srv:          &http.Server{Addr: defaultAddr.String()},
 		routeMux:     newFastMux(),
 		filterMux:    newFastMux(),
+		filterMuxMap: map[reflect.Type]dispatcher{},
 		methodMap:    map[string]reflect.Method{},
 		filterMap:    map[string]Filter{},
 		ctrlEntryMap: map[string]ctrlEntry{},
@@ -285,24 +287,24 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 }
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	filterMatch := doubleMatch(can.filterMux, req)
-	if filterMatch.Error() == nil {
-		filters := can.filterMap[filterMatch.Route().GetName()]
-		filters.PreHandle(req)
-		// for _, f := range filters {
-		// 	ri := f.PreHandle(req)
-		// 	if rt, ok := ri.(bool); ok {
-		// 		// 返回为false 这个之后注册的filter失效
-		// 		// todo 添加filter的执行顺序
-		// 		if rt == false {
-		// 			break
-		// 		}
-		// 	} else {
-		// 		// 如果不是bool类型，提前结束
-		// 		return ri, http.StatusOK
-		// 	}
-		// }
+	// todo filter should not here?????
+	for typ, dsp := range can.filterMuxMap {
+		match := doubleMatch(dsp, req)
+		if match.Error() == nil {
+			ri := filterMap[typ].PreHandle(req)
+			if rt, ok := ri.(bool); ok {
+				// todo 这样的设计是不是合理？？？？
+				// 返回为false 这个之后注册的filter失效
+				if rt == false {
+					break
+				}
+			} else {
+				// 如果不是bool类型，提前结束
+				return ri, http.StatusOK
+			}
+		}
 	}
+
 	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())

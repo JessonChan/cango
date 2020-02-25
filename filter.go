@@ -33,7 +33,9 @@ type MyFilter struct {
 }
 
 var filterRegMap = map[Filter]bool{}
-var filterStructMap = map[reflect.Type]Filter{}
+
+var uriFilterMap = map[reflect.Type][]reflect.Type{}
+var filterMap = map[reflect.Type]Filter{}
 
 func RegisterFilter(filter Filter) bool {
 	filterRegMap[filter] = true
@@ -44,24 +46,31 @@ func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
-	for typ, flt := range filterStructMap {
-		hs := factoryType(typ)
-		urls, _ := urlStr(typ.Elem())
-		for _, fn := range hs.fns {
-			for _, pattern := range fn.patterns {
-				if len(urls) > 0 {
-					for _, url := range urls {
-						can.buildSingleFilter(flt, filepath.Clean(url+"/"+pattern.path), pattern.methods)
+	for flt, typs := range uriFilterMap {
+		dsp, ok := can.filterMuxMap[flt]
+		if !ok {
+			dsp = newFastMux()
+		}
+		can.filterMuxMap[flt] = dsp
+		for _, typ := range typs {
+			hs := factoryType(typ)
+			urls, _ := urlStr(typ.Elem())
+			for _, fn := range hs.fns {
+				for _, pattern := range fn.patterns {
+					if len(urls) > 0 {
+						for _, url := range urls {
+							buildSingleFilter(dsp, filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.methods)
+						}
+					} else {
+						buildSingleFilter(dsp, filterMap[flt], filepath.Clean(pattern.path), pattern.methods)
 					}
-				} else {
-					can.buildSingleFilter(flt, filepath.Clean(pattern.path), pattern.methods)
 				}
 			}
 		}
 	}
 }
 
-func (can *Can) buildSingleFilter(f Filter, path string, methods []string) {
+func buildSingleFilter(dsp dispatcher, f Filter, path string, methods []string) {
 	if path == "" {
 		return
 	}
@@ -72,10 +81,8 @@ func (can *Can) buildSingleFilter(f Filter, path string, methods []string) {
 	if fv.Kind() != reflect.Ptr {
 		panic("filter must be ptr")
 	}
-
-	name := fv.Type().Name()
-	can.filterMux.NewRouter(name).PathMethods(path, methods...)
-	can.filterMap[name] = f
+	name := fv.Elem().Type().Name()
+	dsp.NewRouter(name).PathMethods(path, methods...)
 }
 
 func (can *Can) filter(f Filter, uri URI) {
@@ -83,7 +90,19 @@ func (can *Can) filter(f Filter, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("filter controller must be ptr")
 	}
-	filterStructMap[rp.Type()] = f
+	ts := uriFilterMap[reflect.TypeOf(f)]
+	contain := false
+	for _, t := range ts {
+		if t == rp.Type() {
+			contain = true
+			break
+		}
+	}
+	if contain {
+		return
+	}
+	uriFilterMap[reflect.TypeOf(f)] = append(ts, rp.Type())
+	filterMap[reflect.TypeOf(f)] = f
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {
