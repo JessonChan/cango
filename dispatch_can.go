@@ -16,6 +16,7 @@ package cango
 import (
 	"errors"
 	"net/http"
+	"strings"
 )
 
 type (
@@ -69,9 +70,16 @@ func (m *canDispatcher) Match(req *http.Request) matcher {
 	}
 	return &mapMatcher{err: errors.New("can dispatch can't find the path")}
 }
+
+func isVarPattern(path string) bool {
+	return strings.Contains(path, "{") || strings.Contains(path, "*")
+}
+
 func (m *canForwarder) PathMethods(path string, ms ...string) {
 	m.mapRouter.PathMethods(path, ms...)
-	m.fastRouter.PathMethods(path, ms...)
+	if isVarPattern(path) {
+		m.fastRouter.PathMethods(path, ms...)
+	}
 }
 func (m *canForwarder) GetName() string {
 	return m.mapRouter.GetName()

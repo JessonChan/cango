@@ -35,7 +35,6 @@ type Can struct {
 	debugTpl       bool
 
 	routeMux     dispatcher
-	filterMux    dispatcher
 	filterMuxMap map[reflect.Type]dispatcher
 	methodMap    map[string]reflect.Method
 	filterMap    map[reflect.Type]Filter
@@ -49,11 +48,10 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:          &http.Server{Addr: defaultAddr.String()},
-		routeMux:     newFastMux(),
-		filterMux:    newFastMux(),
+		routeMux:     newCanMux(),
 		filterMuxMap: map[reflect.Type]dispatcher{},
 		methodMap:    map[string]reflect.Method{},
-		filterMap:    map[string]Filter{},
+		filterMap:    map[reflect.Type]Filter{},
 		ctrlEntryMap: map[string]ctrlEntry{},
 		tplFuncMap:   map[string]interface{}{},
 		tplNameMap:   map[string]bool{},

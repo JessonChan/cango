@@ -45,13 +45,13 @@ func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
-	for flt, typs := range uriFilterMap {
+	for flt, typArr := range uriFilterMap {
 		dsp, ok := can.filterMuxMap[flt]
 		if !ok {
-			dsp = newFastMux()
+			dsp = newCanMux()
 		}
 		can.filterMuxMap[flt] = dsp
-		for _, typ := range typs {
+		for _, typ := range typArr {
 			hs := factoryType(typ)
 			urls, _ := urlStr(typ.Elem())
 			for _, fn := range hs.fns {
