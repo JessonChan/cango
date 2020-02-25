@@ -49,7 +49,7 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 func NewCan() *Can {
 	return &Can{
 		srv:            &http.Server{Addr: defaultAddr.String()},
-		routeMux:       newCanMux(),
+		routeMux:       newFastMux(),
 		filterMux:      newFastMux(),
 		methodMap:      map[string]reflect.Method{},
 		filterMap:      map[string][]Filter{},

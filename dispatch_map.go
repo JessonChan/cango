@@ -25,15 +25,20 @@ type (
 		pathName map[string]string
 	}
 	mapForwarder struct {
-		name        string
-		innerMux    *mapDispatcher
-		paths       []string
-		methods     map[string]bool
-		methodSlice []string
+		name       string
+		innerMux   *mapDispatcher
+		paths      []string
+		patternMap map[string]*mapPattern
 	}
 	mapMatcher struct {
 		innerRouter *mapForwarder
 		err         error
+	}
+	//  每个注册都是由一条路径和其对应的方法组成
+	//  如 /api/movie/list.json [GET][POST]
+	mapPattern struct {
+		path    string
+		methods map[string]bool
 	}
 )
 
@@ -42,13 +47,17 @@ func newMapMux() *mapDispatcher {
 }
 
 func (m *mapDispatcher) NewRouter(name string) forwarder {
-	mr := &mapForwarder{name: name, innerMux: m, methods: map[string]bool{}}
+	mr, ok := m.routers[name]
+	if ok {
+		return mr
+	}
+	mr = &mapForwarder{name: name, innerMux: m, patternMap: map[string]*mapPattern{}}
 	m.routers[name] = mr
 	return mr
 }
 func (m *mapDispatcher) Match(req *http.Request) matcher {
 	r, ok := m.routers[m.pathName[req.URL.Path]]
-	if ok {
+	if ok && r.patternMap[req.URL.Path].methods[req.Method] {
 		return &mapMatcher{innerRouter: r}
 	}
 	return &mapMatcher{err: errors.New("map dispatch can't find the path")}
@@ -62,16 +71,23 @@ func (m *mapForwarder) Path(ps ...string) {
 }
 
 func (m *mapForwarder) Methods(ms ...string) {
-	for _, v := range ms {
-		m.methods[v] = true
+	for _, path := range m.paths {
+		pattern := m.patternMap[path]
+		if pattern == nil {
+			pattern = &mapPattern{path: path}
+			pattern.methods = map[string]bool{}
+		}
+		for _, m := range ms {
+			pattern.methods[m] = true
+		}
+		m.patternMap[path] = pattern
 	}
-	m.methodSlice = ms
 }
 func (m *mapForwarder) GetName() string {
 	return m.name
 }
 func (m *mapForwarder) GetMethods() []string {
-	return m.methodSlice
+	return []string{}
 }
 func (m *mapForwarder) GetPath() string {
 	return strings.Join(m.paths, ";")

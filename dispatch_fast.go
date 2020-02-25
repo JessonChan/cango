@@ -15,7 +15,6 @@ package cango
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -29,11 +28,12 @@ type (
 		pathNameMap        map[string]string
 	}
 	fastForwarder struct {
-		innerMux *fastDispatcher
-		name     string
-		pattens  []*fastPatten
-		paths    []string
-		methods  []string
+		innerMux   *fastDispatcher
+		name       string
+		pattens    []*fastPatten
+		paths      []string
+		methods    []string
+		patternMap map[string]*fastPatten
 	}
 	fastPatten struct {
 		name          string
@@ -64,10 +64,14 @@ func newFastMux() *fastDispatcher {
 }
 
 func (fm *fastDispatcher) NewRouter(name string) forwarder {
-	fr := &fastForwarder{innerMux: fm, name: name}
-	fm.routers[name] = fr
-	fm.routerArr = append(fm.routerArr, fr)
-	return fr
+	ff, ok := fm.routers[name]
+	if ok {
+		return ff
+	}
+	ff = &fastForwarder{innerMux: fm, name: name, patternMap: map[string]*fastPatten{}}
+	fm.routers[name] = ff
+	fm.routerArr = append(fm.routerArr, ff)
+	return ff
 }
 
 func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
@@ -151,10 +155,12 @@ func (fm *fastDispatcher) Match(req *http.Request) matcher {
 }
 
 func (fr *fastForwarder) Path(ps ...string) {
-	for k, path := range ps {
-		routerName := fmt.Sprintf("%v-%d", fr.name, k)
-		fr.innerMux.pathNameMap[routerName] = fr.name
-		patten := &fastPatten{name: routerName, pattern: path}
+	for _, path := range ps {
+		if _, ok := fr.innerMux.pathNameMap[path]; ok {
+			continue
+		}
+		fr.innerMux.pathNameMap[path] = fr.name
+		patten := &fastPatten{name: path, pattern: path, methodMap: map[string]bool{}}
 		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
 		if patten.isWildcard {
 			ss := strings.Split(path, "*")
@@ -162,16 +168,49 @@ func (fr *fastForwarder) Path(ps ...string) {
 			patten.wildcardRight = ss[1]
 		}
 		fr.pattens = append(fr.pattens, patten)
+		fr.patternMap[path] = patten
 	}
 	fr.paths = ps
 }
 
 func (fr *fastForwarder) Methods(ms ...string) {
-	for _, v := range ms {
-		fr.innerMux.methodRouterArrMap[v] = append(fr.innerMux.methodRouterArrMap[v], fr.pattens...)
+	for _, patten := range fr.pattens {
+		for _, m := range ms {
+			patten.methodMap[m] = true
+			list := fr.innerMux.methodRouterArrMap[m]
+			contain := false
+			for _, l := range list {
+				if l.name == patten.name {
+					contain = true
+				}
+			}
+			if contain == false {
+				fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], patten)
+			}
+		}
 	}
 	fr.methods = ms
 }
+
+// func (fr *fastForwarder) PathMethod(path string, ms []string) {
+// 	patten, ok := fr.patternMap[path]
+// 	if !ok {
+// 		fr.innerMux.pathNameMap[path] = fr.name
+// 		patten := &fastPatten{name: path, pattern: path,methodMap: map[string]bool{}}
+// 		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
+// 		if patten.isWildcard {
+// 			ss := strings.Split(path, "*")
+// 			patten.wildcardLeft = ss[0]
+// 			patten.wildcardRight = ss[1]
+// 		}
+// 		fr.pattens = append(fr.pattens, patten)
+// 		fr.patternMap[path] = patten
+// 	}
+// 	for _, m := range ms {
+// 		patten.methodMap[m] = true
+// 		fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], fr.pattens...)
+// 	}
+// }
 func (fr *fastForwarder) GetName() string {
 	return fr.name
 }
