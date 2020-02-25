@@ -123,5 +123,8 @@ func urlStr(typ reflect.Type) ([]string, string) {
 }
 
 func tagUriParse(tag reflect.StructTag) []string {
+	if tag.Get(uriTagName) == "" {
+		return []string{}
+	}
 	return strings.Split(tag.Get(uriTagName), ";")
 }

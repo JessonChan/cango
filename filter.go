@@ -28,12 +28,10 @@ type Filter interface {
 	// AfterHandled()
 }
 
-type MyFilter struct {
-	Filter `value:"/api/*"`
-}
+var filterType = reflect.TypeOf((*Filter)(nil)).Elem()
+var filterName = filterType.Name()
 
 var filterRegMap = map[Filter]bool{}
-
 var uriFilterMap = map[reflect.Type][]reflect.Type{}
 
 func RegisterFilter(filter Filter) bool {
@@ -51,6 +49,10 @@ func (can *Can) buildFilter() {
 			dsp = newCanMux()
 		}
 		can.filterMuxMap[flt] = dsp
+		paths, methods := getPaths(flt)
+		for _, path := range paths {
+			buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(path), methods)
+		}
 		for _, typ := range typArr {
 			hs := factoryType(typ)
 			urls, _ := urlStr(typ.Elem())
@@ -67,6 +69,29 @@ func (can *Can) buildFilter() {
 			}
 		}
 	}
+}
+
+func getPaths(typ reflect.Type) ([]string, []string) {
+	if typ.Implements(filterType) {
+		ff, ok := typ.Elem().FieldByName(filterName)
+		if ok {
+			paths := tagUriParse(ff.Tag)
+			if len(paths) == 0 {
+				return []string{}, []string{}
+			}
+			var httpMethods []string
+			for i := 0; i < typ.Elem().NumField(); i++ {
+				if m, ok := httpMethodMap[typ.Elem().Field(i).Type]; ok {
+					httpMethods = append(httpMethods, m)
+				}
+			}
+			if len(httpMethods) == 0 {
+				httpMethods = allHttpMethods
+			}
+			return paths, httpMethods
+		}
+	}
+	return []string{}, []string{}
 }
 
 func buildSingleFilter(dsp dispatcher, f Filter, path string, methods []string) {
@@ -117,6 +142,12 @@ func (can *Can) Filter(f Filter, uris ...URI) *Can {
 		}
 		if tp.Implements(uriType) {
 			uris = append(uris, rp.Field(i).Interface().(URI))
+		}
+	}
+	if len(uris) == 0 {
+		if len(uriFilterMap[reflect.TypeOf(f)]) == 0 {
+			uriFilterMap[reflect.TypeOf(f)] = nil
+			can.filterMap[reflect.TypeOf(f)] = f
 		}
 	}
 

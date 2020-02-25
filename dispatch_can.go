@@ -59,6 +59,10 @@ func newCanMux() *canDispatcher {
 	}
 }
 
+func isVarPattern(path string) bool {
+	return strings.Contains(path, "{") || strings.Contains(path, "*")
+}
+
 func (m *canDispatcher) NewForwarder(name string) forwarder {
 	return &canForwarder{mapForwarder: m.mapMux.NewForwarder(name), fastForwarder: m.fastMux.NewForwarder(name)}
 }
@@ -69,10 +73,6 @@ func (m *canDispatcher) Match(req *http.Request) matcher {
 		}
 	}
 	return &mapMatcher{err: errors.New("can dispatch can't find the path")}
-}
-
-func isVarPattern(path string) bool {
-	return strings.Contains(path, "{") || strings.Contains(path, "*")
 }
 
 func (m *canForwarder) PathMethods(path string, ms ...string) {

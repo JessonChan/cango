@@ -141,8 +141,6 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	}
 }
 
-var defaultHttpMethods = []string{http.MethodGet}
-
 func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) forwarder {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
@@ -165,13 +163,21 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			}
 			switch f.Type {
 			case uriType:
-				for _, path := range tagUriParse(f.Tag) {
+				tagPaths := tagUriParse(f.Tag)
+				setPath := func(path string) {
 					if len(strUrls) == 0 {
 						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, path}, "/")))
-						continue
+					} else {
+						for _, strUrl := range strUrls {
+							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
+						}
 					}
-					for _, strUrl := range strUrls {
-						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
+				}
+				if len(tagPaths) == 0 {
+					setPath("")
+				} else {
+					for _, path := range tagPaths {
+						setPath(path)
 					}
 				}
 				can.methodMap[routerName] = m
@@ -193,21 +199,3 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 	}
 	return nil
 }
-
-// // urlStr get uri from tag value
-// func (can *Can) urlStr(typ reflect.Type) ([]string, string) {
-// 	for i := 0; i < typ.NumField(); i++ {
-// 		f := typ.Field(i)
-// 		if f.PkgPath != "" {
-// 			continue
-// 		}
-// 		if f.Type == uriType {
-// 			return tagUriParse(f.Tag), typ.Name()
-// 		}
-// 	}
-// 	return []string{}, ""
-// }
-//
-// func tagUriParse(tag reflect.StructTag) []string {
-// 	return strings.Split(tag.Get(uriTagName), ";")
-// }

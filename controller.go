@@ -65,6 +65,9 @@ type StaticFile struct {
 type httpMethod interface {
 }
 
+var defaultHttpMethods = []string{http.MethodGet}
+var allHttpMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
+
 /*
 	methods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
 	for _, m := range methods {
