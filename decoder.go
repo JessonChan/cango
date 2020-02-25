@@ -52,7 +52,6 @@ const (
 func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
-
 		if f.Kind() == reflect.Ptr {
 			f = reflect.Indirect(f)
 		}

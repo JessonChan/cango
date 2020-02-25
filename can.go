@@ -285,7 +285,7 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 }
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	// todo filter should not here?????
+	// todo filter should not be here?????
 	for typ, dsp := range can.filterMuxMap {
 		match := doubleMatch(dsp, req)
 		if match.Error() == nil {
@@ -308,13 +308,14 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, http.StatusNotFound
 	}
+
 	m, ok := can.methodMap[match.Forwarder().GetName()]
 	if ok == false {
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
 	}
+	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
 	if m.Type.NumIn() == 1 {
-
 		if m.Type.In(0) == uriType {
 			vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
 			if len(vs) == 0 {
@@ -357,17 +358,6 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 			return vs[0].Interface(), http.StatusOK
 		}
 	}
-
-	if m.Type.NumIn() == 1 && m.Type.In(0) == uriType {
-		vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
-		if len(vs) == 0 {
-			return nil, http.StatusMethodNotAllowed
-		}
-		if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
-			return vs[0].Elem().Interface(), http.StatusOK
-		}
-		return vs[0].Interface(), http.StatusOK
-	}
 	if m.Type.NumIn() != 2 {
 		// error,method only have one arg
 		return nil, http.StatusMethodNotAllowed
@@ -381,9 +371,13 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	}
 	// method
 	mt := reflect.New(m.Type.In(1)).Elem()
-	uriFiled = mt.FieldByName(uriName)
-	if uriFiled.IsValid() {
-		uriFiled.Set(reflect.ValueOf(context))
+	if mt.Type() == uriType {
+		mt.Set(reflect.ValueOf(context))
+	} else {
+		uriFiled = mt.FieldByName(uriName)
+		if uriFiled.IsValid() {
+			uriFiled.Set(reflect.ValueOf(context))
+		}
 	}
 
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
@@ -400,12 +394,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
 			decodeForm(req.Form, ct.Interface())
-			decodeForm(req.Form, mt.Addr().Interface())
+			if mt.Type() != uriType {
+				decodeForm(req.Form, mt.Addr().Interface())
+			}
 		}
 	}
 	if len(match.GetVars()) > 0 {
 		decode(match.GetVars(), ct.Interface())
-		decode(match.GetVars(), mt.Addr().Interface())
+		if mt.Type() != uriType {
+			decode(match.GetVars(), mt.Addr().Interface())
+		}
 	}
 
 	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})

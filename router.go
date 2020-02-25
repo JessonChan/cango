@@ -15,7 +15,6 @@
 package cango
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -132,7 +131,6 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 			if m.PkgPath != "" {
 				continue
 			}
-			// filters := can.filterMap[rp.String()]
 			routerName := ctlName + "." + m.Name
 			can.routeMethod(prefix, m, routerName, strUrls)
 		}
@@ -141,7 +139,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	}
 }
 
-func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) forwarder {
+func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
@@ -189,13 +187,11 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		}
 		// default method is get
 		if len(httpMethods) == 0 {
-			httpMethods = []string{http.MethodGet}
+			httpMethods = defaultHttpMethods
 		}
 		for _, path := range paths {
 			route.PathMethods(path, httpMethods...)
 			canlog.CanDebug(routerName, path, httpMethods)
 		}
-		return route
 	}
-	return nil
 }

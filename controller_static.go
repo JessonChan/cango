@@ -26,9 +26,6 @@ type staticController struct {
 // 	return StaticFile{s.URI.Request().URL.Path}
 // }
 
-func (s *staticController) Get(ps struct {
-	URI
-	GetMethod
-}) StaticFile {
+func (s *staticController) Get(URI) StaticFile {
 	return StaticFile{s.URI.Request().URL.Path}
 }
