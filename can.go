@@ -34,29 +34,27 @@ type Can struct {
 	tplSuffix      []string
 	debugTpl       bool
 
-	routeMux       dispatcher
-	filterMux      dispatcher
-	methodMap      map[string]reflect.Method
-	filterMap      map[string][]Filter
-	ctrlEntryMap   map[string]ctrlEntry
-	filterEntryMap map[string]filterEntry
-	tplFuncMap     map[string]interface{}
-	tplNameMap     map[string]bool
+	routeMux     dispatcher
+	filterMux    dispatcher
+	methodMap    map[string]reflect.Method
+	filterMap    map[string]Filter
+	ctrlEntryMap map[string]ctrlEntry
+	tplFuncMap   map[string]interface{}
+	tplNameMap   map[string]bool
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
 
 func NewCan() *Can {
 	return &Can{
-		srv:            &http.Server{Addr: defaultAddr.String()},
-		routeMux:       newFastMux(),
-		filterMux:      newFastMux(),
-		methodMap:      map[string]reflect.Method{},
-		filterMap:      map[string][]Filter{},
-		ctrlEntryMap:   map[string]ctrlEntry{},
-		filterEntryMap: map[string]filterEntry{},
-		tplFuncMap:     map[string]interface{}{},
-		tplNameMap:     map[string]bool{},
+		srv:          &http.Server{Addr: defaultAddr.String()},
+		routeMux:     newFastMux(),
+		filterMux:    newFastMux(),
+		methodMap:    map[string]reflect.Method{},
+		filterMap:    map[string]Filter{},
+		ctrlEntryMap: map[string]ctrlEntry{},
+		tplFuncMap:   map[string]interface{}{},
+		tplNameMap:   map[string]bool{},
 	}
 }
 
@@ -290,19 +288,20 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	filterMatch := doubleMatch(can.filterMux, req)
 	if filterMatch.Error() == nil {
 		filters := can.filterMap[filterMatch.Route().GetName()]
-		for _, f := range filters {
-			ri := f.PreHandle(req)
-			if rt, ok := ri.(bool); ok {
-				// 返回为false 这个之后注册的filter失效
-				// todo 添加filter的执行顺序
-				if rt == false {
-					break
-				}
-			} else {
-				// 如果不是bool类型，提前结束
-				return ri, http.StatusOK
-			}
-		}
+		filters.PreHandle(req)
+		// for _, f := range filters {
+		// 	ri := f.PreHandle(req)
+		// 	if rt, ok := ri.(bool); ok {
+		// 		// 返回为false 这个之后注册的filter失效
+		// 		// todo 添加filter的执行顺序
+		// 		if rt == false {
+		// 			break
+		// 		}
+		// 	} else {
+		// 		// 如果不是bool类型，提前结束
+		// 		return ri, http.StatusOK
+		// 	}
+		// }
 	}
 	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {

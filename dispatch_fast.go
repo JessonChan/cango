@@ -59,6 +59,8 @@ type word struct {
 	isWildcard bool
 }
 
+var _ = forwarder(&fastForwarder{})
+
 func newFastMux() *fastDispatcher {
 	return &fastDispatcher{routers: map[string]*fastForwarder{}, methodRouterArrMap: map[string][]*fastPatten{}, pathNameMap: map[string]string{}}
 }
@@ -192,25 +194,25 @@ func (fr *fastForwarder) Methods(ms ...string) {
 	fr.methods = ms
 }
 
-// func (fr *fastForwarder) PathMethod(path string, ms []string) {
-// 	patten, ok := fr.patternMap[path]
-// 	if !ok {
-// 		fr.innerMux.pathNameMap[path] = fr.name
-// 		patten := &fastPatten{name: path, pattern: path,methodMap: map[string]bool{}}
-// 		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
-// 		if patten.isWildcard {
-// 			ss := strings.Split(path, "*")
-// 			patten.wildcardLeft = ss[0]
-// 			patten.wildcardRight = ss[1]
-// 		}
-// 		fr.pattens = append(fr.pattens, patten)
-// 		fr.patternMap[path] = patten
-// 	}
-// 	for _, m := range ms {
-// 		patten.methodMap[m] = true
-// 		fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], fr.pattens...)
-// 	}
-// }
+func (fr *fastForwarder) PathMethods(path string, ms ...string) {
+	patten, ok := fr.patternMap[path]
+	if !ok {
+		fr.innerMux.pathNameMap[path] = fr.name
+		patten = &fastPatten{name: path, pattern: path, methodMap: map[string]bool{}}
+		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
+		if patten.isWildcard {
+			ss := strings.Split(path, "*")
+			patten.wildcardLeft = ss[0]
+			patten.wildcardRight = ss[1]
+		}
+		fr.pattens = append(fr.pattens, patten)
+		fr.patternMap[path] = patten
+	}
+	for _, m := range ms {
+		patten.methodMap[m] = true
+		fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], patten)
+	}
+}
 func (fr *fastForwarder) GetName() string {
 	return fr.name
 }

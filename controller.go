@@ -98,3 +98,14 @@ var httpMethodMap = map[reflect.Type]string{
 	reflect.TypeOf((*OptionsMethod)(nil)).Elem(): http.MethodOptions,
 	reflect.TypeOf((*TraceMethod)(nil)).Elem():   http.MethodTrace,
 }
+
+var httpMethodNameMap = map[string]string{
+	"GetMethod":     "GET",
+	"HeadMethod":    "HEAD",
+	"PostMethod":    "POST",
+	"PutMethod":     "PUT",
+	"PatchMethod":   "PATCH",
+	"DeleteMethod":  "DELETE",
+	"OptionsMethod": "Options",
+	"TraceMethod":   "Trace",
+}

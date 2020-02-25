@@ -25,8 +25,9 @@ type (
 	}
 
 	forwarder interface {
-		Path(ps ...string)
-		Methods(ms ...string)
+		// Path(ps ...string)
+		// Methods(ms ...string)
+		PathMethods(path string, ms ...string)
 		GetName() string
 		GetMethods() []string
 		GetPath() string
@@ -73,14 +74,19 @@ func (m *canDispatcher) Match(req *http.Request) matcher {
 	return &mapMatcher{err: errors.New("can dispatch can't find the path")}
 }
 
-func (m *canForwarder) Path(ps ...string) {
-	m.mapRouter.Path(ps...)
-	m.fastRouter.Path(ps...)
-}
+// func (m *canForwarder) Path(ps ...string) {
+// 	m.mapRouter.Path(ps...)
+// 	m.fastRouter.Path(ps...)
+// }
+//
+// func (m *canForwarder) Methods(ms ...string) {
+// 	m.mapRouter.Methods(ms...)
+// 	m.fastRouter.Methods(ms...)
+// }
 
-func (m *canForwarder) Methods(ms ...string) {
-	m.mapRouter.Methods(ms...)
-	m.fastRouter.Methods(ms...)
+func (m *canForwarder) PathMethods(path string, ms ...string) {
+	m.mapRouter.PathMethods(path, ms...)
+	m.mapRouter.PathMethods(path, ms...)
 }
 func (m *canForwarder) GetName() string {
 	return m.mapRouter.GetName()

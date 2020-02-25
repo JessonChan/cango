@@ -15,10 +15,8 @@
 package cango
 
 import (
-	"fmt"
 	"net/http"
 	"reflect"
-	"time"
 )
 
 // todo 为什么filter 不使用和URI一样的方式进行注册
@@ -34,72 +32,46 @@ type MyFilter struct {
 }
 
 var filterRegMap = map[Filter]bool{}
+var filterStructMap = map[reflect.Type]Filter{}
 
 func RegisterFilter(filter Filter) bool {
 	filterRegMap[filter] = true
 	return true
 }
 
-type filterEntry struct {
-	method reflect.Method
-	f      Filter
-}
-
 func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
-
-	// 忽略方法
-	filterPathMap := map[Filter][]string{}
-	for _, fe := range can.filterEntryMap {
-		pm := routeInfoMap[fe.method.Name]
-		if pm != nil {
-			filterPathMap[fe.f] = append(filterPathMap[fe.f], pm.paths...)
-			// can.buildSingleFilter(fe.f, pm.paths, pm.methods)
-		}
-	}
-	for f, p := range filterPathMap {
-		can.buildSingleFilter(f, p, []string{"GET"})
-	}
-
+	// for typ, flt := range filterStructMap {
+	//
+	// }
 }
 
-// 会存在一种情况  就是一个path 对应多个filter 这个应该如何体现呢？
-// 也没有关系，我们的
-
-func (can *Can) buildSingleFilter(f Filter, paths []string, methods []string) {
-	if len(paths) == 0 {
-		return
-	}
-	if len(methods) == 0 {
-		methods = []string{http.MethodGet}
-	}
-	fv := reflect.ValueOf(f)
-	if fv.Kind() != reflect.Ptr {
-		panic("filter must be ptr")
-	}
-
-	// 随机生成名字，可以保证不会重复，因为某个filter可以被多次注册
-	fwdName := fmt.Sprint(time.Now().UnixNano())
-	fwd := can.filterMux.NewRouter(fwdName)
-	fwd.Path(paths...)
-	fwd.Methods(methods...)
-	can.filterMap[fwdName] = append(can.filterMap[fwdName], f)
-}
+// func (can *Can) buildSingleFilter(f Filter, paths []string, methods []string) {
+// 	if len(paths) == 0 {
+// 		return
+// 	}
+// 	if len(methods) == 0 {
+// 		methods = []string{http.MethodGet}
+// 	}
+// 	fv := reflect.ValueOf(f)
+// 	if fv.Kind() != reflect.Ptr {
+// 		panic("filter must be ptr")
+// 	}
+//
+// 	fwd := can.filterMux.NewRouter(fv.Type().Name())
+// 	fwd.Path(paths...)
+// 	fwd.Methods(methods...)
+// 	can.filterMap[fwd.GetName()] = f
+// }
 
 func (can *Can) filter(f Filter, uri URI) {
 	rp := reflect.ValueOf(uri)
 	if rp.Kind() != reflect.Ptr {
 		panic("filter controller must be ptr")
 	}
-	for i := 0; i < rp.Type().NumMethod(); i++ {
-		// todo bug here method 会重复
-		can.filterEntryMap[rp.Type().Method(i).Name] = filterEntry{
-			method: rp.Type().Method(i),
-			f:      f,
-		}
-	}
+	filterStructMap[rp.Type()] = f
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {

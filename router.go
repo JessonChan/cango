@@ -118,14 +118,6 @@ func (can *Can) buildStaticRoute() {
 	can.route("/robots.txt", &staticController{})
 }
 
-type pathMethod struct {
-	rp      reflect.Value
-	paths   []string
-	methods []string
-}
-
-var routeInfoMap = map[string]*pathMethod{}
-
 func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	prefix := ce.prefix
 	rp := ce.vl
@@ -133,7 +125,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	fn := ce.fn
 	switch rp.Kind() {
 	case reflect.Ptr:
-		strUrls, ctlName := can.urlStr(reflect.Indirect(rp).Type())
+		strUrls, ctlName := urlStr(reflect.Indirect(rp).Type())
 		tvp := reflect.TypeOf(uri)
 		for i := 0; i < tvp.NumMethod(); i++ {
 			m := tvp.Method(i)
@@ -142,37 +134,28 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 			}
 			// filters := can.filterMap[rp.String()]
 			routerName := ctlName + "." + m.Name
-			fwd := can.routeMethod(prefix, m, routerName, strUrls, nil)
-			if fwd != nil {
-				//todo 测试
-				routeInfoMap[m.Name] = &pathMethod{
-					rp:      rp,
-					paths:   strings.Split(fwd.GetPath(), ";"),
-					methods: fwd.GetMethods(),
-				}
-			}
+			can.routeMethod(prefix, m, routerName, strUrls)
 		}
 	case reflect.Func:
-		can.routeMethod(prefix, fn, "RouteFunc."+fn.Name, nil, nil)
+		can.routeMethod(prefix, fn, "RouteFunc."+fn.Name, nil)
 	}
 }
 
-func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string, filters []Filter) forwarder {
+func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) forwarder {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
 			if in.Kind() == reflect.Interface && in == uriType {
 				route := can.routeMux.NewRouter(routerName)
-				route.Path(prefix)
-				route.Methods(http.MethodGet)
+				route.PathMethods(prefix, http.MethodGet)
 				can.methodMap[routerName] = m
-				can.filterMap[routerName] = filters
 				canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 			}
 			continue
 		}
 		route := can.routeMux.NewRouter(routerName)
 		var httpMethods []string
+		var paths []string
 		for j := 0; j < in.NumField(); j++ {
 			f := in.Field(j)
 			if f.PkgPath != "" {
@@ -180,7 +163,6 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			}
 			switch f.Type {
 			case uriType:
-				var paths []string
 				for _, path := range tagUriParse(f.Tag) {
 					if len(strUrls) == 0 {
 						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, path}, "/")))
@@ -190,9 +172,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
 					}
 				}
-				route.Path(paths...)
 				can.methodMap[routerName] = m
-				can.filterMap[routerName] = filters
 			}
 			m, ok := httpMethodMap[f.Type]
 			if ok {
@@ -203,27 +183,29 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		if len(httpMethods) == 0 {
 			httpMethods = []string{http.MethodGet}
 		}
-		route.Methods(httpMethods...)
+		for _, path := range paths {
+			route.PathMethods(path, httpMethods...)
+		}
 		canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 		return route
 	}
 	return nil
 }
 
-// urlStr get uri from tag value
-func (can *Can) urlStr(typ reflect.Type) ([]string, string) {
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if f.PkgPath != "" {
-			continue
-		}
-		if f.Type == uriType {
-			return tagUriParse(f.Tag), typ.Name()
-		}
-	}
-	return []string{}, ""
-}
-
-func tagUriParse(tag reflect.StructTag) []string {
-	return strings.Split(tag.Get(uriTagName), ";")
-}
+// // urlStr get uri from tag value
+// func (can *Can) urlStr(typ reflect.Type) ([]string, string) {
+// 	for i := 0; i < typ.NumField(); i++ {
+// 		f := typ.Field(i)
+// 		if f.PkgPath != "" {
+// 			continue
+// 		}
+// 		if f.Type == uriType {
+// 			return tagUriParse(f.Tag), typ.Name()
+// 		}
+// 	}
+// 	return []string{}, ""
+// }
+//
+// func tagUriParse(tag reflect.StructTag) []string {
+// 	return strings.Split(tag.Get(uriTagName), ";")
+// }

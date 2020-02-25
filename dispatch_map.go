@@ -83,6 +83,19 @@ func (m *mapForwarder) Methods(ms ...string) {
 		m.patternMap[path] = pattern
 	}
 }
+
+func (m *mapForwarder) PathMethods(path string, ms ...string) {
+	m.innerMux.pathName[path] = m.name
+	pattern := m.patternMap[path]
+	if pattern == nil {
+		pattern = &mapPattern{path: path}
+		pattern.methods = map[string]bool{}
+	}
+	for _, m := range ms {
+		pattern.methods[m] = true
+	}
+	m.patternMap[path] = pattern
+}
 func (m *mapForwarder) GetName() string {
 	return m.name
 }
