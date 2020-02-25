@@ -16,7 +16,6 @@ package cango
 import (
 	"errors"
 	"net/http"
-	"strings"
 )
 
 type (
@@ -63,27 +62,6 @@ func (m *mapDispatcher) Match(req *http.Request) matcher {
 	return &mapMatcher{err: errors.New("map dispatch can't find the path")}
 }
 
-func (m *mapForwarder) Path(ps ...string) {
-	for _, p := range ps {
-		m.innerMux.pathName[p] = m.name
-	}
-	m.paths = ps
-}
-
-func (m *mapForwarder) Methods(ms ...string) {
-	for _, path := range m.paths {
-		pattern := m.patternMap[path]
-		if pattern == nil {
-			pattern = &mapPattern{path: path}
-			pattern.methods = map[string]bool{}
-		}
-		for _, m := range ms {
-			pattern.methods[m] = true
-		}
-		m.patternMap[path] = pattern
-	}
-}
-
 func (m *mapForwarder) PathMethods(path string, ms ...string) {
 	m.innerMux.pathName[path] = m.name
 	pattern := m.patternMap[path]
@@ -98,12 +76,6 @@ func (m *mapForwarder) PathMethods(path string, ms ...string) {
 }
 func (m *mapForwarder) GetName() string {
 	return m.name
-}
-func (m *mapForwarder) GetMethods() []string {
-	return []string{}
-}
-func (m *mapForwarder) GetPath() string {
-	return strings.Join(m.paths, ";")
 }
 
 func (m *mapMatcher) Error() error {

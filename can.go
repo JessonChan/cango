@@ -331,17 +331,14 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 			if uriFiled.IsValid() {
 				uriFiled.Set(reflect.ValueOf(newContext(rw, req)))
 			}
-			if func(methods []string) bool {
-				for _, m := range methods {
-					switch m {
-					case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
-						return true
-					default:
-						return false
-					}
+			if func(methods string) bool {
+				switch methods {
+				case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
+					return true
+				default:
+					return false
 				}
-				return false
-			}(match.Route().GetMethods()) {
+			}(req.Method) {
 				_ = req.ParseForm()
 				if len(req.Form) > 0 {
 					decodeForm(req.Form, mt.Addr().Interface())
@@ -392,17 +389,14 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, S
 	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
 	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
 	// todo 性能提升
-	if func(methods []string) bool {
-		for _, m := range methods {
-			switch m {
-			case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
-				return true
-			default:
-				return false
-			}
+	if func(httpMethod string) bool {
+		switch httpMethod {
+		case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
+			return true
+		default:
+			return false
 		}
-		return false
-	}(match.Route().GetMethods()) {
+	}(req.Method) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
 			decodeForm(req.Form, ct.Interface())

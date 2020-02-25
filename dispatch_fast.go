@@ -156,44 +156,6 @@ func (fm *fastDispatcher) Match(req *http.Request) matcher {
 	return cm
 }
 
-func (fr *fastForwarder) Path(ps ...string) {
-	for _, path := range ps {
-		if _, ok := fr.innerMux.pathNameMap[path]; ok {
-			continue
-		}
-		fr.innerMux.pathNameMap[path] = fr.name
-		patten := &fastPatten{name: path, pattern: path, methodMap: map[string]bool{}}
-		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
-		if patten.isWildcard {
-			ss := strings.Split(path, "*")
-			patten.wildcardLeft = ss[0]
-			patten.wildcardRight = ss[1]
-		}
-		fr.pattens = append(fr.pattens, patten)
-		fr.patternMap[path] = patten
-	}
-	fr.paths = ps
-}
-
-func (fr *fastForwarder) Methods(ms ...string) {
-	for _, patten := range fr.pattens {
-		for _, m := range ms {
-			patten.methodMap[m] = true
-			list := fr.innerMux.methodRouterArrMap[m]
-			contain := false
-			for _, l := range list {
-				if l.name == patten.name {
-					contain = true
-				}
-			}
-			if contain == false {
-				fr.innerMux.methodRouterArrMap[m] = append(fr.innerMux.methodRouterArrMap[m], patten)
-			}
-		}
-	}
-	fr.methods = ms
-}
-
 func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 	patten, ok := fr.patternMap[path]
 	if !ok {
@@ -215,12 +177,6 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 }
 func (fr *fastForwarder) GetName() string {
 	return fr.name
-}
-func (fr *fastForwarder) GetMethods() []string {
-	return fr.methods
-}
-func (fr *fastForwarder) GetPath() string {
-	return strings.Join(fr.paths, ";")
 }
 
 func (fm *fastMatcher) Error() error {

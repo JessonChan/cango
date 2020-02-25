@@ -141,15 +141,17 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	}
 }
 
+var defaultHttpMethods = []string{http.MethodGet}
+
 func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) forwarder {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
 			if in.Kind() == reflect.Interface && in == uriType {
 				route := can.routeMux.NewRouter(routerName)
-				route.PathMethods(prefix, http.MethodGet)
+				route.PathMethods(prefix, defaultHttpMethods...)
 				can.methodMap[routerName] = m
-				canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
+				canlog.CanDebug(routerName, prefix, defaultHttpMethods)
 			}
 			continue
 		}
@@ -185,8 +187,8 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 		}
 		for _, path := range paths {
 			route.PathMethods(path, httpMethods...)
+			canlog.CanDebug(routerName, path, httpMethods)
 		}
-		canlog.CanDebug(route.GetName(), route.GetPath(), route.GetMethods())
 		return route
 	}
 	return nil
