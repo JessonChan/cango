@@ -36,7 +36,7 @@ var (
 	uint16Type   = reflect.Uint16
 	uint32Type   = reflect.Uint32
 	uint64Type   = reflect.Uint64
-	timeTypeKind = reflect.Kind(1e5)
+	timeTypeKind = reflect.Kind(1e7)
 )
 
 var casterMap = map[reflect.Kind]Caster{
