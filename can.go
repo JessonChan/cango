@@ -94,15 +94,6 @@ func InitLogger(rw io.Writer) {
 	canlog.SetWriter(rw, "CANGO")
 }
 
-var uriRegMap = map[URI]bool{}
-
-// todo with prefix???
-// todo with can app Name ???
-func RegisterURI(uri URI) bool {
-	uriRegMap[uri] = true
-	return true
-}
-
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {

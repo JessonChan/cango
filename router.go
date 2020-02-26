@@ -74,6 +74,15 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 	can.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, vl: fv, fn: funcMethod, tim: time.Now().Unix()}
 }
 
+var uriRegMap = map[URI]bool{}
+
+// todo with prefix???
+// todo with can app Name ???
+func RegisterURI(uri URI) bool {
+	uriRegMap[uri] = true
+	return true
+}
+
 type ctrlEntry struct {
 	prefix string
 	vl     reflect.Value
