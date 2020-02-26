@@ -148,6 +148,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	}
 }
 
+// todo use factory to clean code
 func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) {
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
