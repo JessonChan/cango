@@ -105,16 +105,57 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	rt, statusCode := can.serve(rw, r)
-	// todo nil是不是可以表示已经在函数内完成了？
-	if rt == nil {
-		rw.WriteHeader(int(statusCode))
-		_, _ = rw.Write([]byte(nil))
+	// todo filter should not be here?????
+	needStop := false
+	var filterReturn interface{}
+	for typ, dsp := range can.filterMuxMap {
+		match := doubleMatch(dsp, r)
+		if match.Error() == nil {
+			ri := can.filterMap[typ].PreHandle(rw, r)
+			if rt, ok := ri.(bool); ok {
+				// todo 这样的设计是不是合理？？？？
+				// 返回为false 这个之后注册的filter失效
+				if rt == false {
+					needStop = true
+				}
+			} else {
+				// 如果不是bool类型，需要提前结束
+				// todo 需要设计filter的执行顺序，优先生效最早返回的
+				filterReturn = ri
+			}
+		}
+	}
+	if needStop {
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	switch rt.(type) {
+	var handleReturn interface{}
+	var statusCode int
+	var needHandle = true
+	if filterReturn != nil {
+		// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
+		if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
+			rw = filterReturn.(http.ResponseWriter)
+		} else {
+			needHandle = false
+		}
+	}
+	if needHandle {
+		handleReturn, statusCode = can.serve(rw, r)
+		// todo nil是不是可以表示已经在函数内完成了？
+		// todo 这样的设计返回是有问题的
+		if handleReturn == nil {
+			rw.WriteHeader(statusCode)
+			_, _ = rw.Write([]byte(nil))
+			return
+		}
+	} else {
+		handleReturn = filterReturn
+	}
+
+	switch handleReturn.(type) {
 	case ModelView:
-		mv := rt.(ModelView)
+		mv := handleReturn.(ModelView)
 		tpl := can.lookupTpl(mv.Tpl)
 		if tpl == nil {
 			canlog.CanError("template not find", mv.Tpl, mv.Model)
@@ -127,26 +168,26 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		return
 	case Redirect:
-		code := rt.(Redirect).Code
+		code := handleReturn.(Redirect).Code
 		if code == 0 {
 			code = http.StatusFound
 		}
-		http.Redirect(rw, r, rt.(Redirect).Url, code)
+		http.Redirect(rw, r, handleReturn.(Redirect).Url, code)
 		return
 	case Content:
-		code := rt.(Content).Code
+		code := handleReturn.(Content).Code
 		if code == 0 {
 			code = http.StatusOK
 		}
 		rw.WriteHeader(code)
-		_, err := rw.Write([]byte(rt.(Content).String))
+		_, err := rw.Write([]byte(handleReturn.(Content).String))
 		if err != nil {
 			canlog.CanError(err)
 		}
 		return
 	case StaticFile:
 		var err error
-		path := rt.(StaticFile).Path
+		path := handleReturn.(StaticFile).Path
 		if path[0] != '/' {
 			path = "/" + path
 		}
@@ -161,15 +202,15 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if err != nil {
-			canlog.CanDebug(err, "can't find the file", rt)
+			canlog.CanDebug(err, "can't find the file", handleReturn)
 			// todo 404 default page
 		}
 		http.ServeFile(rw, r, path)
 		return
 	}
 
-	rw.WriteHeader(int(statusCode))
-	bs, err := responseJsonHandler(rt)
+	rw.WriteHeader(statusCode)
+	bs, err := responseJsonHandler(handleReturn)
 	if err == nil {
 		_, _ = rw.Write(bs)
 	} else {
@@ -258,8 +299,6 @@ func getRootPath() string {
 	return filepath.Dir(abs)
 }
 
-type StatusCode int
-
 func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	match := mux.Match(req)
 	if match.Error() != nil {
@@ -276,25 +315,7 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	return match
 }
 
-func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, StatusCode) {
-	// todo filter should not be here?????
-	for typ, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp, req)
-		if match.Error() == nil {
-			ri := can.filterMap[typ].PreHandle(req)
-			if rt, ok := ri.(bool); ok {
-				// todo 这样的设计是不是合理？？？？
-				// 返回为false 这个之后注册的filter失效
-				if rt == false {
-					break
-				}
-			} else {
-				// 如果不是bool类型，提前结束
-				return ri, http.StatusOK
-			}
-		}
-	}
-
+func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, int) {
 	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())

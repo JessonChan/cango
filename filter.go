@@ -22,7 +22,7 @@ import (
 
 // todo 为什么filter 不使用和URI一样的方式进行注册
 type Filter interface {
-	PreHandle(req *http.Request) interface{}
+	PreHandle(rw http.ResponseWriter, req *http.Request) interface{}
 	// todo
 	// PostHandle()
 	// AfterHandled()
