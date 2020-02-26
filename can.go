@@ -99,6 +99,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err := recover(); err != nil {
 			var buf [1024 * 10]byte
 			runtime.Stack(buf[:], false)
+			canlog.CanError(err)
 			canlog.CanError(string(buf[0:]))
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
