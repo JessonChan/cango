@@ -21,22 +21,21 @@ import (
 var timeType = reflect.TypeOf(time.Time{})
 
 // todo 缓存v struct结构
-func decode(holder map[string]string, v interface{}, filedName ...func(reflect.StructField) []string) {
+func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) []string) {
 	checkSet(stringFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, v, filedName)
+	}, rv, filedName)
 }
-func decodeForm(holder map[string][]string, v interface{}, filedName ...func(field reflect.StructField) []string) {
+func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
 	checkSet(strSliceFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, v, filedName)
+	}, rv, filedName)
 }
 
-func checkSet(flag int, holder func(string) (interface{}, bool), v interface{}, filedName []func(field reflect.StructField) []string) {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+func checkSet(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName []func(field reflect.StructField) []string) {
+	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
 	rv = reflect.Indirect(rv)

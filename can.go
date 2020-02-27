@@ -334,99 +334,55 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
 	}
-	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
-	if m.Type.NumIn() == 1 {
-		if m.Type.In(0) == uriType {
-			vs := m.Func.Call([]reflect.Value{reflect.ValueOf(newContext(rw, req))})
-			if len(vs) == 0 {
-				return nil, http.StatusMethodNotAllowed
-			}
-			if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
-				return vs[0].Elem().Interface(), http.StatusOK
-			}
-			return vs[0].Interface(), http.StatusOK
-		}
-		if m.Type.In(0).Implements(uriType) {
-			mt := reflect.New(m.Type.In(0)).Elem()
-			uriFiled := mt.FieldByName(uriName)
-			if uriFiled.IsValid() {
-				uriFiled.Set(reflect.ValueOf(newContext(rw, req)))
-			}
-			if func(methods string) bool {
-				switch methods {
-				case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
-					return true
-				default:
-					return false
-				}
-			}(req.Method) {
-				_ = req.ParseForm()
-				if len(req.Form) > 0 {
-					decodeForm(req.Form, mt.Addr().Interface())
-				}
-			}
-			if len(match.GetVars()) > 0 {
-				decode(match.GetVars(), mt.Addr().Interface())
-			}
-			vs := m.Func.Call([]reflect.Value{mt})
-			if len(vs) == 0 {
-				return nil, http.StatusMethodNotAllowed
-			}
-			if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
-				return vs[0].Elem().Interface(), http.StatusOK
-			}
-			return vs[0].Interface(), http.StatusOK
-		}
-	}
-	if m.Type.NumIn() != 2 {
+
+	// 当前版本不可能出现这种情况
+	if m.Type.NumIn() > 2 {
 		// error,method only have one arg
 		return nil, http.StatusMethodNotAllowed
 	}
-	// controller
-	ct := reflect.New(m.Type.In(0).Elem())
-	uriFiled := ct.Elem().FieldByName(uriName)
-	context := newContext(rw, req)
-	if uriFiled.IsValid() {
-		uriFiled.Set(reflect.ValueOf(context))
+	uriContext := reflect.ValueOf(newContext(rw, req))
+	var receiver reflect.Value
+	if m.Type.NumIn() == 2 {
+		receiver = reflect.New(m.Type.In(0).Elem())
+		uriFiled := receiver.Elem().FieldByName(uriName)
+		if uriFiled.IsValid() && uriFiled.CanSet() {
+			uriFiled.Set(uriContext)
+		}
 	}
-	// method
-	mt := reflect.New(m.Type.In(1)).Elem()
-	if mt.Type() == uriType {
-		mt.Set(reflect.ValueOf(context))
+	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
+	var args0 = reflect.New(m.Type.In(m.Type.NumIn() - 1)).Elem()
+	if args0.Type() == uriType {
+		args0.Set(uriContext)
 	} else {
-		uriFiled = mt.FieldByName(uriName)
-		if uriFiled.IsValid() {
-			uriFiled.Set(reflect.ValueOf(context))
-		}
-	}
-
-	// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
-	// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
-	// todo 性能提升
-	if func(httpMethod string) bool {
-		switch httpMethod {
-		case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
-			return true
-		default:
-			return false
-		}
-	}(req.Method) {
-		_ = req.ParseForm()
-		if len(req.Form) > 0 {
-			decodeForm(req.Form, ct.Interface())
-			if mt.Type() != uriType {
-				decodeForm(req.Form, mt.Addr().Interface())
-			}
+		uriFiled := args0.FieldByName(uriName)
+		if uriFiled.IsValid() && uriFiled.CanSet() {
+			uriFiled.Set(uriContext)
 		}
 	}
 	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), ct.Interface())
-		if mt.Type() != uriType {
-			decode(match.GetVars(), mt.Addr().Interface())
+		decode(match.GetVars(), receiver)
+		if args0.Type() != uriType {
+			decode(match.GetVars(), args0.Addr())
 		}
 	}
+	if shouldParsForm(req.Method) {
+		_ = req.ParseForm()
+		if len(req.Form) > 0 {
+			decodeForm(req.Form, receiver)
+			if args0.Type() != uriType {
+				decodeForm(req.Form, args0.Addr())
+			}
+		}
+	}
+	if receiver.IsValid() {
+		return call(m, receiver, args0)
+	} else {
+		return call(m, args0)
+	}
+}
 
-	vs := ct.MethodByName(m.Name).Call([]reflect.Value{mt})
+func call(m reflect.Method, values ...reflect.Value) (interface{}, int) {
+	vs := m.Func.Call(values)
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed
 	}
@@ -434,4 +390,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		return vs[0].Elem().Interface(), http.StatusOK
 	}
 	return vs[0].Interface(), http.StatusOK
+}
+
+// todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
+// todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
+// todo 性能提升
+func shouldParsForm(httpMethod string) bool {
+	switch httpMethod {
+	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
+		return true
+	default:
+		return false
+	}
 }
