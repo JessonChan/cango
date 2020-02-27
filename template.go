@@ -29,11 +29,13 @@ var rootTpl *template.Template
 
 var tplOnce sync.Once
 
+// RegTplFunc 用name注册fn函数，方便在渲染模板时使用
 func (can *Can) RegTplFunc(name string, fn interface{}) *Can {
 	can.tplFuncMap[name] = fn
 	return can
 }
 
+// lazy-init
 func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
