@@ -23,10 +23,23 @@ import (
 // todo 为什么filter 不使用和URI一样的方式进行注册
 type Filter interface {
 	PreHandle(rw http.ResponseWriter, req *http.Request) interface{}
+	// PostHandle(rw http.ResponseWriter, req *http.Request) interface{}
 	// todo
 	// PostHandle()
 	// AfterHandled()
 }
+
+type emptyFilter struct {
+}
+
+func (*emptyFilter) PreHandle(rw http.ResponseWriter, req *http.Request) interface{} {
+	return true
+}
+func (*emptyFilter) PostHandle(rw http.ResponseWriter, req *http.Request) interface{} {
+	return true
+}
+
+var filterImpl = reflect.ValueOf(&emptyFilter{})
 
 var filterType = reflect.TypeOf((*Filter)(nil)).Elem()
 var filterName = filterType.Name()
@@ -43,6 +56,14 @@ func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
+	for _, filter := range can.filterMap {
+		fv := reflect.ValueOf(filter).Elem()
+		ffv := fv.FieldByName(filterName)
+		if ffv.CanSet() && ffv.IsNil() {
+			ffv.Set(filterImpl)
+		}
+	}
+
 	for flt, typArr := range uriFilterMap {
 		dsp, ok := can.filterMuxMap[flt]
 		if !ok {
