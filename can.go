@@ -134,8 +134,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var needHandle = true
 	if filterReturn != nil {
 		// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
+		// todo 这种实现有无必要？？？
 		if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
 			rw = filterReturn.(http.ResponseWriter)
+			if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*io.Closer)(nil)).Elem()) {
+				defer func() {
+					_ = filterReturn.(io.Closer).Close()
+				}()
+			}
 		} else {
 			needHandle = false
 		}
@@ -152,7 +158,6 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	} else {
 		handleReturn = filterReturn
 	}
-
 	switch handleReturn.(type) {
 	case ModelView:
 		mv := handleReturn.(ModelView)
