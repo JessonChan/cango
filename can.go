@@ -151,7 +151,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		handleReturn = filterReturn
 	}
 
-	// todo 直接在type 中判断
+	// todo 直接在type switch中判断
 	if reflect.TypeOf(handleReturn).Kind() == reflect.Ptr {
 		handleReturn = reflect.ValueOf(handleReturn).Elem().Interface()
 	}
