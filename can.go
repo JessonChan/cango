@@ -134,14 +134,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var needHandle = true
 	if filterReturn != nil {
 		// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
-		// todo 这种实现有无必要？？？
 		if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
 			rw = filterReturn.(http.ResponseWriter)
-			if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*io.Closer)(nil)).Elem()) {
-				defer func() {
-					_ = filterReturn.(io.Closer).Close()
-				}()
-			}
 		} else {
 			needHandle = false
 		}
@@ -151,13 +145,17 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		// todo nil是不是可以表示已经在函数内完成了？
 		// todo 这样的设计返回是有问题的
 		if handleReturn == nil {
-			rw.WriteHeader(statusCode)
-			_, _ = rw.Write([]byte(nil))
-			return
+			handleReturn = doNothing
 		}
 	} else {
 		handleReturn = filterReturn
 	}
+
+	// todo 直接在type 中判断
+	if reflect.TypeOf(handleReturn).Kind() == reflect.Ptr {
+		handleReturn = reflect.ValueOf(handleReturn).Elem().Interface()
+	}
+
 	switch handleReturn.(type) {
 	case ModelView:
 		mv := handleReturn.(ModelView)
@@ -165,20 +163,19 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if tpl == nil {
 			canlog.CanError("template not find", mv.Tpl, mv.Model)
 			return
+		} else {
+			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+			err := tpl.Execute(rw, mv.Model)
+			if err != nil {
+				canlog.CanError("template error", err)
+			}
 		}
-		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-		err := tpl.Execute(rw, mv.Model)
-		if err != nil {
-			canlog.CanError("template error", err)
-		}
-		return
 	case Redirect:
 		code := handleReturn.(Redirect).Code
 		if code == 0 {
 			code = http.StatusFound
 		}
 		http.Redirect(rw, r, handleReturn.(Redirect).Url, code)
-		return
 	case Content:
 		code := handleReturn.(Content).Code
 		if code == 0 {
@@ -189,7 +186,6 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			canlog.CanError(err)
 		}
-		return
 	case StaticFile:
 		var err error
 		path := handleReturn.(StaticFile).Path
@@ -211,15 +207,21 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			// todo 404 default page
 		}
 		http.ServeFile(rw, r, path)
-		return
+	default:
+		rw.WriteHeader(statusCode)
+		bs, err := responseJsonHandler(handleReturn)
+		if err == nil {
+			_, _ = rw.Write(bs)
+		} else {
+			_, _ = rw.Write([]byte("{}"))
+		}
 	}
-
-	rw.WriteHeader(statusCode)
-	bs, err := responseJsonHandler(handleReturn)
-	if err == nil {
-		_, _ = rw.Write(bs)
-	} else {
-		_, _ = rw.Write([]byte("{}"))
+	// postHandle
+	for typ, dsp := range can.filterMuxMap {
+		match := doubleMatch(dsp, r)
+		if match.Error() == nil {
+			can.filterMap[typ].PostHandle(rw, r)
+		}
 	}
 }
 

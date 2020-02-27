@@ -62,6 +62,11 @@ type StaticFile struct {
 	Path string
 }
 
+type DoNothing struct {
+}
+
+var doNothing = DoNothing{}
+
 type httpMethod interface {
 }
 
