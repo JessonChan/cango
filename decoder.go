@@ -67,7 +67,6 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			if kind == reflect.Slice {
 				return false
 			}
-			// todo caster 返回值可能为非法，需要进行检测或者通过返回可用值
 			if caster, ok := casterMap[kind]; ok {
 				for _, key := range name {
 					if str, ok := holder(key); ok {
