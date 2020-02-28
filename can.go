@@ -207,6 +207,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			// todo 404 default page
 		}
 		http.ServeFile(rw, r, path)
+	case DoNothing:
+		// 这里就真的什么也不做了
 	default:
 		rw.WriteHeader(statusCode)
 		bs, err := responseJsonHandler(handleReturn)
