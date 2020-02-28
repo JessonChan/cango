@@ -341,4 +341,4 @@ cango.RegisterFilter(cango.Filter)
 
 ## 更多例子
 为了更好的理解和使用cango，`cango-cli`中还包含`can`、`short_url`和`demo`三个示例，请自己执行查看。
-另外，可以查看can_blog[http://www.github.com/JessonChan/can_blog]这个简单的博客项目。
+另外，可以查看[can_blog](http://www.github.com/JessonChan/can_blog)这个简单的博客项目。
