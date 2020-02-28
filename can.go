@@ -365,7 +365,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			decode(match.GetVars(), args0.Addr())
 		}
 	}
-	if shouldParsForm(req.Method) {
+	if shouldParseForm(req.Method) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
 			decodeForm(req.Form, receiver)
@@ -395,7 +395,7 @@ func call(m reflect.Method, values ...reflect.Value) (interface{}, int) {
 // todo 是否做如下区分 get=>Form, post/put/patch=>PostForm
 // todo 是否需要在此类方法上支持更多的特性，如自定义struct来区分pathValue和formValue
 // todo 性能提升
-func shouldParsForm(httpMethod string) bool {
+func shouldParseForm(httpMethod string) bool {
 	switch httpMethod {
 	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch:
 		return true
