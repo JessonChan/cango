@@ -15,7 +15,3 @@ package cango
 
 type Cookie interface {
 }
-
-type CanCookie struct {
-	Cookie
-}
