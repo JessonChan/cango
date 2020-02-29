@@ -13,5 +13,40 @@
 // limitations under the License.
 package cango
 
+import (
+	"net/http"
+	"reflect"
+)
+
 type Cookie interface {
+	Constructor
+}
+
+var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
+var cookieTypeName = cookieType.Name()
+
+const constructFlagFieldName = "isConstruct"
+
+type emptyCookieConstructor struct {
+	isConstruct bool
+}
+
+func (e *emptyCookieConstructor) Construct(r *http.Request) {
+	e.isConstruct = true
+}
+
+func cookieConstruct(r *http.Request, cs Cookie) {
+	if reflect.TypeOf(cs) == cookieType {
+		return
+	}
+	cs.Construct(r)
+	csv := reflect.ValueOf(cs)
+	// true -> 表示使用的是emptyCookieConstructor，也就是默认的构造器。
+	// 证明没有重新实现Construct方法，需要进行处理
+	elem := csv.Elem()
+	elem = elem.FieldByName(cookieTypeName).Elem()
+	if elem.Elem().FieldByName(constructFlagFieldName).Bool() {
+		cookies := r.Cookies()
+		checkSet(stringFlag, cookieHolder(cookies), csv, cookieFiledName())
+	}
 }

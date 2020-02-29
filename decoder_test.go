@@ -68,7 +68,7 @@ func Test_decode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decode(tt.args.holder, tt.args.v, tt.args.filedName)
+			decode(tt.args.holder, reflect.ValueOf(tt.args.v), tt.args.filedName)
 			t.Log(tt.args.v)
 		})
 	}
@@ -103,7 +103,7 @@ func Test_decodeForm(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decodeForm(tt.args.holder, tt.args.v, tt.args.filedName)
+			decodeForm(tt.args.holder, reflect.ValueOf(tt.args.v), tt.args.filedName)
 			t.Log(tt.args.v)
 		})
 	}
