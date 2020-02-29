@@ -27,18 +27,15 @@ var cookieTypeName = cookieType.Name()
 var emptyFiledName = reflect.TypeOf(emptyCookieConstructor{}).Field(0).Name
 
 type emptyCookieConstructor struct {
-	isEmptyConstruct bool
 }
 
-func (e *emptyCookieConstructor) Construct(r *http.Request) {
-	e.isEmptyConstruct = true
+func (e *emptyCookieConstructor) New(r *http.Request) {
 }
 
 func cookieConstruct(r *http.Request, cs Cookie) {
 	if reflect.TypeOf(cs) == cookieType {
 		return
 	}
-	cs.Construct(r)
 	csv := reflect.ValueOf(cs)
 	if csv.Kind() == reflect.Ptr {
 		csv = csv.Elem()
@@ -53,6 +50,9 @@ func cookieConstruct(r *http.Request, cs Cookie) {
 		cookies := r.Cookies()
 		checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
 	}
+	// 最后执行自定义函数的New方法
+	// 如果没有自定义方法，则执行结束
+	cs.New(r)
 }
 
 func cookieNameWithTag(field reflect.StructField) []string {

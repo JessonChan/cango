@@ -19,7 +19,7 @@ import (
 
 // Constructor is the interface that wraps the Construct method.
 //
-// Construct 可以初始化变量
+// New 可以从*http.Request中进行初始化变量
 type Constructor interface {
-	Construct(r *http.Request)
+	New(r *http.Request)
 }

@@ -17,7 +17,7 @@ type MyCookie1 struct {
 
 var build = "build"
 
-func (m *MyCookie1) Construct(r *http.Request) {
+func (m *MyCookie1) New(r *http.Request) {
 	m.build = build
 }
 
