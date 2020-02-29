@@ -15,5 +15,6 @@ package cango
 
 const (
 	uriTagName    string = "value"
+	pathFormName  string = "name"
 	cookieTagName string = "cookie"
 )
