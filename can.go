@@ -361,10 +361,11 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			uriFiled.Set(uriContext)
 		}
 	}
+
 	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), receiver)
+		decode(match.GetVars(), receiver, pathFormFn)
 		if args0.Type() != uriType {
-			decode(match.GetVars(), args0.Addr())
+			decode(match.GetVars(), args0.Addr(), pathFormFn)
 		}
 	}
 	if shouldParseForm(req.Method) {
@@ -372,15 +373,46 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		if len(req.Form) > 0 {
 			decodeForm(req.Form, receiver)
 			if args0.Type() != uriType {
-				decodeForm(req.Form, args0.Addr())
+				decodeForm(req.Form, args0.Addr(), pathFormFn)
 			}
 		}
 	}
+	cookies := req.Cookies()
+	if len(cookies) >= 0 {
+		checkSet(stringFlag, cookieHolder(cookies), receiver, cookieFiledName())
+		if args0.Type() != uriType {
+			checkSet(stringFlag, cookieHolder(cookies), args0.Addr(), cookieFiledName())
+		}
+	}
+
 	if receiver.IsValid() {
 		return call(m, receiver, args0)
 	} else {
 		return call(m, args0)
 	}
+}
+
+func cookieFiledName() func(field reflect.StructField) []string {
+	return func(field reflect.StructField) []string {
+		if field.Tag.Get(cookieTagName) != "" {
+			return []string{field.Tag.Get(cookieTagName)}
+		}
+		return []string{}
+	}
+}
+
+func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, bool) {
+	return func(cookieName string) (interface{}, bool) {
+		for _, cookie := range cookies {
+			if cookie.Name == cookieName {
+				return cookie.Value, true
+			}
+		}
+		return nil, false
+	}
+}
+func pathFormFn(field reflect.StructField) []string {
+	return filedName(field, pathFormName)
 }
 
 func call(m reflect.Method, values ...reflect.Value) (interface{}, int) {

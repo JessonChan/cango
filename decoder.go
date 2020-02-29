@@ -25,21 +25,21 @@ func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflec
 	checkSet(stringFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, rv, filedName)
+	}, rv, append(filedName, notTagName)[0])
 }
 func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
 	checkSet(strSliceFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, rv, filedName)
+	}, rv, append(filedName, notTagName)[0])
 }
 
-func checkSet(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName []func(field reflect.StructField) []string) {
+func checkSet(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedNameFn func(field reflect.StructField) []string) {
 	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
 	rv = reflect.Indirect(rv)
-	setValue(flag, holder, rv, append(filedName, notTagName)[0])
+	setValue(flag, holder, rv, filedNameFn)
 }
 
 const (
@@ -57,8 +57,8 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 		if f.Type().Kind() == reflect.Struct && f.Type() != timeType {
 			setValue(flag, holder, f, filedName)
 		}
-		// 返回值表示是否找到对应的converter
-		name := filedName(rv.Type().Field(i))
+		// 返回值表示是否找到对应的caster
+		names := filedName(rv.Type().Field(i))
 		set := func(flag int) bool {
 			kind := f.Kind()
 			if f.Type() == timeType {
@@ -68,8 +68,8 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 				return false
 			}
 			if caster, ok := casterMap[kind]; ok {
-				for _, key := range name {
-					if str, ok := holder(key); ok {
+				for _, name := range names {
+					if str, ok := holder(name); ok {
 						switch flag {
 						case stringFlag:
 							f.Set(caster(str.(string)))
@@ -94,7 +94,7 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 				if f.Kind() != reflect.Slice {
 					continue
 				}
-				for _, key := range name {
+				for _, key := range names {
 					if str, ok := holder(key); ok && len(str.([]string)) != 0 {
 						sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
 						kind := sv.Index(0).Kind()
