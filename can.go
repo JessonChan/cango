@@ -362,12 +362,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		}
 	}
 
-	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), receiver, pathFormFn)
-		if args0.Type() != uriType {
-			decode(match.GetVars(), args0.Addr(), pathFormFn)
-		}
-	}
+	// 先解析form
 	if shouldParseForm(req.Method) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
@@ -377,6 +372,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			}
 		}
 	}
+
+	// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
+	if len(match.GetVars()) > 0 {
+		decode(match.GetVars(), receiver, pathFormFn)
+		if args0.Type() != uriType {
+			decode(match.GetVars(), args0.Addr(), pathFormFn)
+		}
+	}
+
+	// 最后读取cookie，只赋值有cookie标签的变量
 	cookies := req.Cookies()
 	if len(cookies) >= 0 {
 		checkSet(stringFlag, cookieHolder(cookies), receiver, cookieFiledName())
