@@ -24,15 +24,14 @@ type Cookie interface {
 
 var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
 var cookieTypeName = cookieType.Name()
-
-const constructFlagFieldName = "isConstruct"
+var emptyFiledName = reflect.TypeOf(emptyCookieConstructor{}).Field(0).Name
 
 type emptyCookieConstructor struct {
-	isConstruct bool
+	isEmptyConstruct bool
 }
 
 func (e *emptyCookieConstructor) Construct(r *http.Request) {
-	e.isConstruct = true
+	e.isEmptyConstruct = true
 }
 
 func cookieConstruct(r *http.Request, cs Cookie) {
@@ -41,12 +40,21 @@ func cookieConstruct(r *http.Request, cs Cookie) {
 	}
 	cs.Construct(r)
 	csv := reflect.ValueOf(cs)
-	// true -> 表示使用的是emptyCookieConstructor，也就是默认的构造器。
-	// 证明没有重新实现Construct方法，需要进行处理
-	elem := csv.Elem()
-	elem = elem.FieldByName(cookieTypeName).Elem()
-	if elem.Elem().FieldByName(constructFlagFieldName).Bool() {
-		cookies := r.Cookies()
-		checkSet(stringFlag, cookieHolder(cookies), csv, cookieFiledName())
+	if csv.Kind() == reflect.Ptr {
+		csv = csv.Elem()
 	}
+	elem := csv.FieldByName(cookieTypeName).Elem()
+	if elem.Kind() == reflect.Ptr {
+		elem = elem.Elem()
+	}
+	// true -> 表示Construct使用的是emptyCookieConstructor，也就是默认的构造器。
+	// 证明没有重新实现Construct方法，需要进行处理
+	if elem.FieldByName(emptyFiledName).Bool() {
+		cookies := r.Cookies()
+		checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
+	}
+}
+
+func cookieNameWithTag(field reflect.StructField) []string {
+	return filedName(field, cookieTagName)
 }

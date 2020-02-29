@@ -7,6 +7,7 @@ import (
 
 type MyCookie0 struct {
 	Cookie
+	build string
 }
 
 type MyCookie1 struct {
@@ -54,16 +55,12 @@ func Test_cookieConstruct(t *testing.T) {
 			switch tt.name {
 			case "0":
 				myCookie := tt.args.cs.(*MyCookie0)
-				e := myCookie.Cookie.(*emptyCookieConstructor)
-				t.Log(e.isConstruct)
-				if e.isConstruct == false {
+				if myCookie.build != "" {
 					t.Fail()
 				}
 			case "1":
 				myCookie := tt.args.cs.(*MyCookie1)
-				e := myCookie.Cookie.(*emptyCookieConstructor)
-				t.Log(e.isConstruct)
-				if e.isConstruct {
+				if myCookie.build != build {
 					t.Fail()
 				}
 			}
