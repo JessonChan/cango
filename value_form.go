@@ -43,6 +43,7 @@ func formConstruct(r *http.Request, cs FormValue) {
 	if elem.Kind() == reflect.Ptr {
 		elem = elem.Elem()
 	}
+	// ParsForm可以多少调用，不会影响性能
 	_ = r.ParseForm()
 	decodeForm(r.Form, csv, notTagName)
 	cs.New(r)
