@@ -19,12 +19,11 @@ import (
 )
 
 type Cookie interface {
-	Constructor
+	constructor
 }
 
 var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
 var cookieTypeName = cookieType.Name()
-var emptyFiledName = reflect.TypeOf(emptyCookieConstructor{}).Field(0).Name
 
 type emptyCookieConstructor struct {
 }
@@ -44,12 +43,9 @@ func cookieConstruct(r *http.Request, cs Cookie) {
 	if elem.Kind() == reflect.Ptr {
 		elem = elem.Elem()
 	}
-	// true -> 表示Construct使用的是emptyCookieConstructor，也就是默认的构造器。
-	// 证明没有重新实现Construct方法，需要进行处理
-	if elem.FieldByName(emptyFiledName).Bool() {
-		cookies := r.Cookies()
-		checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
-	}
+	// 先从默认值进行赋值
+	cookies := r.Cookies()
+	checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
 	// 最后执行自定义函数的New方法
 	// 如果没有自定义方法，则执行结束
 	cs.New(r)
