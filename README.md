@@ -22,7 +22,7 @@ go install github.com/JessonChan/cango-cli
 cango-cli start
 cd start
 ```  
-本命令完成的工作是：创建一个文件，如route.go，写入下面的代码。
+本命令完成的工作是：创建一个文件，route.go，写入下面的代码。
 ```go
 package main
 
@@ -327,17 +327,25 @@ curl  -d ""  http://127.0.0.1:8080/ping/2020/15/white.json
 cango.URI `value:"/goto/*"`
 ```
 ### 过滤器
-当前版本支持前置过滤器。定义如下
+当前版本支持前置过滤器和后置过滤器，目前不支持对执行结果的修改。定义如下
 ```go 
-type VisitFilter struct {
-	cango.Filter `value:"/*"`
+type GzipFilter struct {
+	cango.Filter `value:"/static/*.css;/static/*.js"`
+}
+func (v *VisitFilter) PreHandle(w http.ResponseWriter, req *http.Request) interface{} {
+	return true
+}
+func (v *VisitFilter) PostHandle(w http.ResponseWriter, req *http.Request) interface{} {
+	return true
 }
 ```	
-如上所写，使用tag定义filter路径是最推荐的，但是你也可以根据自己的需要，只注册某些cango.URI，如下所示。
+如上所写，使用tag定义filter路径是最推荐的。上面的代码完成会在执行controller的函数前先执行PreHandle，再执行函数，最后执行PostHandle。它的作用范围是所有的css和js静态文件。  
+但是你也可以根据自己的需要，只注册某些cango.URI，如下所示。
 ```go
 can.Filter(f cango.Filter, uris ...cango.URI)
 cango.RegisterFilter(cango.Filter)
 ```
+上在的接口支持对某些接口单独的Filter。
 
 ## 更多例子
 为了更好的理解和使用cango，`cango-cli`中还包含`can`、`short_url`和`demo`三个示例，请自己执行查看。
