@@ -88,11 +88,11 @@ func Test_decodeForm(t *testing.T) {
 			name: "persons",
 			args: args{
 				holder: map[string][]string{
-					"Name":   []string{"Cango", "Golang"},
-					"Age":    []string{"1", "2"},
-					"Height": []string{"1.5"},
-					"birth":  []string{time.Now().Format(longSimpleTimeFormat)},
-					"IsGood": []string{"true"},
+					"Name":   {"Cango", "Golang"},
+					"Age":    {"1", "2"},
+					"Height": {"1.5"},
+					"birth":  {time.Now().Format(longSimpleTimeFormat)},
+					"IsGood": {"true"},
 				},
 				v: &Persons{},
 				filedName: func(field reflect.StructField) []string {
