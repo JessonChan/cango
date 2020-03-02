@@ -53,11 +53,11 @@ type Redirect struct {
 }
 
 func (r Redirect) WithCode(code int) *RedirectWithCode {
-	return &RedirectWithCode{Redirect: &r, Code: code}
+	return &RedirectWithCode{Url: r.Url, Code: code}
 }
 
 type RedirectWithCode struct {
-	*Redirect
+	Url  string
 	Code int
 }
 type Content struct {
