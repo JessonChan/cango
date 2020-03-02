@@ -17,15 +17,6 @@ type staticController struct {
 	URI
 }
 
-// var _ = RegisterURI(&staticController{})
-
-// func (s *staticController) Get(ps struct {
-// 	URI `value:"/static/*;/favicon.ico;/robots.txt"`
-// 	GetMethod
-// }) StaticFile {
-// 	return StaticFile{s.URI.Request().URL.Path}
-// }
-
-func (s *staticController) Get(URI) StaticFile {
-	return StaticFile{s.URI.Request().URL.Path}
+func (s *staticController) Get(uri URI) StaticFile {
+	return StaticFile{uri.Request().URL.Path}
 }
