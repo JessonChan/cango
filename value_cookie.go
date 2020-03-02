@@ -28,7 +28,7 @@ var cookieTypeName = cookieType.Name()
 type emptyCookieConstructor struct {
 }
 
-func (e *emptyCookieConstructor) New(r *http.Request) {
+func (e *emptyCookieConstructor) Construct(r *http.Request) {
 }
 
 func cookieConstruct(r *http.Request, cs Cookie) {
@@ -48,7 +48,7 @@ func cookieConstruct(r *http.Request, cs Cookie) {
 	checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
 	// 最后执行自定义函数的New方法
 	// 如果没有自定义方法，则执行结束
-	cs.New(r)
+	cs.Construct(r)
 }
 
 func cookieNameWithTag(field reflect.StructField) []string {
