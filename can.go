@@ -64,6 +64,8 @@ type Addr struct {
 }
 
 type Opts struct {
+	Host      string
+	Port      int
 	RootPath  string
 	TplDir    string
 	StaticDir string
