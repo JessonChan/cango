@@ -49,10 +49,17 @@ type ModelView struct {
 }
 
 type Redirect struct {
-	Url  string
-	Code int
+	Url string
 }
 
+func (r Redirect) WithCode(code int) *RedirectWithCode {
+	return &RedirectWithCode{Redirect: &r, Code: code}
+}
+
+type RedirectWithCode struct {
+	*Redirect
+	Code int
+}
 type Content struct {
 	String string
 	Code   int

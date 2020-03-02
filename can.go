@@ -171,11 +171,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			}
 		}
 	case Redirect:
-		code := handleReturn.(Redirect).Code
+		http.Redirect(rw, r, handleReturn.(Redirect).Url, http.StatusFound)
+	case RedirectWithCode:
+		code := handleReturn.(RedirectWithCode).Code
 		if code == 0 {
 			code = http.StatusFound
 		}
-		http.Redirect(rw, r, handleReturn.(Redirect).Url, code)
+		http.Redirect(rw, r, handleReturn.(RedirectWithCode).Url, http.StatusFound)
 	case Content:
 		code := handleReturn.(Content).Code
 		if code == 0 {
