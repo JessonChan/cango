@@ -22,7 +22,14 @@ import (
 
 // todo 为什么filter 不使用和URI一样的方式进行注册
 type Filter interface {
+	// PreHandle is used to perform operations before sending the request to the controller.
+	// This method should return true to continue the request serve.
+	// If this method returns false,the request will stop.
+	// If this method returns cango-return type(Redirect/ModelView...),the request will response with the type
+	// If this method returns http.ResponseWriter,the rw will be replaced
 	PreHandle(rw http.ResponseWriter, req *http.Request) interface{}
+	// PostHandle is used to perform operations before sending the response to the client.
+	// This method should return true.
 	PostHandle(rw http.ResponseWriter, req *http.Request) interface{}
 	// todo
 	// AfterHandled()
