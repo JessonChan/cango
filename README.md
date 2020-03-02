@@ -43,7 +43,7 @@ func main() {
 ```bash
 go run route.go
 ```
-打开 `http://127.0.0.1:8080`,就会看到`Hello,World!` ，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容 
+打开 `http://127.0.0.1:8080`,就会看到`Hello,World!` ，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容。   
 上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
 ```go
 package main
