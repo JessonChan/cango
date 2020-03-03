@@ -208,11 +208,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		if err != nil {
 			canlog.CanDebug(err, "can't find the file", handleReturn)
-			// todo 404 default page
+			error404(rw, r)
+		} else {
+			http.ServeFile(rw, r, path)
 		}
-		http.ServeFile(rw, r, path)
 	case DoNothing:
-		// 这里就真的什么也不做了
+		if statusCode == http.StatusNotFound {
+			error404(rw, r)
+		}
 	default:
 		rw.WriteHeader(statusCode)
 		bs, err := responseJsonHandler(handleReturn)
