@@ -14,7 +14,6 @@
 package cango
 
 import (
-	"net/http"
 	"reflect"
 	"strings"
 )
@@ -67,13 +66,15 @@ func factoryType(typ reflect.Type) *handlerStruct {
 				continue
 			}
 			switch in.Kind() {
+			// 此时，in的类型为cango.URI，形如这种
+			// func (c *Controller)Ping(cango.URI)interface{}
 			case reflect.Interface:
 				hs.fns = append(hs.fns, &handlerMethod{
 					fn: m,
 					patterns: func() (pms []*handlePath) {
 						return []*handlePath{{
 							path:        "",
-							httpMethods: []string{http.MethodGet},
+							httpMethods: defaultHttpMethods,
 						}}
 					}(),
 				})
