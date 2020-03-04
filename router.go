@@ -171,7 +171,6 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			}
 			switch f.Type {
 			case uriType:
-				tagPaths := tagUriParse(f.Tag)
 				setPath := func(path string) {
 					if len(strUrls) == 0 {
 						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, path}, "/")))
@@ -181,6 +180,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 						}
 					}
 				}
+				tagPaths := tagUriParse(f.Tag)
 				if len(tagPaths) == 0 {
 					setPath("")
 				} else {
