@@ -87,10 +87,10 @@ func (can *Can) buildFilter() {
 				for _, pattern := range fn.patterns {
 					if len(urls) > 0 {
 						for _, url := range urls {
-							buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.methods)
+							buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.httpMethods)
 						}
 					} else {
-						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(pattern.path), pattern.methods)
+						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(pattern.path), pattern.httpMethods)
 					}
 				}
 			}

@@ -19,20 +19,21 @@ import (
 	"strings"
 )
 
-type pathMethods struct {
-	path    string
-	methods []string
-}
+type (
+	handlerStruct struct {
+		typ reflect.Type
+		fns []*handlerMethod
+	}
+	handlerMethod struct {
+		fn       reflect.Method
+		patterns []*handlePath
+	}
 
-type handlerMethod struct {
-	fn       reflect.Method
-	patterns []*pathMethods
-}
-
-type handlerStruct struct {
-	typ reflect.Type
-	fns []*handlerMethod
-}
+	handlePath struct {
+		path        string
+		httpMethods []string
+	}
+)
 
 var cacheStruct = map[reflect.Type]*handlerStruct{}
 
@@ -65,10 +66,10 @@ func factoryType(typ reflect.Type) *handlerStruct {
 			case reflect.Interface:
 				hs.fns = append(hs.fns, &handlerMethod{
 					fn: m,
-					patterns: func() (pms []*pathMethods) {
-						return []*pathMethods{{
-							path:    "",
-							methods: []string{http.MethodGet},
+					patterns: func() (pms []*handlePath) {
+						return []*handlePath{{
+							path:        "",
+							httpMethods: []string{http.MethodGet},
 						}}
 					}(),
 				})
@@ -89,9 +90,9 @@ func factoryType(typ reflect.Type) *handlerStruct {
 				hm := &handlerMethod{fn: m}
 				hs.fns = append(hs.fns, hm)
 				for _, path := range paths {
-					hm.patterns = append(hm.patterns, &pathMethods{
-						path:    path,
-						methods: methods,
+					hm.patterns = append(hm.patterns, &handlePath{
+						path:        path,
+						httpMethods: methods,
 					})
 				}
 			}
