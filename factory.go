@@ -38,11 +38,15 @@ type (
 var cacheStruct = map[reflect.Type]*handlerStruct{}
 
 func factory(i interface{}) *handlerStruct {
+	return factoryType(toPtrKind(i))
+}
+func toPtrKind(i interface{}) reflect.Type {
 	typ := reflect.TypeOf(i)
 	if typ.Kind() != reflect.Ptr {
-		panic("must be a ptr")
+		// 转换成指针类型
+		typ = reflect.New(typ).Type()
 	}
-	return factoryType(typ)
+	return typ
 }
 func factoryType(typ reflect.Type) *handlerStruct {
 	hs, ok := cacheStruct[typ]
