@@ -19,14 +19,6 @@ import (
 	"strings"
 )
 
-/**
-struct 一对多 method
-method 一对多  path
-path 一对多 httpMethod
-
-查找时(path,httpMethod)
-*/
-
 type pathMethods struct {
 	path    string
 	methods []string
