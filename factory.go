@@ -95,16 +95,20 @@ func factoryType(typ reflect.Type) *handlerStruct {
 					continue
 				}
 				paths := tagUriParse(uriFiled.Tag)
-				methods := func() (methods []string) {
+				methods := func() (foundHttpMethods []string) {
 					for k, v := range httpMethodMap {
 						if _, ok := in.FieldByName(k.Name()); ok {
-							methods = append(methods, v)
+							foundHttpMethods = append(foundHttpMethods, v)
 						}
 					}
 					return
 				}()
 				hm := &handlerMethod{fn: m}
 				hs.fns = append(hs.fns, hm)
+				// 没有在方法定义路径，需要用空的字段把方法带出去
+				if len(paths) == 0 {
+					paths = []string{""}
+				}
 				for _, path := range paths {
 					hm.patterns = append(hm.patterns, &handlePath{
 						path:        path,
