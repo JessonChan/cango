@@ -47,6 +47,17 @@ func toPtrKind(i interface{}) reflect.Type {
 	}
 	return typ
 }
+
+func implements(in, typ reflect.Type) reflect.Type {
+	if in.Implements(typ) {
+		if in.Kind() == reflect.Ptr {
+			in = in.Elem()
+		}
+		return in
+	}
+	return nil
+}
+
 func factoryType(typ reflect.Type) *handlerStruct {
 	hs, ok := cacheStruct[typ]
 	if ok {
@@ -61,8 +72,8 @@ func factoryType(typ reflect.Type) *handlerStruct {
 		}
 		// todo 现在只接受一个参数???
 		for j := 0; j < m.Type.NumIn(); j++ {
-			in := m.Type.In(j)
-			if in.Implements(uriType) == false {
+			in := implements(m.Type.In(j), uriType)
+			if in == nil {
 				continue
 			}
 			switch in.Kind() {
