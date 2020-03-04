@@ -169,13 +169,11 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			if f.PkgPath != "" {
 				canlog.CanError("could not use unexpected filed in param:" + f.Name)
 			}
-			switch f.Type {
-			case uriType:
+			if f.Type == uriType {
 				can.methodMap[routerName] = m
 				paths = appendPaths(tagUriParse(f.Tag), strUrls, prefix)
 			}
-			m, ok := httpMethodMap[f.Type]
-			if ok {
+			if m, ok := httpMethodMap[f.Type]; ok {
 				httpMethods = append(httpMethods, m)
 			}
 		}
