@@ -171,24 +171,8 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			}
 			switch f.Type {
 			case uriType:
-				setPath := func(path string) {
-					if len(strUrls) == 0 {
-						paths = append(paths, filepath.Clean(strings.Join([]string{prefix, path}, "/")))
-					} else {
-						for _, strUrl := range strUrls {
-							paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
-						}
-					}
-				}
-				tagPaths := tagUriParse(f.Tag)
-				if len(tagPaths) == 0 {
-					setPath("")
-				} else {
-					for _, path := range tagPaths {
-						setPath(path)
-					}
-				}
 				can.methodMap[routerName] = m
+				paths = appendPaths(tagUriParse(f.Tag), strUrls, prefix)
 			}
 			m, ok := httpMethodMap[f.Type]
 			if ok {
@@ -204,4 +188,19 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 			canlog.CanDebug(routerName, path, httpMethods)
 		}
 	}
+}
+
+func appendPaths(tagPaths, strUrls []string, prefix string) (paths []string) {
+	if len(tagPaths) == 0 {
+		tagPaths = []string{""}
+	}
+	if len(strUrls) == 0 {
+		strUrls = []string{""}
+	}
+	for _, path := range tagPaths {
+		for _, strUrl := range strUrls {
+			paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
+		}
+	}
+	return paths
 }
