@@ -45,6 +45,6 @@ func formConstruct(r *http.Request, cs FormValue) {
 	}
 	// ParsForm可以多少调用，不会影响性能
 	_ = r.ParseForm()
-	decodeForm(r.Form, csv, notTagName)
+	decodeForm(r.Form, csv, noTagName)
 	cs.Construct(r)
 }

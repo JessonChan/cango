@@ -25,13 +25,13 @@ func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflec
 	checkSet(stringFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, rv, append(filedName, notTagName)[0])
+	}, rv, append(filedName, noTagName)[0])
 }
 func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
 	checkSet(strSliceFlag, func(s string) (interface{}, bool) {
 		v, ok := holder[s]
 		return v, ok
-	}, rv, append(filedName, notTagName)[0])
+	}, rv, append(filedName, noTagName)[0])
 }
 
 func checkSet(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedNameFn func(field reflect.StructField) []string) {
@@ -125,7 +125,7 @@ func filedName(f reflect.StructField, tagName string) []string {
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
 }
 
-func notTagName(f reflect.StructField) []string {
+func noTagName(f reflect.StructField) []string {
 	return filedName(f, "")
 }
 
