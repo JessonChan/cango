@@ -153,7 +153,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 	for i := 0; i < m.Type.NumIn(); i++ {
 		in := m.Type.In(i)
 		if in.Kind() != reflect.Struct {
-			if in.Kind() == reflect.Interface && in == uriType {
+			if in == uriType {
 				route := can.routeMux.NewForwarder(routerName)
 				route.PathMethods(prefix, defaultHttpMethods...)
 				can.methodMap[routerName] = m
