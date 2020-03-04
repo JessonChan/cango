@@ -35,6 +35,7 @@ type (
 )
 
 var cacheStruct = map[reflect.Type]*handlerStruct{}
+var cacheMethod = map[reflect.Method]*handlerMethod{}
 
 func factory(i interface{}) *handlerStruct {
 	return factoryType(toPtrKind(i))
@@ -70,55 +71,71 @@ func factoryType(typ reflect.Type) *handlerStruct {
 		if m.PkgPath != "" {
 			continue
 		}
-		// todo 现在只接受一个参数???
-		for j := 0; j < m.Type.NumIn(); j++ {
-			in := implements(m.Type.In(j), uriType)
-			if in == nil {
-				continue
-			}
-			switch in.Kind() {
-			// 此时，in的类型为cango.URI，形如这种
-			// func (c *Controller)Ping(cango.URI)interface{}
-			case reflect.Interface:
-				hs.fns = append(hs.fns, &handlerMethod{
-					fn: m,
-					patterns: func() (pms []*handlePath) {
-						return []*handlePath{{
-							path:        "",
-							httpMethods: defaultHttpMethods,
-						}}
-					}(),
-				})
-			case reflect.Struct:
-				uriFiled, ok := in.FieldByName(uriName)
-				if !ok {
-					continue
-				}
-				paths := tagUriParse(uriFiled.Tag)
-				methods := func() (foundHttpMethods []string) {
-					for k, v := range httpMethodMap {
-						if _, ok := in.FieldByName(k.Name()); ok {
-							foundHttpMethods = append(foundHttpMethods, v)
-						}
-					}
-					return
-				}()
-				hm := &handlerMethod{fn: m}
-				hs.fns = append(hs.fns, hm)
-				// 没有在方法定义路径，需要用空的字段把方法带出去
-				if len(paths) == 0 {
-					paths = []string{""}
-				}
-				for _, path := range paths {
-					hm.patterns = append(hm.patterns, &handlePath{
-						path:        path,
-						httpMethods: methods,
-					})
-				}
-			}
+		hm := factoryMethod(m)
+		if hm != nil {
+			hs.fns = append(hs.fns, hm)
 		}
+
 	}
 	return hs
+}
+
+func factoryMethod(m reflect.Method) *handlerMethod {
+	if hm, ok := cacheMethod[m]; ok {
+		return hm
+	}
+	// todo 现在只接受一个参数???
+	for j := 0; j < m.Type.NumIn(); j++ {
+		in := implements(m.Type.In(j), uriType)
+		if in == nil {
+			continue
+		}
+		switch in.Kind() {
+		// 此时，in的类型为cango.URI，形如这种
+		// func (c *Controller)Ping(cango.URI)interface{}
+		case reflect.Interface:
+			hm := &handlerMethod{
+				fn: m,
+				patterns: func() (pms []*handlePath) {
+					return []*handlePath{{
+						path:        "",
+						httpMethods: defaultHttpMethods,
+					}}
+				}(),
+			}
+			cacheMethod[m] = hm
+			return hm
+		case reflect.Struct:
+			uriFiled, ok := in.FieldByName(uriName)
+			if !ok {
+				continue
+			}
+			paths := tagUriParse(uriFiled.Tag)
+			methods := func() (foundHttpMethods []string) {
+				for k, v := range httpMethodMap {
+					if _, ok := in.FieldByName(k.Name()); ok {
+						foundHttpMethods = append(foundHttpMethods, v)
+					}
+				}
+				return
+			}()
+			hm := &handlerMethod{fn: m}
+			// 没有在方法定义路径，需要用空的字段把方法带出去
+			if len(paths) == 0 {
+				paths = []string{""}
+			}
+			// 依然有改进空间
+			for _, path := range paths {
+				hm.patterns = append(hm.patterns, &handlePath{
+					path:        path,
+					httpMethods: methods,
+				})
+			}
+			cacheMethod[m] = hm
+			return hm
+		}
+	}
+	return nil
 }
 
 // urlStr get uri from tag value
