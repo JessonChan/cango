@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_appendPaths(t *testing.T) {
+func Test_combinePaths(t *testing.T) {
 	type args struct {
 		tagPaths string
 		strUrls  []string
