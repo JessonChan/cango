@@ -126,15 +126,10 @@ func (can *Can) buildStaticRoute() {
 func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	switch ce.kind {
 	case reflect.Ptr:
-		tvp := toPtrKind(ce.ctrl)
-		strUrls, ctlName := urlStr(tvp.Elem())
-		for i := 0; i < tvp.NumMethod(); i++ {
-			m := tvp.Method(i)
-			if m.PkgPath != "" {
-				continue
-			}
-			routerName := ctlName + "." + m.Name
-			can.routeMethod(ce.prefix, m, routerName, strUrls)
+		hs := factory(ce.ctrl)
+		strUrls, ctlName := urlStr(hs.typ.Elem())
+		for _, hm := range hs.fns {
+			can.routeMethod(ce.prefix, hm.fn, ctlName+"."+hm.fn.Name, strUrls)
 		}
 	case reflect.Func:
 		can.routeMethod(ce.prefix, ce.fn, "RouteFunc."+ce.fn.Name, nil)
@@ -142,7 +137,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 }
 
 // todo use factory to clean code
-func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) {
+func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, ctrlTagPaths []string) {
 	hm := factoryMethod(m)
 	if hm == nil {
 		return
@@ -150,7 +145,7 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 	for _, hp := range hm.patterns {
 		route := can.routeMux.NewForwarder(routerName)
 		can.methodMap[routerName] = m
-		for _, path := range appendPaths([]string{hp.path}, strUrls, prefix) {
+		for _, path := range combinePaths(prefix, ctrlTagPaths, hp.path) {
 			// default method is get
 			httpMethods := defaultHttpMethods
 			if len(hp.httpMethods) > 0 {
@@ -162,17 +157,12 @@ func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, 
 	}
 }
 
-func appendPaths(tagPaths, strUrls []string, prefix string) (paths []string) {
-	if len(tagPaths) == 0 {
-		tagPaths = []string{""}
+func combinePaths(prefix string, ctrlTagPaths []string, methodTagPath string) (paths []string) {
+	if len(ctrlTagPaths) == 0 {
+		ctrlTagPaths = []string{""}
 	}
-	if len(strUrls) == 0 {
-		strUrls = []string{""}
-	}
-	for _, path := range tagPaths {
-		for _, strUrl := range strUrls {
-			paths = append(paths, filepath.Clean(strings.Join([]string{prefix, strUrl, path}, "/")))
-		}
+	for _, ctrlTagPaths := range ctrlTagPaths {
+		paths = append(paths, filepath.Clean(strings.Join([]string{prefix, ctrlTagPaths, methodTagPath}, "/")))
 	}
 	return paths
 }

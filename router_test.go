@@ -7,7 +7,7 @@ import (
 
 func Test_appendPaths(t *testing.T) {
 	type args struct {
-		tagPaths []string
+		tagPaths string
 		strUrls  []string
 		prefix   string
 	}
@@ -19,7 +19,7 @@ func Test_appendPaths(t *testing.T) {
 		{
 			name: "empty_tag",
 			args: args{
-				tagPaths: nil,
+				tagPaths: "",
 				strUrls:  []string{"str"},
 				prefix:   "/prefix",
 			},
@@ -28,7 +28,7 @@ func Test_appendPaths(t *testing.T) {
 		{
 			name: "empty_str",
 			args: args{
-				tagPaths: []string{"tag"},
+				tagPaths: "tag",
 				strUrls:  []string{},
 				prefix:   "/prefix",
 			},
@@ -37,7 +37,7 @@ func Test_appendPaths(t *testing.T) {
 		{
 			name: "empty",
 			args: args{
-				tagPaths: nil,
+				tagPaths: "",
 				strUrls:  nil,
 				prefix:   "/prefix",
 			},
@@ -46,16 +46,16 @@ func Test_appendPaths(t *testing.T) {
 		{
 			name: "full",
 			args: args{
-				tagPaths: []string{"tag1", "tag2"},
+				tagPaths: "tag1",
 				strUrls:  []string{"str1", "str2"},
 				prefix:   "/prefix",
 			},
-			wantPaths: []string{"/prefix/str1/tag1", "/prefix/str2/tag1", "/prefix/str1/tag2", "/prefix/str2/tag2"},
+			wantPaths: []string{"/prefix/str1/tag1", "/prefix/str2/tag1"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotPaths := appendPaths(tt.args.tagPaths, tt.args.strUrls, tt.args.prefix); !reflect.DeepEqual(gotPaths, tt.wantPaths) {
+			if gotPaths := combinePaths(tt.args.prefix, tt.args.strUrls, tt.args.tagPaths); !reflect.DeepEqual(gotPaths, tt.wantPaths) {
 				t.Errorf("appendPaths() = %v, want %v", gotPaths, tt.wantPaths)
 			}
 		})
