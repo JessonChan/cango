@@ -35,6 +35,8 @@ type Filter interface {
 	// AfterHandled()
 }
 
+var _ = Filter(&emptyFilter{})
+
 type emptyFilter struct {
 }
 
@@ -51,6 +53,8 @@ var filterType = reflect.TypeOf((*Filter)(nil)).Elem()
 var filterName = filterType.Name()
 
 var filterRegMap = map[Filter]bool{}
+
+// key-FilterType ,value-URI Type
 var uriFilterMap = map[reflect.Type][]reflect.Type{}
 
 func RegisterFilter(filter Filter) bool {
@@ -83,14 +87,13 @@ func (can *Can) buildFilter() {
 		for _, typ := range typArr {
 			hs := factoryType(typ)
 			urls, _ := urlStr(typ.Elem())
+			if len(urls) == 0 {
+				urls = []string{""}
+			}
 			for _, fn := range hs.fns {
 				for _, pattern := range fn.patterns {
-					if len(urls) > 0 {
-						for _, url := range urls {
-							buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.httpMethods)
-						}
-					} else {
-						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(pattern.path), pattern.httpMethods)
+					for _, url := range urls {
+						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.httpMethods)
 					}
 				}
 			}
@@ -171,15 +174,16 @@ func (can *Can) Filter(f Filter, uris ...URI) *Can {
 			uris = append(uris, rp.Field(i).Interface().(URI))
 		}
 	}
+	// 只是注册Filter,路由使用Filter的Value字段
 	if len(uris) == 0 {
 		if len(uriFilterMap[reflect.TypeOf(f)]) == 0 {
 			uriFilterMap[reflect.TypeOf(f)] = nil
 			can.filterMap[reflect.TypeOf(f)] = f
 		}
-	}
-
-	for _, uri := range uris {
-		can.filter(f, uri)
+	} else {
+		for _, uri := range uris {
+			can.filter(f, uri)
+		}
 	}
 	return can
 }
