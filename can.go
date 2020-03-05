@@ -352,14 +352,14 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	uriContext := reflect.ValueOf(newContext(rw, req))
 	var receiver reflect.Value
 	if invoker.Type.NumIn() == 2 {
-		receiver = reflect.New(invoker.Type.In(0).Elem())
+		receiver = newValue(invoker.Type.In(0))
 		uriFiled := receiver.Elem().FieldByName(uriName)
 		if uriFiled.IsValid() && uriFiled.CanSet() {
 			uriFiled.Set(uriContext)
 		}
 	}
 	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
-	var args0 = reflect.New(invoker.Type.In(invoker.Type.NumIn() - 1)).Elem()
+	var args0 = newValue(invoker.Type.In(invoker.Type.NumIn() - 1))
 	if args0.Type() == uriType {
 		args0.Set(uriContext)
 	} else {
@@ -427,6 +427,16 @@ func pathFormFn(field reflect.StructField) []string {
 	return filedName(field, pathFormName)
 }
 
+func newValue(typ reflect.Type) reflect.Value {
+	// pointer,new typ.Elem()
+	if typ.Kind() == reflect.Ptr {
+		return reflect.New(typ.Elem())
+	}
+	// normal
+	return reflect.New(typ).Elem()
+}
+
+// 执行函数
 func call(m reflect.Method, values ...reflect.Value) (interface{}, int) {
 	vs := m.Func.Call(values)
 	if len(vs) == 0 {
