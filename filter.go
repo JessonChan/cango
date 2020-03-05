@@ -103,12 +103,7 @@ func (can *Can) buildFilter() {
 
 func getPaths(typ reflect.Type) ([]string, []string) {
 	if typ.Implements(filterType) {
-		ff, ok := typ.Elem().FieldByName(filterName)
-		if ok {
-			paths := tagUriParse(ff.Tag)
-			if len(paths) == 0 {
-				return []string{}, []string{}
-			}
+		if ff, ok := typ.Elem().FieldByName(filterName); ok {
 			var httpMethods []string
 			for i := 0; i < typ.Elem().NumField(); i++ {
 				if m, ok := httpMethodMap[typ.Elem().Field(i).Type]; ok {
@@ -118,7 +113,7 @@ func getPaths(typ reflect.Type) ([]string, []string) {
 			if len(httpMethods) == 0 {
 				httpMethods = allHttpMethods
 			}
-			return paths, httpMethods
+			return tagUriParse(ff.Tag), httpMethods
 		}
 	}
 	return []string{}, []string{}
