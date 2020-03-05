@@ -18,9 +18,8 @@ import (
 )
 
 const (
-	//
-	invokeByReceiver = 0
-	invokeBySelf     = 1
+	invokeBySelf     = 0
+	invokeByReceiver = 1
 )
 
 // invoker实际执行请求的函数
