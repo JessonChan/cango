@@ -37,6 +37,7 @@ var uriMethods = func() (ms []reflect.Method) {
 	return
 }()
 
+// 判断某个方法是否是接口中包含的方法，接口中的方法不参与路由的构建
 func uriInterfaceContains(m reflect.Method) bool {
 	for _, v := range uriMethods {
 		if v.Name == m.Name && m.Type.NumIn() == v.Type.NumIn() && m.Type.NumOut() == v.Type.NumOut() {
