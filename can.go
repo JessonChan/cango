@@ -349,31 +349,52 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		// error,method only have one arg
 		return nil, http.StatusMethodNotAllowed
 	}
+
 	uriContext := reflect.ValueOf(newContext(rw, req))
+	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	var receiver reflect.Value
-	if invoker.Type.NumIn() == 2 {
+	if invoker.kind == invokeByReceiver {
 		receiver = newValue(invoker.Type.In(0))
 		uriFiled := receiver.Elem().FieldByName(uriName)
 		if uriFiled.IsValid() && uriFiled.CanSet() {
 			uriFiled.Set(uriContext)
 		}
+		callerIn[0] = receiver
 	}
-	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
-	var args0 = newValue(invoker.Type.In(invoker.Type.NumIn() - 1))
-	if args0.Type() == uriType {
-		args0.Set(uriContext)
-	} else {
-		uriFiled := args0.FieldByName(uriName)
-		if uriFiled.IsValid() && uriFiled.CanSet() {
-			uriFiled.Set(uriContext)
+	foundURI := -1
+	for j := len(callerIn); j > invoker.kind; j-- {
+		idx := j - 1
+		in := invoker.Type.In(idx)
+		callerIn[idx] = newValue(in)
+		// 只会对最后一个进行赋值
+		if in.Implements(uriType) && foundURI == -1 {
+			foundURI = idx
+			if in == uriType {
+				callerIn[idx].Set(uriContext)
+			} else {
+				uriFiled := callerIn[idx].FieldByName(uriName)
+				if uriFiled.IsValid() && uriFiled.CanSet() {
+					uriFiled.Set(uriContext)
+				}
+			}
+		}
+		if in.Implements(cookieType) {
+			cs := addr(callerIn[idx]).Interface().(Cookie)
+			cookieConstruct(req, cs)
+		}
+		if in.Implements(formValueType) {
+			fs := addr(callerIn[idx]).Interface().(FormValue)
+			formConstruct(req, fs)
 		}
 	}
-
+	var args0 = callerIn[foundURI]
 	// 先解析form
 	if shouldParseForm(req.Method) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
-			decodeForm(req.Form, addr(receiver))
+			if invoker.kind == invokeByReceiver {
+				decodeForm(req.Form, addr(receiver))
+			}
 			if args0.Type() != uriType {
 				decodeForm(req.Form, addr(args0), pathFormFn)
 			}
@@ -382,7 +403,9 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 
 	// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
 	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), addr(receiver), pathFormFn)
+		if invoker.kind == invokeByReceiver {
+			decode(match.GetVars(), addr(receiver), pathFormFn)
+		}
 		if args0.Type() != uriType {
 			decode(match.GetVars(), addr(args0), pathFormFn)
 		}
@@ -391,17 +414,14 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	// 最后读取cookie，只赋值有cookie标签的变量
 	cookies := req.Cookies()
 	if len(cookies) >= 0 {
-		checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieFiledName())
-		if args0.Type() != uriType {
+		if invoker.kind == invokeByReceiver {
 			checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieFiledName())
 		}
+		if args0.Type() != uriType {
+			checkSet(stringFlag, cookieHolder(cookies), addr(args0), cookieFiledName())
+		}
 	}
-
-	if receiver.IsValid() {
-		return call(*invoker.Method, receiver, args0)
-	} else {
-		return call(*invoker.Method, args0)
-	}
+	return call(*invoker.Method, callerIn)
 }
 
 func cookieFiledName() func(field reflect.StructField) []string {
@@ -444,7 +464,7 @@ func newValue(typ reflect.Type) reflect.Value {
 }
 
 // 执行函数
-func call(m reflect.Method, values ...reflect.Value) (interface{}, int) {
+func call(m reflect.Method, values []reflect.Value) (interface{}, int) {
 	vs := m.Func.Call(values)
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed

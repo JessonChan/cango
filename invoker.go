@@ -24,8 +24,8 @@ const (
 
 // invoker实际执行请求的函数
 // kind用来表示是通过struct来注册的还是只是通过函数来注册的
-// 0 --- 通过struct
-// 1 --- 通过函数
+// 0 invokeBySelf --- 通过函数
+// 1 invokeByReceiver --- 通过struct
 type invoker struct {
 	kind int
 	*reflect.Method
