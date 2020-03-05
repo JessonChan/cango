@@ -84,9 +84,13 @@ func factoryMethod(m reflect.Method) *handlerMethod {
 	if hm, ok := cacheMethod[m]; ok {
 		return hm
 	}
+	if IsEmptyRequest(m) {
+		return nil
+	}
 	// todo 现在只接受一个参数???
-	for j := 0; j < m.Type.NumIn(); j++ {
-		in := implements(m.Type.In(j), uriType)
+	// 只接受参数列表最后一个做为uri
+	for j := m.Type.NumIn(); j > 0; j-- {
+		in := implements(m.Type.In(j-1), uriType)
 		if in == nil {
 			continue
 		}
@@ -136,6 +140,12 @@ func factoryMethod(m reflect.Method) *handlerMethod {
 		}
 	}
 	return nil
+}
+
+var uriRequestName = "Request"
+
+func IsEmptyRequest(m reflect.Method) bool {
+	return m.Name == uriRequestName && m.Type.NumIn() == 1 && m.Type.NumOut() == 1 && m.Type.Out(0).Elem() == reflect.TypeOf(WebRequest{})
 }
 
 // urlStr get uri from tag value

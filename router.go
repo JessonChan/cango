@@ -150,38 +150,19 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 
 // todo use factory to clean code
 func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, strUrls []string) {
-	for i := 0; i < m.Type.NumIn(); i++ {
-		in := m.Type.In(i)
-		if in.Kind() != reflect.Struct {
-			if in == uriType {
-				route := can.routeMux.NewForwarder(routerName)
-				route.PathMethods(prefix, defaultHttpMethods...)
-				can.methodMap[routerName] = m
-				canlog.CanDebug(routerName, prefix, defaultHttpMethods)
-			}
-			continue
-		}
+	hm := factoryMethod(m)
+	if hm == nil {
+		return
+	}
+	for _, hp := range hm.patterns {
 		route := can.routeMux.NewForwarder(routerName)
-		var httpMethods []string
-		var paths []string
-		for j := 0; j < in.NumField(); j++ {
-			f := in.Field(j)
-			if f.PkgPath != "" {
-				canlog.CanError("could not use unexpected filed in param:" + f.Name)
+		can.methodMap[routerName] = m
+		for _, path := range appendPaths([]string{hp.path}, strUrls, prefix) {
+			// default method is get
+			httpMethods := defaultHttpMethods
+			if len(hp.httpMethods) > 0 {
+				httpMethods = hp.httpMethods
 			}
-			if f.Type == uriType {
-				can.methodMap[routerName] = m
-				paths = appendPaths(tagUriParse(f.Tag), strUrls, prefix)
-			}
-			if m, ok := httpMethodMap[f.Type]; ok {
-				httpMethods = append(httpMethods, m)
-			}
-		}
-		// default method is get
-		if len(httpMethods) == 0 {
-			httpMethods = defaultHttpMethods
-		}
-		for _, path := range paths {
 			route.PathMethods(path, httpMethods...)
 			canlog.CanDebug(routerName, path, httpMethods)
 		}
