@@ -45,6 +45,7 @@ func Test_decode(t *testing.T) {
 		v         interface{}
 		filedName func(field reflect.StructField) []string
 	}
+	now := time.Now()
 	tests := []struct {
 		name string
 		args args
@@ -56,7 +57,7 @@ func Test_decode(t *testing.T) {
 					"Name":   "Cango",
 					"Age":    "1",
 					"Height": "1.5",
-					"birth":  time.Now().Format(longSimpleTimeFormat),
+					"birth":  now.Format(longSimpleTimeFormat),
 					"IsGood": "true",
 				},
 				v: &Person{},
@@ -69,7 +70,28 @@ func Test_decode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			decode(tt.args.holder, reflect.ValueOf(tt.args.v), tt.args.filedName)
-			t.Log(tt.args.v)
+			switch tt.args.v.(type) {
+			case *Person:
+				v := tt.args.v.(*Person)
+				if v.Name != "Cango" {
+					t.Fail()
+				}
+				if v.Age != 1 {
+					t.Fail()
+				}
+				if v.Height != 1.5 {
+					t.Fail()
+				}
+				if v.IsGood != true {
+					t.Fail()
+				}
+				if v.Birthday.Format(longSimpleTimeFormat) != now.Format(longSimpleTimeFormat) {
+					t.Fail()
+				}
+
+			default:
+				t.Fail()
+			}
 		})
 	}
 }
@@ -101,10 +123,32 @@ func Test_decodeForm(t *testing.T) {
 			},
 		},
 	}
+	now := time.Now()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			decodeForm(tt.args.holder, reflect.ValueOf(tt.args.v), tt.args.filedName)
-			t.Log(tt.args.v)
+			switch tt.args.v.(type) {
+			case *Persons:
+				v := tt.args.v.(*Persons)
+				if v.Name[0] != "Cango" {
+					t.Fail()
+				}
+				if v.Age[0] != 1 {
+					t.Fail()
+				}
+				if v.Height != 1.5 {
+					t.Fail()
+				}
+				if v.IsGood != true {
+					t.Fail()
+				}
+				if v.Birthday.Format(longSimpleTimeFormat) != now.Format(longSimpleTimeFormat) {
+					t.Fail()
+				}
+			default:
+				t.Fail()
+
+			}
 		})
 	}
 }
