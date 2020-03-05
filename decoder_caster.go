@@ -66,63 +66,56 @@ func castBool(value string) reflect.Value {
 	return reflect.ValueOf(false)
 }
 
-var f32 float32
-
 func castFloat32(value string) reflect.Value {
+	var f32 float32
 	if v, err := strconv.ParseFloat(value, 32); err == nil {
 		return reflect.ValueOf(float32(v))
 	}
 	return reflect.ValueOf(f32)
 }
 
-var f64 float64
-
 func castFloat64(value string) reflect.Value {
+	var f64 float64
 	if v, err := strconv.ParseFloat(value, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
 	return reflect.ValueOf(f64)
 }
 
-var i int
-
 func castInt(value string) reflect.Value {
+	var i int
 	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
 		return reflect.ValueOf(int(v))
 	}
 	return reflect.ValueOf(i)
 }
 
-var i8 int8
-
 func castInt8(value string) reflect.Value {
+	var i8 int8
 	if v, err := strconv.ParseInt(value, 10, 8); err == nil {
 		return reflect.ValueOf(int8(v))
 	}
 	return reflect.ValueOf(i8)
 }
 
-var i16 int16
-
 func castInt16(value string) reflect.Value {
+	var i16 int16
 	if v, err := strconv.ParseInt(value, 10, 16); err == nil {
 		return reflect.ValueOf(int16(v))
 	}
 	return reflect.ValueOf(i16)
 }
 
-var i32 int32
-
 func castInt32(value string) reflect.Value {
+	var i32 int32
 	if v, err := strconv.ParseInt(value, 10, 32); err == nil {
 		return reflect.ValueOf(int32(v))
 	}
 	return reflect.ValueOf(i32)
 }
 
-var i64 int64
-
 func castInt64(value string) reflect.Value {
+	var i64 int64
 	if v, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
@@ -133,45 +126,40 @@ func castString(value string) reflect.Value {
 	return reflect.ValueOf(value)
 }
 
-var u uint
-
 func castUint(value string) reflect.Value {
+	var u uint
 	if v, err := strconv.ParseUint(value, 10, 0); err == nil {
 		return reflect.ValueOf(uint(v))
 	}
 	return reflect.ValueOf(u)
 }
 
-var u8 uint8
-
 func castUint8(value string) reflect.Value {
+	var u8 uint8
 	if v, err := strconv.ParseUint(value, 10, 8); err == nil {
 		return reflect.ValueOf(uint8(v))
 	}
 	return reflect.ValueOf(u8)
 }
 
-var u16 uint16
-
 func castUint16(value string) reflect.Value {
+	var u16 uint16
 	if v, err := strconv.ParseUint(value, 10, 16); err == nil {
 		return reflect.ValueOf(uint16(v))
 	}
 	return reflect.ValueOf(u16)
 }
 
-var u32 uint32
-
 func castUint32(value string) reflect.Value {
+	var u32 uint32
 	if v, err := strconv.ParseUint(value, 10, 32); err == nil {
 		return reflect.ValueOf(uint32(v))
 	}
 	return reflect.ValueOf(u32)
 }
 
-var u64 uint64
-
 func castUint64(value string) reflect.Value {
+	var u64 uint64
 	if v, err := strconv.ParseUint(value, 10, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
