@@ -29,6 +29,22 @@ type URI interface {
 
 var uriType = reflect.TypeOf((*URI)(nil)).Elem()
 var uriName = uriType.Name()
+var uriMethods = func() (ms []reflect.Method) {
+	ut := reflect.TypeOf(&uriImpl{})
+	for i := 0; i < ut.NumMethod(); i++ {
+		ms = append(ms, ut.Method(i))
+	}
+	return
+}()
+
+func uriInterfaceContains(m reflect.Method) bool {
+	for _, v := range uriMethods {
+		if v.Name == m.Name && m.Type.NumIn() == v.Type.NumIn() && m.Type.NumOut() == v.Type.NumOut() {
+			return true
+		}
+	}
+	return false
+}
 
 type uriImpl struct {
 	request *WebRequest

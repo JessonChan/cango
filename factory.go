@@ -84,7 +84,7 @@ func factoryMethod(m reflect.Method) *handlerMethod {
 	if hm, ok := cacheMethod[m]; ok {
 		return hm
 	}
-	if IsEmptyRequest(m) {
+	if uriInterfaceContains(m) {
 		return nil
 	}
 	// todo 现在只接受一个参数???
@@ -140,12 +140,6 @@ func factoryMethod(m reflect.Method) *handlerMethod {
 		}
 	}
 	return nil
-}
-
-var uriRequestName = "Request"
-
-func IsEmptyRequest(m reflect.Method) bool {
-	return m.Name == uriRequestName && m.Type.NumIn() == 1 && m.Type.NumOut() == 1 && m.Type.Out(0).Elem() == reflect.TypeOf(WebRequest{})
 }
 
 // urlStr get uri from tag value
