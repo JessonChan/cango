@@ -39,6 +39,39 @@ type School struct {
 	IsGood bool
 }
 
+func Test_assign(t *testing.T) {
+	now := time.Now()
+	holder := map[string]string{
+		"Name":   "Cango",
+		"Age":    "1",
+		"Height": "1.5",
+		"birth":  now.Format(longSimpleTimeFormat),
+		"IsGood": "true",
+	}
+	filedName := func(field reflect.StructField) []string {
+		return filedName(field, "cookie")
+	}
+	var p Person
+	var v = newValue(reflect.TypeOf(p))
+	decode(holder, v.Addr(), filedName)
+	p = v.Interface().(Person)
+	if p.Name != "Cango" {
+		t.Fail()
+	}
+	if p.Age != 1 {
+		t.Fail()
+	}
+	if p.Height != 1.5 {
+		t.Fail()
+	}
+	if p.IsGood != true {
+		t.Fail()
+	}
+	if p.Birthday.Format(longSimpleTimeFormat) != now.Format(longSimpleTimeFormat) {
+		t.Fail()
+	}
+}
+
 func Test_decode(t *testing.T) {
 	type args struct {
 		holder    map[string]string
