@@ -373,27 +373,27 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	if shouldParseForm(req.Method) {
 		_ = req.ParseForm()
 		if len(req.Form) > 0 {
-			decodeForm(req.Form, receiver)
+			decodeForm(req.Form, addr(receiver))
 			if args0.Type() != uriType {
-				decodeForm(req.Form, args0.Addr(), pathFormFn)
+				decodeForm(req.Form, addr(args0), pathFormFn)
 			}
 		}
 	}
 
 	// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
 	if len(match.GetVars()) > 0 {
-		decode(match.GetVars(), receiver, pathFormFn)
+		decode(match.GetVars(), addr(receiver), pathFormFn)
 		if args0.Type() != uriType {
-			decode(match.GetVars(), args0.Addr(), pathFormFn)
+			decode(match.GetVars(), addr(args0), pathFormFn)
 		}
 	}
 
 	// 最后读取cookie，只赋值有cookie标签的变量
 	cookies := req.Cookies()
 	if len(cookies) >= 0 {
-		checkSet(stringFlag, cookieHolder(cookies), receiver, cookieFiledName())
+		checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieFiledName())
 		if args0.Type() != uriType {
-			checkSet(stringFlag, cookieHolder(cookies), args0.Addr(), cookieFiledName())
+			checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieFiledName())
 		}
 	}
 
@@ -425,6 +425,13 @@ func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, 
 }
 func pathFormFn(field reflect.StructField) []string {
 	return filedName(field, pathFormName)
+}
+
+func addr(value reflect.Value) reflect.Value {
+	if value.Type().Kind() == reflect.Ptr {
+		return value
+	}
+	return value.Addr()
 }
 
 func newValue(typ reflect.Type) reflect.Value {

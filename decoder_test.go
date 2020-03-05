@@ -53,7 +53,7 @@ func Test_assign(t *testing.T) {
 	}
 	var p Person
 	var v = newValue(reflect.TypeOf(p))
-	decode(holder, v.Addr(), filedName)
+	decode(holder, addr(v), filedName)
 	p = v.Interface().(Person)
 	if p.Name != "Cango" {
 		t.Fail()
