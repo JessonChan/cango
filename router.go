@@ -127,24 +127,24 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 	switch ce.kind {
 	case reflect.Ptr:
 		hs := factory(ce.ctrl)
-		strUrls, ctlName := urlStr(hs.typ.Elem())
+		ctrlTagPaths, ctlName := urlStr(hs.typ.Elem())
 		for _, hm := range hs.fns {
-			can.routeMethod(ce.prefix, hm.fn, ctlName+"."+hm.fn.Name, strUrls)
+			can.routeMethod(invokeByReceiver, ce.prefix, hm.fn, ctlName+"."+hm.fn.Name, ctrlTagPaths)
 		}
 	case reflect.Func:
-		can.routeMethod(ce.prefix, ce.fn, "RouteFunc."+ce.fn.Name, nil)
+		can.routeMethod(invokeBySelf, ce.prefix, ce.fn, "RouteFunc."+ce.fn.Name, nil)
 	}
 }
 
 // todo use factory to clean code
-func (can *Can) routeMethod(prefix string, m reflect.Method, routerName string, ctrlTagPaths []string) {
+func (can *Can) routeMethod(invokeByWho int, prefix string, m reflect.Method, routerName string, ctrlTagPaths []string) {
 	hm := factoryMethod(m)
 	if hm == nil {
 		return
 	}
 	for _, hp := range hm.patterns {
 		route := can.routeMux.NewForwarder(routerName)
-		can.methodMap[routerName] = m
+		can.methodMap[routerName] = &invoker{kind: invokeByWho, Method: &m}
 		for _, path := range combinePaths(prefix, ctrlTagPaths, hp.path) {
 			// default method is get
 			httpMethods := defaultHttpMethods

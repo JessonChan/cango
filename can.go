@@ -36,7 +36,7 @@ type Can struct {
 
 	routeMux     dispatcher
 	filterMuxMap map[reflect.Type]dispatcher
-	methodMap    map[string]reflect.Method
+	methodMap    map[string]*invoker
 	filterMap    map[reflect.Type]Filter
 	ctrlEntryMap map[string]ctrlEntry
 	tplFuncMap   map[string]interface{}
@@ -50,7 +50,7 @@ func NewCan() *Can {
 		srv:          &http.Server{Addr: defaultAddr.String()},
 		routeMux:     newCanMux(),
 		filterMuxMap: map[reflect.Type]dispatcher{},
-		methodMap:    map[string]reflect.Method{},
+		methodMap:    map[string]*invoker{},
 		filterMap:    map[reflect.Type]Filter{},
 		ctrlEntryMap: map[string]ctrlEntry{},
 		tplFuncMap:   map[string]interface{}{},
@@ -338,28 +338,28 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		return nil, http.StatusNotFound
 	}
 
-	m, ok := can.methodMap[match.Forwarder().GetName()]
+	invoker, ok := can.methodMap[match.Forwarder().GetName()]
 	if ok == false {
 		// error,match failed
 		return nil, http.StatusMethodNotAllowed
 	}
 
 	// 当前版本不可能出现这种情况
-	if m.Type.NumIn() > 2 {
+	if invoker.Type.NumIn() > 2 {
 		// error,method only have one arg
 		return nil, http.StatusMethodNotAllowed
 	}
 	uriContext := reflect.ValueOf(newContext(rw, req))
 	var receiver reflect.Value
-	if m.Type.NumIn() == 2 {
-		receiver = reflect.New(m.Type.In(0).Elem())
+	if invoker.Type.NumIn() == 2 {
+		receiver = reflect.New(invoker.Type.In(0).Elem())
 		uriFiled := receiver.Elem().FieldByName(uriName)
 		if uriFiled.IsValid() && uriFiled.CanSet() {
 			uriFiled.Set(uriContext)
 		}
 	}
 	// 这种数据出现在当使用RouteFunc和RouteFuncWithPrefix时，因为他们是直接使用函数注册的，没有receiver参数，所以个数为1
-	var args0 = reflect.New(m.Type.In(m.Type.NumIn() - 1)).Elem()
+	var args0 = reflect.New(invoker.Type.In(invoker.Type.NumIn() - 1)).Elem()
 	if args0.Type() == uriType {
 		args0.Set(uriContext)
 	} else {
@@ -398,9 +398,9 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	}
 
 	if receiver.IsValid() {
-		return call(m, receiver, args0)
+		return call(*invoker.Method, receiver, args0)
 	} else {
-		return call(m, args0)
+		return call(*invoker.Method, args0)
 	}
 }
 
