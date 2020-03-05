@@ -42,11 +42,8 @@ func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 }
 
 func (can *Can) route(prefix string, uri URI) {
-	rp := reflect.ValueOf(uri)
-	if rp.Kind() != reflect.Ptr {
-		panic("route controller must be ptr")
-	}
-	can.ctrlEntryMap[prefix+rp.String()] = ctrlEntry{prefix: prefix, vl: rp, ctrl: uri, tim: time.Now().Unix()}
+	typ := toPtrKind(uri)
+	can.ctrlEntryMap[prefix+typ.String()] = ctrlEntry{prefix: prefix, kind: reflect.Ptr, ctrl: uri, tim: time.Now().Unix()}
 }
 
 func (can *Can) RouteFunc(fns ...interface{}) *Can {
@@ -71,7 +68,7 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 		Func:    fv,
 		Index:   0,
 	}
-	can.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, vl: fv, fn: funcMethod, tim: time.Now().Unix()}
+	can.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, kind: reflect.Func, fn: funcMethod, tim: time.Now().Unix()}
 }
 
 var uriRegMap = map[URI]bool{}
@@ -85,7 +82,7 @@ func RegisterURI(uri URI) bool {
 
 type ctrlEntry struct {
 	prefix string
-	vl     reflect.Value
+	kind   reflect.Kind
 	ctrl   interface{}
 	fn     reflect.Method
 	tim    int64
@@ -127,24 +124,20 @@ func (can *Can) buildStaticRoute() {
 }
 
 func (can *Can) buildSingleRoute(ce ctrlEntry) {
-	prefix := ce.prefix
-	rp := ce.vl
-	uri := ce.ctrl
-	fn := ce.fn
-	switch rp.Kind() {
+	switch ce.kind {
 	case reflect.Ptr:
-		strUrls, ctlName := urlStr(reflect.Indirect(rp).Type())
-		tvp := reflect.TypeOf(uri)
+		tvp := toPtrKind(ce.ctrl)
+		strUrls, ctlName := urlStr(tvp.Elem())
 		for i := 0; i < tvp.NumMethod(); i++ {
 			m := tvp.Method(i)
 			if m.PkgPath != "" {
 				continue
 			}
 			routerName := ctlName + "." + m.Name
-			can.routeMethod(prefix, m, routerName, strUrls)
+			can.routeMethod(ce.prefix, m, routerName, strUrls)
 		}
 	case reflect.Func:
-		can.routeMethod(prefix, fn, "RouteFunc."+fn.Name, nil)
+		can.routeMethod(ce.prefix, ce.fn, "RouteFunc."+ce.fn.Name, nil)
 	}
 }
 
