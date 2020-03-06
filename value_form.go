@@ -20,6 +20,7 @@ import (
 
 type FormValue interface {
 	constructor
+	Form()
 }
 
 var formValueType = reflect.TypeOf((*FormValue)(nil)).Elem()
@@ -30,12 +31,14 @@ type emptyFormValueConstructor struct {
 
 func (e *emptyFormValueConstructor) Construct(r *http.Request) {
 }
+func (e *emptyFormValueConstructor) Form(r *http.Request) {
+}
 
-func formConstruct(r *http.Request, cs FormValue) {
+func formConstruct(r *http.Request, cs FormValue) FormValue {
 	if reflect.TypeOf(cs) == formValueType {
-		return
+		return cs
 	}
-	csv := reflect.ValueOf(cs)
+	csv := newValue(reflect.TypeOf(cs))
 	if csv.Kind() == reflect.Ptr {
 		csv = csv.Elem()
 	}
@@ -45,6 +48,8 @@ func formConstruct(r *http.Request, cs FormValue) {
 	}
 	// ParsForm可以多少调用，不会影响性能
 	_ = r.ParseForm()
-	decodeForm(r.Form, csv, noTagName)
+	decodeForm(r.Form, addr(csv), noTagName)
+	cs = addr(csv).Interface().(FormValue)
 	cs.Construct(r)
+	return cs
 }

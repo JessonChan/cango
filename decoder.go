@@ -54,7 +54,7 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 		if f.Kind() == reflect.Ptr {
 			f = reflect.Indirect(f)
 		}
-		if f.Type().Kind() == reflect.Struct && f.Type() != timeType {
+		if f.Kind() == reflect.Struct && f.Type() != timeType {
 			setValue(flag, holder, f, filedName)
 		}
 		// 返回值表示是否找到对应的caster

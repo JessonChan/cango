@@ -20,6 +20,7 @@ import (
 
 type Cookie interface {
 	constructor
+	Cookie()
 }
 
 var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
@@ -30,10 +31,12 @@ type emptyCookieConstructor struct {
 
 func (e *emptyCookieConstructor) Construct(r *http.Request) {
 }
+func (e *emptyCookieConstructor) Cookie() {
+}
 
-func cookieConstruct(r *http.Request, cs Cookie) {
+func cookieConstruct(r *http.Request, cs Cookie) Cookie {
 	if reflect.TypeOf(cs) == cookieType {
-		return
+		return cs
 	}
 	csv := reflect.ValueOf(cs)
 	if csv.Kind() == reflect.Ptr {
@@ -49,6 +52,7 @@ func cookieConstruct(r *http.Request, cs Cookie) {
 	// 最后执行自定义函数的New方法
 	// 如果没有自定义方法，则执行结束
 	cs.Construct(r)
+	return cs
 }
 
 func cookieNameWithTag(field reflect.StructField) []string {
