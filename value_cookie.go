@@ -43,10 +43,6 @@ func cookieConstruct(r *http.Request, cs Cookie) Cookie {
 	if csv.Kind() == reflect.Ptr {
 		csv = csv.Elem()
 	}
-	elem := csv.FieldByName(cookieTypeName).Elem()
-	if elem.Kind() == reflect.Ptr {
-		elem = elem.Elem()
-	}
 	// 先从默认值进行赋值
 	cookies := r.Cookies()
 	checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
