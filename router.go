@@ -147,7 +147,7 @@ func (can *Can) routeMethod(invokeByWho int, prefix string, m reflect.Method, ro
 		can.methodMap[routerName] = &invoker{kind: invokeByWho, Method: &m}
 		for _, path := range combinePaths(prefix, ctrlTagPaths, hp.path) {
 			// default method is get
-			httpMethods := defaultHttpMethods
+			httpMethods := defaultHTTPMethods
 			if len(hp.httpMethods) > 0 {
 				httpMethods = hp.httpMethods
 			}

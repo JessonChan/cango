@@ -111,7 +111,7 @@ func getPaths(typ reflect.Type) ([]string, []string) {
 				}
 			}
 			if len(httpMethods) == 0 {
-				httpMethods = allHttpMethods
+				httpMethods = allHTTPMethods
 			}
 			return tagUriParse(ff.Tag), httpMethods
 		}
@@ -124,7 +124,7 @@ func buildSingleFilter(dsp dispatcher, f Filter, path string, methods []string) 
 		return
 	}
 	if len(methods) == 0 {
-		methods = defaultHttpMethods
+		methods = defaultHTTPMethods
 	}
 	fv := reflect.ValueOf(f)
 	if fv.Kind() != reflect.Ptr {

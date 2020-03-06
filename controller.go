@@ -94,8 +94,8 @@ var doNothing = DoNothing{}
 type httpMethod interface {
 }
 
-var defaultHttpMethods = []string{http.MethodGet}
-var allHttpMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
+var defaultHTTPMethods = []string{http.MethodGet}
+var allHTTPMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodConnect, http.MethodOptions, http.MethodTrace}
 
 /*
 	httpMethods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}

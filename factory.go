@@ -103,7 +103,7 @@ func factoryMethod(m reflect.Method) *handlerMethod {
 				patterns: func() (pms []*handlePath) {
 					return []*handlePath{{
 						path:        "",
-						httpMethods: defaultHttpMethods,
+						httpMethods: defaultHTTPMethods,
 					}}
 				}(),
 			}
