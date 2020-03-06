@@ -99,19 +99,24 @@ var allHTTPMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, 
 
 /*
 	httpMethods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
+	fmt.Println("type (")
 	for _, m := range httpMethods {
-		fmt.Printf("type %sMethod httpMethod\n", m)
+		fmt.Printf("\t%sMethod httpMethod\n", m)
 	}
+	fmt.Println(")")
 */
 
-type GetMethod httpMethod
-type HeadMethod httpMethod
-type PostMethod httpMethod
-type PutMethod httpMethod
-type PatchMethod httpMethod
-type DeleteMethod httpMethod
-type OptionsMethod httpMethod
-type TraceMethod httpMethod
+// Common HTTP methods.
+type (
+	GetMethod     httpMethod
+	HeadMethod    httpMethod
+	PostMethod    httpMethod
+	PutMethod     httpMethod
+	PatchMethod   httpMethod
+	DeleteMethod  httpMethod
+	OptionsMethod httpMethod
+	TraceMethod   httpMethod
+)
 
 /*
 	httpMethods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
