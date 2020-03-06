@@ -34,16 +34,3 @@ func (e *emptyFormValueConstructor) Construct(r *http.Request) {
 }
 func (e *emptyFormValueConstructor) FormPlaceHolder() {
 }
-
-func formConstruct(r *http.Request, cs FormValue) FormValue {
-	if reflect.TypeOf(cs) == formValueType {
-		return cs
-	}
-	csv := newValue(reflect.TypeOf(cs))
-	// ParsForm可以多少调用，不会影响性能
-	_ = r.ParseForm()
-	decodeForm(r.Form, addr(csv), noTagName)
-	cs = addr(csv).Interface().(FormValue)
-	cs.Construct(r)
-	return cs
-}

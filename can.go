@@ -375,11 +375,16 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		// todo cookie and form 同时成立 ？？？
 		if in.Implements(cookieType) {
 			value(callerIn[idx]).FieldByName(cookieTypeName).Set(valueOfEmptyCookie)
-			callerIn[idx] = reflect.ValueOf(cookieConstruct(req, addr(callerIn[idx]).Interface().(Cookie)))
+			cookies := req.Cookies()
+			checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[idx]), cookieNameWithTag)
+			addr(callerIn[idx]).Interface().(CookieValue).Construct(req)
 		}
 		if in.Implements(formValueType) {
 			value(callerIn[idx]).FieldByName(formValueTypeName).Set(valueOfEmptyForm)
-			callerIn[idx] = reflect.ValueOf(formConstruct(req, addr(callerIn[idx]).Interface().(FormValue)))
+			// ParsForm可以多少调用，不会影响性能或副作用
+			_ = req.ParseForm()
+			decodeForm(req.Form, addr(callerIn[idx]), pathFormFn)
+			addr(callerIn[idx]).Interface().(FormValue).Construct(req)
 		}
 	}
 	var args0 = callerIn[foundURI]
@@ -410,22 +415,13 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	cookies := req.Cookies()
 	if len(cookies) >= 0 {
 		if invoker.kind == invokeByReceiver {
-			checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieFiledName())
+			checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieNameWithTag)
 		}
 		if args0.Type() != uriType {
-			checkSet(stringFlag, cookieHolder(cookies), addr(args0), cookieFiledName())
+			checkSet(stringFlag, cookieHolder(cookies), addr(args0), cookieNameWithTag)
 		}
 	}
 	return call(*invoker.Method, callerIn)
-}
-
-func cookieFiledName() func(field reflect.StructField) []string {
-	return func(field reflect.StructField) []string {
-		if field.Tag.Get(cookieTagName) != "" {
-			return []string{field.Tag.Get(cookieTagName)}
-		}
-		return []string{}
-	}
 }
 
 func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, bool) {

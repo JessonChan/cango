@@ -18,12 +18,12 @@ import (
 	"reflect"
 )
 
-type Cookie interface {
+type CookieValue interface {
 	constructor
 	CookiePlaceHolder()
 }
 
-var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
+var cookieType = reflect.TypeOf((*CookieValue)(nil)).Elem()
 var cookieTypeName = cookieType.Name()
 var valueOfEmptyCookie = reflect.ValueOf(&emptyCookieConstructor{})
 
@@ -35,24 +35,7 @@ func (e *emptyCookieConstructor) Construct(r *http.Request) {
 func (e *emptyCookieConstructor) CookiePlaceHolder() {
 }
 
-func cookieConstruct(r *http.Request, cs Cookie) Cookie {
-	if reflect.TypeOf(cs) == cookieType {
-		return cs
-	}
-	csv := reflect.ValueOf(cs)
-	if csv.Kind() == reflect.Ptr {
-		csv = csv.Elem()
-	}
-	// 先从默认值进行赋值
-	cookies := r.Cookies()
-	checkSet(stringFlag, cookieHolder(cookies), addr(csv), cookieNameWithTag)
-	cs = addr(csv).Interface().(Cookie)
-	// 最后执行自定义函数的New方法
-	// 如果没有自定义方法，则执行结束
-	cs.Construct(r)
-	return cs
-}
-
+// ??? todo 要不要支持多个别名？？
 func cookieNameWithTag(field reflect.StructField) []string {
 	return filedName(field, cookieTagName)
 }
