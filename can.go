@@ -344,12 +344,6 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		return nil, http.StatusMethodNotAllowed
 	}
 
-	// 当前版本不可能出现这种情况
-	// if invoker.Type.NumIn() > 2 {
-	// 	// error,method only have one arg
-	// 	return nil, http.StatusMethodNotAllowed
-	// }
-
 	uriContext := reflect.ValueOf(newContext(rw, req))
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	var receiver reflect.Value
@@ -380,12 +374,12 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		}
 		// todo cookie and form 同时成立 ？？？
 		if in.Implements(cookieType) {
-			cs := addr(callerIn[idx]).Interface().(Cookie)
-			callerIn[idx] = reflect.ValueOf(cookieConstruct(req, cs))
+			value(callerIn[idx]).FieldByName(cookieTypeName).Set(valueOfEmptyCookie)
+			callerIn[idx] = reflect.ValueOf(cookieConstruct(req, addr(callerIn[idx]).Interface().(Cookie)))
 		}
 		if in.Implements(formValueType) {
-			fs := addr(callerIn[idx]).Interface().(FormValue)
-			callerIn[idx] = reflect.ValueOf(formConstruct(req, fs))
+			value(callerIn[idx]).FieldByName(formValueTypeName).Set(valueOfEmptyForm)
+			callerIn[idx] = reflect.ValueOf(formConstruct(req, addr(callerIn[idx]).Interface().(FormValue)))
 		}
 	}
 	var args0 = callerIn[foundURI]
@@ -446,6 +440,13 @@ func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, 
 }
 func pathFormFn(field reflect.StructField) []string {
 	return filedName(field, pathFormName)
+}
+
+func value(value reflect.Value) reflect.Value {
+	if value.Type().Kind() == reflect.Ptr {
+		return value.Elem()
+	}
+	return value
 }
 
 func addr(value reflect.Value) reflect.Value {

@@ -25,13 +25,14 @@ type FormValue interface {
 
 var formValueType = reflect.TypeOf((*FormValue)(nil)).Elem()
 var formValueTypeName = formValueType.Name()
+var valueOfEmptyForm = reflect.ValueOf(&emptyFormValueConstructor{})
 
 type emptyFormValueConstructor struct {
 }
 
 func (e *emptyFormValueConstructor) Construct(r *http.Request) {
 }
-func (e *emptyFormValueConstructor) Form(r *http.Request) {
+func (e *emptyFormValueConstructor) Form() {
 }
 
 func formConstruct(r *http.Request, cs FormValue) FormValue {

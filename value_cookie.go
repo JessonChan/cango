@@ -25,6 +25,7 @@ type Cookie interface {
 
 var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
 var cookieTypeName = cookieType.Name()
+var valueOfEmptyCookie = reflect.ValueOf(&emptyCookieConstructor{})
 
 type emptyCookieConstructor struct {
 }
