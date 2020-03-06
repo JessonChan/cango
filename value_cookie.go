@@ -45,7 +45,8 @@ func cookieConstruct(r *http.Request, cs Cookie) Cookie {
 	}
 	// 先从默认值进行赋值
 	cookies := r.Cookies()
-	checkSet(stringFlag, cookieHolder(cookies), csv, cookieNameWithTag)
+	checkSet(stringFlag, cookieHolder(cookies), addr(csv), cookieNameWithTag)
+	cs = addr(csv).Interface().(Cookie)
 	// 最后执行自定义函数的New方法
 	// 如果没有自定义方法，则执行结束
 	cs.Construct(r)

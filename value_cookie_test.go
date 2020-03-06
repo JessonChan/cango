@@ -8,6 +8,7 @@ import (
 type MyCookie0 struct {
 	Cookie
 	build string
+	Token string `cookie:"_token"`
 }
 
 type MyCookie1 struct {
@@ -33,7 +34,11 @@ func Test_cookieConstruct(t *testing.T) {
 		{
 			name: "0",
 			args: args{
-				r: new(http.Request),
+				r: &http.Request{
+					Header: map[string][]string{
+						"Cookie": {"_token=test"},
+					},
+				},
 				cs: &MyCookie0{
 					Cookie: &emptyCookieConstructor{},
 				},
@@ -56,6 +61,9 @@ func Test_cookieConstruct(t *testing.T) {
 			case "0":
 				myCookie := tt.args.cs.(*MyCookie0)
 				if myCookie.build != "" {
+					t.Fail()
+				}
+				if myCookie.Token != "test" {
 					t.Fail()
 				}
 			case "1":
