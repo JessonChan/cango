@@ -372,19 +372,24 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 				}
 			}
 		}
-		// todo cookie and form 同时成立 ？？？
-		if in.Implements(cookieType) {
-			value(callerIn[idx]).FieldByName(cookieTypeName).Set(valueOfEmptyCookie)
-			cookies := req.Cookies()
-			checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[idx]), cookieNameWithTag)
-			addr(callerIn[idx]).Interface().(CookieValue).Construct(req)
-		}
-		if in.Implements(formValueType) {
-			value(callerIn[idx]).FieldByName(formValueTypeName).Set(valueOfEmptyForm)
-			// ParsForm可以多少调用，不会影响性能或副作用
-			_ = req.ParseForm()
-			decodeForm(req.Form, addr(callerIn[idx]), pathFormFn)
-			addr(callerIn[idx]).Interface().(FormValue).Construct(req)
+		if in.Implements(constructorType) {
+			// todo cookie and form 同时成立 ？？？
+			if in.Implements(cookieType) {
+				value(callerIn[idx]).FieldByName(cookieTypeName).Set(valueOfEmptyCookie)
+				cookies := req.Cookies()
+				checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[idx]), cookieNameWithTag)
+				addr(callerIn[idx]).Interface().(CookieValue).Construct(req)
+			} else if in.Implements(formValueType) {
+				value(callerIn[idx]).FieldByName(formValueTypeName).Set(valueOfEmptyForm)
+				// ParsForm可以多少调用，不会影响性能或副作用
+				_ = req.ParseForm()
+				decodeForm(req.Form, addr(callerIn[idx]), pathFormFn)
+				addr(callerIn[idx]).Interface().(FormValue).Construct(req)
+			} else {
+				// todo ???
+				value(callerIn[idx]).FieldByName(constructorTypeName).Set(valueOfEmptyConstructor)
+				addr(callerIn[idx]).Interface().(FormValue).Construct(req)
+			}
 		}
 	}
 	var args0 = callerIn[foundURI]

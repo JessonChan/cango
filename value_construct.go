@@ -15,6 +15,7 @@ package cango
 
 import (
 	"net/http"
+	"reflect"
 )
 
 // constructor is the interface that wraps the Construct method.
@@ -22,4 +23,14 @@ import (
 // Construct 可以从*http.Request中进行初始化变量
 type constructor interface {
 	Construct(r *http.Request)
+}
+
+var constructorType = reflect.TypeOf((*constructor)(nil)).Elem()
+var constructorTypeName = constructorType.Name()
+var valueOfEmptyConstructor = reflect.ValueOf(&emptyConstructor{})
+
+type emptyConstructor struct {
+}
+
+func (e *emptyConstructor) Construct(r *http.Request) {
 }
