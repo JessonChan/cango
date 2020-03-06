@@ -20,7 +20,7 @@ import (
 
 type FormValue interface {
 	constructor
-	Form()
+	FormPlaceHolder()
 }
 
 var formValueType = reflect.TypeOf((*FormValue)(nil)).Elem()
@@ -32,7 +32,7 @@ type emptyFormValueConstructor struct {
 
 func (e *emptyFormValueConstructor) Construct(r *http.Request) {
 }
-func (e *emptyFormValueConstructor) Form() {
+func (e *emptyFormValueConstructor) FormPlaceHolder() {
 }
 
 func formConstruct(r *http.Request, cs FormValue) FormValue {

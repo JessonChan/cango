@@ -20,7 +20,7 @@ import (
 
 type Cookie interface {
 	constructor
-	Cookie()
+	CookiePlaceHolder()
 }
 
 var cookieType = reflect.TypeOf((*Cookie)(nil)).Elem()
@@ -32,7 +32,7 @@ type emptyCookieConstructor struct {
 
 func (e *emptyCookieConstructor) Construct(r *http.Request) {
 }
-func (e *emptyCookieConstructor) Cookie() {
+func (e *emptyCookieConstructor) CookiePlaceHolder() {
 }
 
 func cookieConstruct(r *http.Request, cs Cookie) Cookie {
