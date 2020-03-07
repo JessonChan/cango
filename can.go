@@ -185,6 +185,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if code == 0 {
 			code = http.StatusOK
 		}
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 		rw.WriteHeader(code)
 		_, err := rw.Write([]byte(handleReturn.(Content).String))
 		if err != nil {
