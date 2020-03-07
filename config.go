@@ -25,11 +25,11 @@ var envs = map[string]string{}
 var envOnce sync.Once
 
 func Env(key string) string {
-	envOnce.Do(initConfig)
+	envOnce.Do(initIniConfig)
 	return envs[key]
 }
 
-func initConfig() {
+func initIniConfig() {
 	configPath := getRootPath() + "/conf/cango.ini"
 	for _, line := range strings.Split(func() string {
 		bs, err := ioutil.ReadFile(configPath)
@@ -42,20 +42,9 @@ func initConfig() {
 		kv := strings.Split(line, "=")
 		if len(kv) == 2 {
 			envs[kv[0]] = kv[1]
-		}
-	}
-
-	bs, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		canlog.CanError(err)
-		return
-	}
-	lines := strings.Split(string(bs), "\n")
-	for _, line := range lines {
-		vs := strings.Split(line, "=")
-		if len(vs) != 2 {
+		} else {
 			canlog.CanError("can't parse config line", line)
-			continue
 		}
+
 	}
 }
