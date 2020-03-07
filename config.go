@@ -1,14 +1,50 @@
+// Copyright 2020 Cango Author.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//    http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package cango
 
 import (
 	"io/ioutil"
 	"strings"
+	"sync"
 
 	"github.com/JessonChan/canlog"
 )
 
-// todo 支持对于can全局配置的文件化设定
-func initConfig(configPath string) {
+var envs = map[string]string{}
+var envOnce sync.Once
+
+func Env(key string) string {
+	envOnce.Do(initConfig)
+	return envs[key]
+}
+
+func initConfig() {
+	configPath := getRootPath() + "/conf/cango.ini"
+	for _, line := range strings.Split(func() string {
+		bs, err := ioutil.ReadFile(configPath)
+		if err != nil {
+			canlog.CanError(err)
+			return ""
+		}
+		return string(bs)
+	}(), "\n") {
+		kv := strings.Split(line, "=")
+		if len(kv) == 2 {
+			envs[kv[0]] = kv[1]
+		}
+	}
+
 	bs, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		canlog.CanError(err)
