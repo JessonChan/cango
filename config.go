@@ -39,12 +39,11 @@ func initIniConfig() {
 		}
 		return string(bs)
 	}(), "\n") {
-		kv := strings.Split(line, "=")
-		if len(kv) == 2 {
-			envs[kv[0]] = kv[1]
-		} else {
+		idx := strings.Index(line, "=")
+		if idx == -1 {
 			canlog.CanError("can't parse config line", line)
+			continue
 		}
-
+		envs[strings.TrimSpace(line[:idx])] = strings.TrimSpace(line[idx+1:])
 	}
 }
