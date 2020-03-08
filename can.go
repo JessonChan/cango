@@ -240,6 +240,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (can *Can) Run(as ...interface{}) {
+	// 优先从配置文件中读取
+	// 之后从传入参数中读取
 	Envs(&defaultAddr)
 	Envs(&defaultOpts)
 
@@ -277,12 +279,20 @@ func (can *Can) Run(as ...interface{}) {
 }
 
 func getAddr(as []interface{}) Addr {
+	host := defaultAddr.Host
+	port := defaultAddr.Port
 	for _, v := range as {
 		if addr, ok := v.(Addr); ok {
 			return addr
 		}
+		if h, ok := v.(string); ok {
+			host = h
+		}
+		if p, ok := v.(int); ok {
+			port = p
+		}
 	}
-	return defaultAddr
+	return Addr{host, port}
 }
 
 func getOpts(as []interface{}) Opts {
