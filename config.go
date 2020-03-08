@@ -23,6 +23,7 @@ import (
 )
 
 var envs = map[string]string{}
+var envForm = map[string][]string{}
 var envOnce sync.Once
 
 // Env 从配置文件中取配置项为key的值
@@ -34,7 +35,7 @@ func Env(key string) string {
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
 func Envs(i interface{}) {
-	decode(envs, reflect.ValueOf(i), func(field reflect.StructField) []string {
+	decodeForm(envForm, reflect.ValueOf(i), func(field reflect.StructField) []string {
 		return filedName(field, nameTagName)
 	})
 }
@@ -62,6 +63,14 @@ func initIniConfig() {
 		if commentIdx == -1 {
 			commentIdx = len(line)
 		}
-		envs[strings.TrimSpace(line[:idx])] = strings.TrimSpace(line[idx+1 : commentIdx])
+		key := strings.TrimSpace(line[:idx])
+		value := strings.TrimSpace(line[idx+1 : commentIdx])
+		envs[key] = value
+		// 数组变量
+		if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
+			envForm[key] = strings.Split(value, ",")
+		} else {
+			envForm[key] = []string{value}
+		}
 	}
 }
