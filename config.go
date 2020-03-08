@@ -44,6 +44,11 @@ func initIniConfig() {
 			canlog.CanError("can't parse config line", line)
 			continue
 		}
-		envs[strings.TrimSpace(line[:idx])] = strings.TrimSpace(line[idx+1:])
+		line := strings.TrimSpace(line)
+		commentIdx := strings.Index(line, "#")
+		if commentIdx == 0 {
+			continue
+		}
+		envs[strings.TrimSpace(line[:idx])] = strings.TrimSpace(line[idx+1 : commentIdx])
 	}
 }
