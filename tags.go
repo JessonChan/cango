@@ -19,4 +19,5 @@ const (
 	cookieTagName    string = "cookie"
 	pathValueTagName string = "path"
 	formValueTagName string = "form"
+	nameTagName      string = "name"
 )

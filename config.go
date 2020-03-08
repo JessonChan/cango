@@ -15,6 +15,7 @@ package cango
 
 import (
 	"io/ioutil"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -24,9 +25,18 @@ import (
 var envs = map[string]string{}
 var envOnce sync.Once
 
+// Env 从配置文件中取配置项为key的值
 func Env(key string) string {
 	envOnce.Do(initIniConfig)
 	return envs[key]
+}
+
+// Envs 对传入的对象进行赋值
+// i 须为指针类型
+func Envs(i interface{}) {
+	decode(envs, reflect.ValueOf(i), func(field reflect.StructField) []string {
+		return filedName(field, nameTagName)
+	})
 }
 
 func initIniConfig() {
