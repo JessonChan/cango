@@ -64,13 +64,14 @@ type Addr struct {
 }
 
 type Opts struct {
-	Host      string
-	Port      int
-	RootPath  string
-	TplDir    string
-	StaticDir string
-	TplSuffix []string
-	DebugTpl  bool
+	Host       string
+	Port       int
+	RootPath   string
+	TplDir     string
+	StaticDir  string
+	TplSuffix  []string
+	DebugTpl   bool
+	CanlogPath string
 }
 
 var defaultTplSuffix = []string{".tpl", ".html"}
@@ -91,8 +92,11 @@ type responseTypeHandler func(interface{}) ([]byte, error)
 
 var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
 
+var loggerInitialed = false
+
 // InitLogger 用来初始化cango的日志writer
 func InitLogger(rw io.Writer) {
+	loggerInitialed = true
 	canlog.SetWriter(rw, "CANGO")
 }
 
@@ -236,6 +240,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (can *Can) Run(as ...interface{}) {
+	Envs(&defaultAddr)
+	Envs(&defaultOpts)
+
+	if loggerInitialed == false && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
+		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
+	}
+
 	addr := getAddr(as)
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
@@ -300,7 +311,7 @@ func copyOpts() Opts {
 		RootPath:  defaultOpts.RootPath,
 		TplDir:    defaultOpts.TplDir,
 		StaticDir: defaultOpts.StaticDir,
-		TplSuffix: append(defaultTplSuffix),
+		TplSuffix: append(defaultOpts.TplSuffix),
 		DebugTpl:  false,
 	}
 }
