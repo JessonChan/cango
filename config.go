@@ -49,6 +49,9 @@ func initIniConfig() {
 		if commentIdx == 0 {
 			continue
 		}
+		if commentIdx == -1 {
+			commentIdx = len(line)
+		}
 		envs[strings.TrimSpace(line[:idx])] = strings.TrimSpace(line[idx+1 : commentIdx])
 	}
 }
