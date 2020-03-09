@@ -17,8 +17,10 @@ import (
 	"net/http"
 )
 
-var error404 = http.NotFound
+var errorHandleMap = map[int]func(w http.ResponseWriter, r *http.Request){
+	http.StatusNotFound: http.NotFound,
+}
 
-func SetError(fn func(w http.ResponseWriter, r *http.Request)) {
-	error404 = fn
+func SetError(code int, fn func(w http.ResponseWriter, r *http.Request)) {
+	errorHandleMap[code] = fn
 }

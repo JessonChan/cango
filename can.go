@@ -213,13 +213,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		if err != nil {
 			canlog.CanDebug(err, "can't find the file", handleReturn)
-			error404(rw, r)
+			errorHandleMap[404](rw, r)
 		} else {
 			http.ServeFile(rw, r, path)
 		}
 	case DoNothing:
 		if statusCode == http.StatusNotFound {
-			error404(rw, r)
+			errorHandleMap[404](rw, r)
 		}
 	default:
 		rw.WriteHeader(statusCode)
