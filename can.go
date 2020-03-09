@@ -494,6 +494,7 @@ func newValue(typ reflect.Type) reflect.Value {
 
 // 执行函数
 func call(m reflect.Method, values []reflect.Value) (interface{}, int) {
+	// todo 是否支持无出参的函数
 	vs := m.Func.Call(values)
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed
