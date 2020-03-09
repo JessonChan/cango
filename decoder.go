@@ -49,6 +49,9 @@ const (
 
 // todo clean the code
 func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
+	if rv.Kind() == reflect.Interface {
+		return
+	}
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
 		if f.Kind() == reflect.Ptr {
