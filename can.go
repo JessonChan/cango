@@ -407,6 +407,10 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 				_ = req.ParseForm()
 				decodeForm(req.Form, addr(callerIn[idx]), pathFormFn)
 				addr(callerIn[idx]).Interface().(FormValue).Construct(req)
+			} else if in.Implements(pathValueType) {
+				value(callerIn[idx]).FieldByName(pathValueTypeName).Set(valueOfEmptyPath)
+				decode(match.GetVars(), addr(callerIn[idx]), pathFormFn)
+				addr(callerIn[idx]).Interface().(PathValue).Construct(req)
 			} else {
 				// todo ???
 				value(callerIn[idx]).FieldByName(constructorTypeName).Set(valueOfEmptyConstructor)

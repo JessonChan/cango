@@ -13,4 +13,24 @@
 // limitations under the License.
 package cango
 
-// 目前看还没有添加的必要，path value可以在定义参数时自动完成
+import (
+	"net/http"
+	"reflect"
+)
+
+type PathValue interface {
+	constructor
+	PathPlaceHolder()
+}
+
+var pathValueType = reflect.TypeOf((*PathValue)(nil)).Elem()
+var pathValueTypeName = pathValueType.Name()
+var valueOfEmptyPath = reflect.ValueOf(&emptyPathValueConstructor{})
+
+type emptyPathValueConstructor struct {
+}
+
+func (e *emptyPathValueConstructor) Construct(r *http.Request) {
+}
+func (e *emptyPathValueConstructor) PathPlaceHolder() {
+}
