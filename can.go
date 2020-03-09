@@ -368,88 +368,45 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 
 	uriContext := reflect.ValueOf(newContext(rw, req))
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
-	var receiver reflect.Value
-	if invoker.kind == invokeByReceiver {
-		receiver = newValue(invoker.Type.In(0))
-		uriFiled := receiver.Elem().FieldByName(uriName)
-		if uriFiled.IsValid() && uriFiled.CanSet() {
-			uriFiled.Set(uriContext)
-		}
-		callerIn[0] = receiver
-	}
-	foundURI := -1
-	for j := len(callerIn); j > invoker.kind; j-- {
-		idx := j - 1
-		in := invoker.Type.In(idx)
-		callerIn[idx] = newValue(in)
-		// 只会对最后一个进行赋值
-		if in.Implements(uriType) && foundURI == -1 {
-			foundURI = idx
+	cookies := req.Cookies()
+	_ = req.ParseForm()
+	for i := 0; i < len(callerIn); i++ {
+		in := invoker.Type.In(i)
+		callerIn[i] = newValue(in)
+		if in.Implements(uriType) {
 			if in == uriType {
-				callerIn[idx].Set(uriContext)
+				callerIn[i].Set(uriContext)
 			} else {
-				uriFiled := callerIn[idx].FieldByName(uriName)
+				uriFiled := value(callerIn[i]).FieldByName(uriName)
 				if uriFiled.IsValid() && uriFiled.CanSet() {
 					uriFiled.Set(uriContext)
 				}
 			}
 		}
+		// todo 统一到decode中一起解析
+		// 先解析form
+		if shouldParseForm(req.Method) {
+			if len(req.Form) > 0 {
+				decodeForm(req.Form, addr(callerIn[i]), pathFormFn)
+			}
+		}
+
+		// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
+		if len(match.GetVars()) > 0 {
+			decode(match.GetVars(), addr(callerIn[i]), pathFormFn)
+		}
+
+		// 最后读取cookie，只赋值有cookie标签的变量
+		if len(cookies) >= 0 {
+			checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[i]), cookieNameWithTag)
+		}
+
 		if in.Implements(constructorType) {
-			// todo cookie and form 同时成立 ？？？
-			if in.Implements(cookieType) {
-				value(callerIn[idx]).FieldByName(cookieTypeName).Set(valueOfEmptyCookie)
-				cookies := req.Cookies()
-				checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[idx]), cookieNameWithTag)
-				addr(callerIn[idx]).Interface().(CookieValue).Construct(req)
-			} else if in.Implements(formValueType) {
-				value(callerIn[idx]).FieldByName(formValueTypeName).Set(valueOfEmptyForm)
-				// ParsForm可以多少调用，不会影响性能或副作用
-				_ = req.ParseForm()
-				decodeForm(req.Form, addr(callerIn[idx]), pathFormFn)
-				addr(callerIn[idx]).Interface().(FormValue).Construct(req)
-			} else if in.Implements(pathValueType) {
-				value(callerIn[idx]).FieldByName(pathValueTypeName).Set(valueOfEmptyPath)
-				decode(match.GetVars(), addr(callerIn[idx]), pathFormFn)
-				addr(callerIn[idx]).Interface().(PathValue).Construct(req)
-			} else {
-				// todo ???
-				value(callerIn[idx]).FieldByName(constructorTypeName).Set(valueOfEmptyConstructor)
-				addr(callerIn[idx]).Interface().(FormValue).Construct(req)
+			uriFiled := value(callerIn[i]).FieldByName(constructorTypeName)
+			if uriFiled.IsValid() && uriFiled.CanSet() {
+				uriFiled.Set(valueOfEmptyConstructor)
 			}
-		}
-	}
-	var args0 = callerIn[foundURI]
-	// 先解析form
-	if shouldParseForm(req.Method) {
-		_ = req.ParseForm()
-		if len(req.Form) > 0 {
-			if invoker.kind == invokeByReceiver {
-				decodeForm(req.Form, addr(receiver))
-			}
-			if args0.Type() != uriType {
-				decodeForm(req.Form, addr(args0), pathFormFn)
-			}
-		}
-	}
-
-	// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
-	if len(match.GetVars()) > 0 {
-		if invoker.kind == invokeByReceiver {
-			decode(match.GetVars(), addr(receiver), pathFormFn)
-		}
-		if args0.Type() != uriType {
-			decode(match.GetVars(), addr(args0), pathFormFn)
-		}
-	}
-
-	// 最后读取cookie，只赋值有cookie标签的变量
-	cookies := req.Cookies()
-	if len(cookies) >= 0 {
-		if invoker.kind == invokeByReceiver {
-			checkSet(stringFlag, cookieHolder(cookies), addr(receiver), cookieNameWithTag)
-		}
-		if args0.Type() != uriType {
-			checkSet(stringFlag, cookieHolder(cookies), addr(args0), cookieNameWithTag)
+			addr(callerIn[i]).Interface().(Constructor).Construct(req)
 		}
 	}
 	return call(*invoker.Method, callerIn)
@@ -467,6 +424,10 @@ func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, 
 }
 func pathFormFn(field reflect.StructField) []string {
 	return filedName(field, pathFormName)
+}
+
+func cookieNameWithTag(field reflect.StructField) []string {
+	return filedName(field, cookieTagName)
 }
 
 func value(value reflect.Value) reflect.Value {
