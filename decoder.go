@@ -63,32 +63,30 @@ func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 		}
 		// 返回值表示是否找到对应的caster
 		names := filedName(rv.Type().Field(i))
-		set := func() bool {
-			kind := f.Kind()
-			if f.Type() == timeType {
-				kind = timeTypeKind
-			}
-			if kind == reflect.Slice {
-				return false
-			}
-			if caster, ok := casterMap[kind]; ok {
-				for _, name := range names {
-					if str, flag, ok := holder(name); ok {
-						switch flag {
-						case stringFlag:
-							f.Set(caster(str.(string)))
-						case strSliceFlag:
-							f.Set(caster(str.([]string)[0]))
-						}
-						return true
-					}
-				}
-				return true
-			}
-			return false
-		}
 		if f.CanSet() {
-			if set() {
+			if func() bool {
+				kind := f.Kind()
+				if kind == reflect.Slice {
+					return false
+				}
+				if f.Type() == timeType {
+					kind = timeTypeKind
+				}
+				if caster, ok := casterMap[kind]; ok {
+					for _, name := range names {
+						if str, flag, ok := holder(name); ok {
+							switch flag {
+							case stringFlag:
+								f.Set(caster(str.(string)))
+							case strSliceFlag:
+								f.Set(caster(str.([]string)[0]))
+							}
+						}
+					}
+					return true
+				}
+				return false
+			}() {
 				continue
 			}
 			if f.Kind() != reflect.Slice {
