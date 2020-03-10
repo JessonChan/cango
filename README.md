@@ -1,16 +1,16 @@
 
 #   简介
 
-**cango** **web 开发框架** 基于tag的URI自发现机制，不需要显示的定义路由。
+**cango** **web 开发框架** 通过tag进行URI自发现，不需要显式的定义路由。
 ## 安装
 
-cango需要Go1.12及以上，配合go mod使用本教程。
-安装cango
+cango需要Go1.12及以上，同时本教程需要依赖go mod。  
+添加cango包
 
 ```bash
 go get -u github.com/JessonChan/cango
 ```
-为了更好的了解cango，建议安装`cango-cli`工具
+为了更好更快的了解cango，建议通过以下命令安装`cango-cli`工具
 ```bash
 go install github.com/JessonChan/cango-cli
 ```
@@ -22,7 +22,27 @@ go install github.com/JessonChan/cango-cli
 cango-cli start
 cd start
 ```  
-本命令完成的工作是：创建一个文件，route.go，写入下面的代码。
+本命令完成的工作：创建一个文件，route.go，写入下面的代码（也可以手动输入以下代码）。
+```go
+package main
+
+import "github.com/JessonChan/cango"
+
+func main() {
+	cango.
+		NewCan().
+		RouteFunc(func(cango.URI) interface{} {
+			return cango.Content{String: "Hello,World!"}
+		}).
+		Run()
+}
+```
+
+```bash
+go run route.go
+```
+打开 `http://127.0.0.1:8080`[链接](http://127.0.0.1:8080),就会看到`Hello,World!` 。
+接下来，通过修改过上面的代码来展示如何通过tag来定义路由。
 ```go
 package main
 
@@ -38,31 +58,30 @@ func main() {
 		}).
 		Run()
 }
-```
+```     
+这段代码在`start`文件夹的`route-func.go`中，通过对func入参`ps`来定义两个等效的路由`/`和`/hello`，
+意味着，我们既可以通过`http://127.0.0.1:8080`[链接](http://127.0.0.1:8080)来访问，也可以通过
+`http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello)来访问。  
 
-```bash
-go run route.go
-```
-打开 `http://127.0.0.1:8080`,就会看到`Hello,World!` ，也可以打开 `http://127.0.0.1:8080/hello`，会看到同样的内容。   
-上面的例子只是为了展示初步的使用，还可以有另外的写法，就是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
+上述两段的代码初步展示cango的使用。在工程中，更为推荐的写法是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
 ```go
 package main
 
 import "github.com/JessonChan/cango"
 
-type CanApp struct {
+type Ctrl struct {
 	cango.URI `value:"/hello"`
 }
 
 // 路由定义是方法的 receiver 中定义的
 // 这个方法对应的 /hello
-func (c *CanApp) Hello(cango.URI) interface{} {
+func (c *Ctrl) Hello(cango.URI) interface{} {
 	return cango.Content{String: "Hello,World!"}
 }
 
 // 路由定义为 receiver中的URI tag和 参数列表中的 URI和tag的相加，
 // 这个示例为 /hello/world.html
-func (c *CanApp) World(ps struct {
+func (c *Ctrl) World(ps struct {
 	cango.URI `value:"/world.html"`
 }) interface{} {
 	return cango.Content{String: "Hello,Cango!"}
@@ -71,15 +90,16 @@ func (c *CanApp) World(ps struct {
 func main() {
 	cango.
 		NewCan().
-		Route(&CanApp{}).
+		Route(&Ctrl{}).
 		Run()
 }
+
 ```
 
 ```bash
 go run route_struct.go
 ```
-打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello`,就会看到`Hello,Cango!`；
+打开 `http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello),就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello/world.html`[链接](http://127.0.0.1:8080/hello/world.html),就会看到`Hello,Cango!`；
 
 ## 路由简介 
 
