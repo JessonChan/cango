@@ -71,11 +71,13 @@ func initIniConfig(configPath string) *IniConfig {
 	for _, line := range strings.Split(func() string {
 		bs, err := ioutil.ReadFile(configPath)
 		if err != nil {
-			canlog.CanError(err)
 			return ""
 		}
 		return string(bs)
 	}(), "\n") {
+		if line == "" {
+			continue
+		}
 		idx := strings.Index(line, "=")
 		if idx == -1 {
 			canlog.CanError("can't parse config line", line)
