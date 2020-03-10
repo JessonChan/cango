@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/JessonChan/canlog"
 )
@@ -26,7 +27,9 @@ type IniConfig struct {
 	envForm map[string][]string
 }
 
-var canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
+var configOnce sync.Once
+
+var canIniConfig *IniConfig
 
 func NewIniConfig(filePath string) *IniConfig {
 	return initIniConfig(filePath)
@@ -34,12 +37,18 @@ func NewIniConfig(filePath string) *IniConfig {
 
 // Env 从配置文件中取配置项为key的值
 func Env(key string) string {
+	configOnce.Do(func() {
+		NewIniConfig(getRootPath() + "/conf/cango.ini")
+	})
 	return canIniConfig.Env(key)
 }
 
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
 func Envs(i interface{}) {
+	configOnce.Do(func() {
+		NewIniConfig(getRootPath() + "/conf/cango.ini")
+	})
 	canIniConfig.Envs(i)
 }
 
@@ -85,7 +94,7 @@ func initIniConfig(configPath string) *IniConfig {
 		envs[key] = value
 		// 数组变量
 		if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-			envForm[key] = strings.Split(value, ",")
+			envForm[key] = strings.Split(value[1:len(value)-1], ",")
 		} else {
 			envForm[key] = []string{value}
 		}
