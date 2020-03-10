@@ -100,6 +100,104 @@ func InitLogger(rw io.Writer) {
 	canlog.SetWriter(rw, "CANGO")
 }
 
+func (can *Can) Run(as ...interface{}) {
+	// 优先从配置文件中读取
+	// 之后从传入参数中读取
+	Envs(&defaultAddr)
+	Envs(&defaultOpts)
+
+	if loggerInitialed == false && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
+		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
+	}
+
+	addr := getAddr(as)
+	can.srv.Addr = addr.String()
+	can.srv.Handler = can
+	can.srv.ErrorLog = canlog.GetLogger()
+	opts := getOpts(as)
+	can.rootPath = opts.RootPath
+	can.tplRootPath = filepath.Clean(can.rootPath + "/" + opts.TplDir)
+	can.staticRootPath = filepath.Clean(can.rootPath + "/" + opts.StaticDir)
+	can.tplSuffix = opts.TplSuffix
+	can.debugTpl = opts.DebugTpl
+	can.buildStaticRoute()
+	can.buildRoute()
+	// 务必要先构建route再去构建filter
+	can.buildFilter()
+
+	startChan := make(chan error, 1)
+	go func() {
+		canlog.CanInfo("cango start success @ " + addr.String())
+		err := can.srv.ListenAndServe()
+		if err != nil {
+			startChan <- err
+		}
+	}()
+	err := <-startChan
+	if err != nil {
+		panic(err)
+	}
+}
+
+func getAddr(as []interface{}) Addr {
+	host := defaultAddr.Host
+	port := defaultAddr.Port
+	for _, v := range as {
+		if addr, ok := v.(Addr); ok {
+			return addr
+		}
+		if h, ok := v.(string); ok {
+			host = h
+		}
+		if p, ok := v.(int); ok {
+			port = p
+		}
+	}
+	return Addr{host, port}
+}
+
+func getOpts(as []interface{}) Opts {
+	newOpts := copyOpts()
+	for _, v := range as {
+		if opts, ok := v.(Opts); ok {
+			if opts.RootPath != "" {
+				newOpts.RootPath = opts.RootPath
+			}
+			if opts.TplDir != "" {
+				newOpts.TplDir = opts.TplDir
+			}
+			if opts.StaticDir != "" {
+				newOpts.StaticDir = opts.StaticDir
+			}
+			if len(opts.TplSuffix) != 0 {
+				newOpts.TplSuffix = opts.TplSuffix
+			}
+			newOpts.DebugTpl = opts.DebugTpl
+		}
+	}
+	return newOpts
+}
+func copyOpts() Opts {
+	return Opts{
+		RootPath:  defaultOpts.RootPath,
+		TplDir:    defaultOpts.TplDir,
+		StaticDir: defaultOpts.StaticDir,
+		TplSuffix: append(defaultOpts.TplSuffix),
+		DebugTpl:  false,
+	}
+}
+func getRootPath() string {
+	dir, err := os.Getwd()
+	if err == nil {
+		return dir
+	}
+	abs, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		return os.Args[0]
+	}
+	return filepath.Dir(abs)
+}
+
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -209,7 +307,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			path = "/" + path
 		}
 		// todo 更好的实现 filepath.Clean的性能问题
-		paths := [3]string{can.rootPath + path, path, can.staticRootPath + path}
+		paths := [3]string{can.staticRootPath + path, can.rootPath + path, path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
 			if err != nil {
@@ -244,104 +342,6 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			can.filterMap[typ].PostHandle(rw, r)
 		}
 	}
-}
-
-func (can *Can) Run(as ...interface{}) {
-	// 优先从配置文件中读取
-	// 之后从传入参数中读取
-	Envs(&defaultAddr)
-	Envs(&defaultOpts)
-
-	if loggerInitialed == false && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
-		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
-	}
-
-	addr := getAddr(as)
-	can.srv.Addr = addr.String()
-	can.srv.Handler = can
-	can.srv.ErrorLog = canlog.GetLogger()
-	opts := getOpts(as)
-	can.rootPath = opts.RootPath
-	can.tplRootPath = filepath.Clean(can.rootPath + "/" + opts.TplDir)
-	can.staticRootPath = filepath.Clean(can.rootPath + "/" + opts.StaticDir)
-	can.tplSuffix = opts.TplSuffix
-	can.debugTpl = opts.DebugTpl
-	can.buildStaticRoute()
-	can.buildRoute()
-	// 务必要先构建route再去构建filter
-	can.buildFilter()
-
-	startChan := make(chan error, 1)
-	go func() {
-		canlog.CanInfo("cango start success @ " + addr.String())
-		err := can.srv.ListenAndServe()
-		if err != nil {
-			startChan <- err
-		}
-	}()
-	err := <-startChan
-	if err != nil {
-		panic(err)
-	}
-}
-
-func getAddr(as []interface{}) Addr {
-	host := defaultAddr.Host
-	port := defaultAddr.Port
-	for _, v := range as {
-		if addr, ok := v.(Addr); ok {
-			return addr
-		}
-		if h, ok := v.(string); ok {
-			host = h
-		}
-		if p, ok := v.(int); ok {
-			port = p
-		}
-	}
-	return Addr{host, port}
-}
-
-func getOpts(as []interface{}) Opts {
-	newOpts := copyOpts()
-	for _, v := range as {
-		if opts, ok := v.(Opts); ok {
-			if opts.RootPath != "" {
-				newOpts.RootPath = opts.RootPath
-			}
-			if opts.TplDir != "" {
-				newOpts.TplDir = opts.TplDir
-			}
-			if opts.StaticDir != "" {
-				newOpts.StaticDir = opts.StaticDir
-			}
-			if len(opts.TplSuffix) != 0 {
-				newOpts.TplSuffix = opts.TplSuffix
-			}
-			newOpts.DebugTpl = opts.DebugTpl
-		}
-	}
-	return newOpts
-}
-func copyOpts() Opts {
-	return Opts{
-		RootPath:  defaultOpts.RootPath,
-		TplDir:    defaultOpts.TplDir,
-		StaticDir: defaultOpts.StaticDir,
-		TplSuffix: append(defaultOpts.TplSuffix),
-		DebugTpl:  false,
-	}
-}
-func getRootPath() string {
-	dir, err := os.Getwd()
-	if err == nil {
-		return dir
-	}
-	abs, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		return os.Args[0]
-	}
-	return filepath.Dir(abs)
 }
 
 func doubleMatch(mux dispatcher, req *http.Request) matcher {
