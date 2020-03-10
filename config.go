@@ -47,7 +47,7 @@ func Env(key string) string {
 // i 须为指针类型
 func Envs(i interface{}) {
 	configOnce.Do(func() {
-		NewIniConfig(getRootPath() + "/conf/cango.ini")
+		canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
 	})
 	canIniConfig.Envs(i)
 }
