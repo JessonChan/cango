@@ -15,6 +15,7 @@ package cango
 
 import (
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -22,24 +23,24 @@ var timeType = reflect.TypeOf(time.Time{})
 
 // todo 缓存v struct结构
 func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) []string) {
-	checkSet(stringFlag, func(s string) (interface{}, bool) {
+	checkSet(func(s string) (interface{}, int, bool) {
 		v, ok := holder[s]
-		return v, ok
+		return v, stringFlag, ok
 	}, rv, append(filedName, noTagName)[0])
 }
 func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
-	checkSet(strSliceFlag, func(s string) (interface{}, bool) {
+	checkSet(func(s string) (interface{}, int, bool) {
 		v, ok := holder[s]
-		return v, ok
+		return v, strSliceFlag, ok
 	}, rv, append(filedName, noTagName)[0])
 }
 
-func checkSet(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedNameFn func(field reflect.StructField) []string) {
+func checkSet(holder func(string) (interface{}, int, bool), rv reflect.Value, filedNameFn func(field reflect.StructField) []string) {
 	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
 	rv = reflect.Indirect(rv)
-	setValue(flag, holder, rv, filedNameFn)
+	setValue(holder, rv, filedNameFn)
 }
 
 const (
@@ -48,7 +49,7 @@ const (
 )
 
 // todo clean the code
-func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
+func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
 	if rv.Kind() == reflect.Interface {
 		return
 	}
@@ -58,11 +59,11 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			f = reflect.Indirect(f)
 		}
 		if f.Kind() == reflect.Struct && f.Type() != timeType {
-			setValue(flag, holder, f, filedName)
+			setValue(holder, f, filedName)
 		}
 		// 返回值表示是否找到对应的caster
 		names := filedName(rv.Type().Field(i))
-		set := func(flag int) bool {
+		set := func() bool {
 			kind := f.Kind()
 			if f.Type() == timeType {
 				kind = timeTypeKind
@@ -72,7 +73,7 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			}
 			if caster, ok := casterMap[kind]; ok {
 				for _, name := range names {
-					if str, ok := holder(name); ok {
+					if str, flag, ok := holder(name); ok {
 						switch flag {
 						case stringFlag:
 							f.Set(caster(str.(string)))
@@ -87,31 +88,26 @@ func setValue(flag int, holder func(string) (interface{}, bool), rv reflect.Valu
 			return false
 		}
 		if f.CanSet() {
-			switch flag {
-			case stringFlag:
-				set(stringFlag)
-			case strSliceFlag:
-				if set(strSliceFlag) {
-					continue
-				}
-				if f.Kind() != reflect.Slice {
-					continue
-				}
-				for _, key := range names {
-					if str, ok := holder(key); ok && len(str.([]string)) != 0 {
-						sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
-						kind := sv.Index(0).Kind()
-						if sv.Index(0).Type() == timeType {
-							kind = timeTypeKind
-						}
-						if converter, ok := casterMap[kind]; ok {
-							for idx, vs := range str.([]string) {
-								sv.Index(idx).Set(converter(vs))
-							}
-						}
-						f.Set(sv)
-						break
+			if set() {
+				continue
+			}
+			if f.Kind() != reflect.Slice {
+				continue
+			}
+			for _, key := range names {
+				if str, _, ok := holder(key); ok && len(str.([]string)) != 0 {
+					sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
+					kind := sv.Index(0).Kind()
+					if sv.Index(0).Type() == timeType {
+						kind = timeTypeKind
 					}
+					if converter, ok := casterMap[kind]; ok {
+						for idx, vs := range str.([]string) {
+							sv.Index(idx).Set(converter(vs))
+						}
+					}
+					f.Set(sv)
+					break
 				}
 			}
 		}
@@ -128,6 +124,22 @@ func filedName(f reflect.StructField, tagName string) []string {
 		}
 	}
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
+}
+
+func fieldTagNames(field reflect.StructField) []string {
+	if field.Tag != "" {
+		if strings.Contains(string(field.Tag), cookieTagName) {
+			tagValue := field.Tag.Get(cookieTagName)
+			if tagValue != "" {
+				if tagValue == "~" {
+					return []string{cookieHolderKey + lowerCase(field.Name), cookieHolderKey + field.Name, cookieHolderKey + underScore(field.Name)}
+				} else {
+					return []string{cookieHolderKey + tagValue}
+				}
+			}
+		}
+	}
+	return []string{formPathHolderKey + lowerCase(field.Name), formPathHolderKey + field.Name, formPathHolderKey + underScore(field.Name)}
 }
 
 func noTagName(f reflect.StructField) []string {
