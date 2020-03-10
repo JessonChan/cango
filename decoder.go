@@ -122,7 +122,9 @@ func filedName(f reflect.StructField, tagName string) []string {
 	if tagName != "" {
 		tag := f.Tag.Get(tagName)
 		if tag != "" {
-			return []string{tag}
+			if tag != "~" {
+				return []string{tag}
+			}
 		}
 	}
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
