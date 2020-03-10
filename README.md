@@ -36,7 +36,7 @@ func main() {
 		}) interface{} {
 			return cango.Content{String: "Hello,World!"}
 		}).
-		Run(cango.Addr{Port: 8080})
+		Run()
 }
 ```
 
@@ -72,7 +72,7 @@ func main() {
 	cango.
 		NewCan().
 		Route(&CanApp{}).
-		Run(cango.Addr{Port: 8080})
+		Run()
 }
 ```
 
@@ -177,7 +177,7 @@ func main() {
 			return cango.Redirect{Url: "/index.html"}
 		}).
 		RouteFuncWithPrefix("/v2", Index).
-		Run(cango.Addr{Port: 8080})
+		Run()
 }
 ```
 在index.html中写入
@@ -278,7 +278,7 @@ func main() {
 		}).
 		RouteFuncWithPrefix("/v2", Index).
 		RouteFunc(Ping).
-		Run(cango.Addr{Port: 8080})
+		Run()
 }
 
 ```
