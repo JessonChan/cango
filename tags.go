@@ -20,4 +20,23 @@ const (
 	pathValueTagName string = "path"
 	formValueTagName string = "form"
 	nameTagName      string = "name"
+	holderLen               = 12
 )
+
+var cookieHolderKey = len16String(cookieTagName)
+var formPathHolderKey = len16String(formValueTagName + pathValueTagName)
+
+func len16String(key string) string {
+	if len(key) > holderLen {
+		return key[0:holderLen]
+	}
+	newKey := make([]byte, holderLen)
+	for i := 0; i < 16; i++ {
+		if i < len(key) {
+			newKey[i] = key[i]
+		} else {
+			newKey[i] = '-'
+		}
+	}
+	return string(newKey)
+}

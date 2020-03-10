@@ -383,21 +383,32 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 				}
 			}
 		}
-		// todo 统一到decode中一起解析
 		// 先解析form
-		if len(req.Form) > 0 {
-			decodeForm(req.Form, addr(callerIn[i]), pathFormFn)
-		}
-
 		// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
-		if len(match.GetVars()) > 0 {
-			decode(match.GetVars(), addr(callerIn[i]), pathFormFn)
+		// 最后读取cookie，只赋值有cookie标签的变量
+		reqHolder := func(key string) (interface{}, int, bool) {
+			holderKey := key[0:holderLen]
+			valueKey := key[holderLen:]
+			switch holderKey {
+			case cookieHolderKey:
+				for _, cookie := range cookies {
+					if cookie.Name == valueKey {
+						return cookie.Value, stringFlag, true
+					}
+				}
+				return nil, stringFlag, false
+			default:
+				if v, ok := match.GetVars()[valueKey]; ok {
+					return v, stringFlag, true
+				}
+				if v, ok := req.Form[valueKey]; ok {
+					return v, strSliceFlag, true
+				}
+				return nil, stringFlag, false
+			}
 		}
 
-		// 最后读取cookie，只赋值有cookie标签的变量
-		if len(cookies) >= 0 {
-			checkSet(stringFlag, cookieHolder(cookies), addr(callerIn[i]), cookieNameWithTag)
-		}
+		checkSet(reqHolder, addr(callerIn[i]), fieldTagNames)
 
 		if in.Implements(constructorType) {
 			uriFiled := value(callerIn[i]).FieldByName(constructorTypeName)
