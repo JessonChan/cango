@@ -111,6 +111,9 @@ func (can *Can) buildRoute() {
 // todo 如果static存在的文件非常多的时候，这种实现方式会成为巨大的问题
 // todo 这里也有个优势，就是防止被恶意请求，请求某个不存在的文件，会直接在调用io之前被拒绝
 func (can *Can) buildStaticRoute() {
+	if fileInfo, _ := os.Lstat(can.staticRootPath); fileInfo == nil {
+		return
+	}
 	_ = filepath.Walk(can.staticRootPath, func(path string, info os.FileInfo, err error) error {
 		if info == nil || info.IsDir() {
 			return nil
