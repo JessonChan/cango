@@ -31,7 +31,7 @@ func len16String(key string) string {
 		return key[0:holderLen]
 	}
 	newKey := make([]byte, holderLen)
-	for i := 0; i < 16; i++ {
+	for i := 0; i < holderLen; i++ {
 		if i < len(key) {
 			newKey[i] = key[i]
 		} else {
