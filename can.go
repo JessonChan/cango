@@ -183,9 +183,16 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if code == 0 {
 			code = http.StatusFound
 		}
-		http.Redirect(rw, r, handleReturn.(RedirectWithCode).Url, http.StatusFound)
+		http.Redirect(rw, r, handleReturn.(RedirectWithCode).Url, code)
 	case Content:
-		code := handleReturn.(Content).Code
+		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+		rw.WriteHeader(http.StatusOK)
+		_, err := rw.Write([]byte(handleReturn.(Content).String))
+		if err != nil {
+			canlog.CanError(err)
+		}
+	case ContentWithCode:
+		code := handleReturn.(ContentWithCode).Code
 		if code == 0 {
 			code = http.StatusOK
 		}

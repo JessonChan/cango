@@ -79,6 +79,14 @@ type RedirectWithCode struct {
 }
 type Content struct {
 	String string
+}
+
+func (c Content) WithCode(code int) *ContentWithCode {
+	return &ContentWithCode{String: c.String, Code: code}
+}
+
+type ContentWithCode struct {
+	String string
 	Code   int
 }
 
