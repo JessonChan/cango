@@ -17,31 +17,48 @@ import (
 	"io/ioutil"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/JessonChan/canlog"
 )
 
-var envs = map[string]string{}
-var envForm = map[string][]string{}
-var envOnce sync.Once
+type IniConfig struct {
+	envs    map[string]string
+	envForm map[string][]string
+}
+
+var canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
+
+func NewIniConfig(filePath string) *IniConfig {
+	return initIniConfig(filePath)
+}
 
 // Env 从配置文件中取配置项为key的值
 func Env(key string) string {
-	envOnce.Do(initIniConfig)
-	return envs[key]
+	return canIniConfig.Env(key)
 }
 
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
 func Envs(i interface{}) {
-	decodeForm(envForm, reflect.ValueOf(i), func(field reflect.StructField) []string {
+	canIniConfig.Envs(i)
+}
+
+// Env 从配置文件中取配置项为key的值
+func (ic *IniConfig) Env(key string) string {
+	return ic.envs[key]
+}
+
+// Envs 对传入的对象进行赋值
+// i 须为指针类型
+func (ic *IniConfig) Envs(i interface{}) {
+	decodeForm(ic.envForm, reflect.ValueOf(i), func(field reflect.StructField) []string {
 		return filedName(field, nameTagName)
 	})
 }
 
-func initIniConfig() {
-	configPath := getRootPath() + "/conf/cango.ini"
+func initIniConfig(configPath string) *IniConfig {
+	var envs = map[string]string{}
+	var envForm = map[string][]string{}
 	for _, line := range strings.Split(func() string {
 		bs, err := ioutil.ReadFile(configPath)
 		if err != nil {
@@ -72,5 +89,9 @@ func initIniConfig() {
 		} else {
 			envForm[key] = []string{value}
 		}
+	}
+	return &IniConfig{
+		envs:    envs,
+		envForm: envForm,
 	}
 }
