@@ -88,6 +88,7 @@ func factoryMethod(m reflect.Method, invokeByWho int) *handlerMethod {
 		return nil
 	}
 	// 只接受参数列表最后一个做为uri,如果在参数中不包含uri，则放弃该路由
+	// todo 支持根据路由名和方法名进行路由定义？？？
 	for j := m.Type.NumIn(); j > invokeByWho; j-- {
 		in := implements(m.Type.In(j-1), uriType)
 		if in == nil {
