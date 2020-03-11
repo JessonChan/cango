@@ -428,24 +428,6 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 	return call(*invoker.Method, callerIn)
 }
 
-func cookieHolder(cookies []*http.Cookie) func(cookieName string) (interface{}, bool) {
-	return func(cookieName string) (interface{}, bool) {
-		for _, cookie := range cookies {
-			if cookie.Name == cookieName {
-				return cookie.Value, true
-			}
-		}
-		return nil, false
-	}
-}
-func pathFormFn(field reflect.StructField) []string {
-	return filedName(field, pathFormName)
-}
-
-func cookieNameWithTag(field reflect.StructField) []string {
-	return filedName(field, cookieTagName)
-}
-
 func value(value reflect.Value) reflect.Value {
 	if value.Type().Kind() == reflect.Ptr {
 		return value.Elem()
