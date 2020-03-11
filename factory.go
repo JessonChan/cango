@@ -71,7 +71,7 @@ func factoryType(typ reflect.Type) *handlerStruct {
 		if m.PkgPath != "" {
 			continue
 		}
-		hm := factoryMethod(m)
+		hm := factoryMethod(m, invokeBySelf)
 		if hm != nil {
 			hs.fns = append(hs.fns, hm)
 		}
@@ -80,16 +80,15 @@ func factoryType(typ reflect.Type) *handlerStruct {
 	return hs
 }
 
-func factoryMethod(m reflect.Method) *handlerMethod {
+func factoryMethod(m reflect.Method, invokeByWho int) *handlerMethod {
 	if hm, ok := cacheMethod[m]; ok {
 		return hm
 	}
 	if uriInterfaceContains(m) {
 		return nil
 	}
-	// todo 现在只接受一个参数???
-	// 只接受参数列表最后一个做为uri
-	for j := m.Type.NumIn(); j > 0; j-- {
+	// 只接受参数列表最后一个做为uri,如果在参数中不包含uri，则放弃该路由
+	for j := m.Type.NumIn(); j > invokeByWho; j-- {
 		in := implements(m.Type.In(j-1), uriType)
 		if in == nil {
 			continue

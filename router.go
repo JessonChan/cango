@@ -153,7 +153,7 @@ func (can *Can) buildSingleRoute(ce ctrlEntry) {
 
 // todo use factory to clean code
 func (can *Can) routeMethod(invokeByWho int, prefix string, m reflect.Method, routerName string, ctrlTagPaths []string) {
-	hm := factoryMethod(m)
+	hm := factoryMethod(m, invokeByWho)
 	if hm == nil {
 		return
 	}
