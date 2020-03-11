@@ -39,7 +39,7 @@ func main() {
 ```
 
 ```bash
-go run route-func.go
+go run route_func.go
 ```
 打开 `http://127.0.0.1:8080`[链接](http://127.0.0.1:8080),就会看到`Hello,World!` 。
 接下来，通过修改过上面的代码来展示如何通过tag来定义路由。
@@ -59,12 +59,12 @@ func main() {
 		Run()
 }
 ```     
-这段代码在`start`文件夹的`route-func.go`中，通过对func入参`ps`来定义两个等效的路由`/`和`/hello`，
+这段代码在`start`文件夹的`route_func.go`中，通过对func入参`ps`来定义两个等效的路由`/`和`/hello`，
 意味着，我们既可以通过`http://127.0.0.1:8080`[链接](http://127.0.0.1:8080)来访问，也可以通过
 `http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello)来访问。  
 
-上述两段的代码初步展示cango的使用。在工程中，更为推荐的写法是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
-```go start.route-struct.go
+上述两段的代码初步展示cango的使用。在项目中，更为推荐的写法是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
+```go start.route_struct.go
 package main
 
 import "github.com/JessonChan/cango"
@@ -97,7 +97,7 @@ func main() {
 ```
 
 ```bash
-go run route-struct.go
+go run route_struct.go
 ```
 打开 `http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello),就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello/world.html`[链接](http://127.0.0.1:8080/hello/world.html),就会看到`Hello,Cango!`；
 
