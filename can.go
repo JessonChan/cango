@@ -213,7 +213,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	needStop := false
 	var filterReturn interface{}
 	for typ, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp, r)
+		match := deepMatch(dsp, r)
 		if match.Error() == nil {
 			ri := can.filterMap[typ].PreHandle(rw, r)
 			if rt, ok := ri.(bool); ok {
@@ -337,14 +337,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	// postHandle
 	for typ, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp, r)
+		match := deepMatch(dsp, r)
 		if match.Error() == nil {
 			can.filterMap[typ].PostHandle(rw, r)
 		}
 	}
 }
 
-func doubleMatch(mux dispatcher, req *http.Request) matcher {
+func deepMatch(mux dispatcher, req *http.Request) matcher {
 	match := mux.Match(req)
 	if match.Error() != nil {
 		// todo 这里有性能问题
@@ -361,7 +361,7 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 }
 
 func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, int) {
-	match := doubleMatch(can.routeMux, req)
+	match := deepMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, http.StatusNotFound
