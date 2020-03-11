@@ -347,7 +347,6 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func deepMatch(mux dispatcher, req *http.Request) matcher {
 	match := mux.Match(req)
 	if match.Error() != nil {
-		// todo 这里有性能问题
 		originalPath := req.URL.Path
 		req.URL.Path = filepath.Clean(originalPath)
 		if originalPath == req.URL.Path {
