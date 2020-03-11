@@ -93,16 +93,27 @@ func initIniConfig(configPath string) *IniConfig {
 		}
 		key := strings.TrimSpace(line[:idx])
 		value := strings.TrimSpace(line[idx+1 : commentIdx])
-		envs[key] = value
+		envs[key] = trimQuote(value)
 		// 数组变量
 		if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-			envForm[key] = strings.Split(value[1:len(value)-1], ",")
+			strs := strings.Split(value[1:len(value)-1], ",")
+			for i := 0; i < len(strs); i++ {
+				strs[i] = trimQuote(strs[i])
+			}
+			envForm[key] = strs
 		} else {
-			envForm[key] = []string{value}
+			envForm[key] = []string{trimQuote(value)}
 		}
 	}
 	return &IniConfig{
 		envs:    envs,
 		envForm: envForm,
 	}
+}
+
+func trimQuote(str string) string {
+	if strings.HasPrefix(str, `""`) && strings.HasSuffix(str, `""`) {
+		return str[1 : len(str)-1]
+	}
+	return str
 }
