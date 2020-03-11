@@ -111,9 +111,9 @@ cango中，路由都定义在控制器结构体和控制器方法参数上。在
 
 ```go
 // RouteFunc 方法路由，可以传入多个方法
-can.RouteFunc(...func(cango.URI)interface{})
+can.RouteFunc(...func(cango.URI,...cango.Constructor)interface{})
 // RouteFuncWithPrefix 带有前缀的方法路由，可以传入多个方法（便于版本、分组等管理）
-can.RouteFuncWithPrefix(prefix, ...func(cango.URI)interface{})
+can.RouteFuncWithPrefix(prefix, ...func(cango.URI,...cango.Constructor)interface{})
 // 路由结构体上所有的方法
 can.Route(cango.URI)
 // 路由结构体上所有的方法，并使用前缀
