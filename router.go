@@ -29,11 +29,13 @@ import (
 const emptyPrefix = ""
 
 // todo route by controller and method Name???
+// Route 路由结构体上所有的可导出方法
 func (can *Can) Route(uris ...URI) *Can {
 	return can.RouteWithPrefix(emptyPrefix, uris...)
 }
 
 // todo route with suffix and simplify
+// Route路由结构体上所有的可导出方法，并使用路由前缀
 func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
 		can.route(prefix, uri)
@@ -46,15 +48,19 @@ func (can *Can) route(prefix string, uri URI) {
 	can.ctrlEntryMap[prefix+typ.String()] = ctrlEntry{prefix: prefix, kind: reflect.Ptr, ctrl: uri, tim: time.Now().Unix()}
 }
 
+// RouteFunc 方法路由，可以传入多个方法
 func (can *Can) RouteFunc(fns ...interface{}) *Can {
 	return can.RouteFuncWithPrefix(emptyPrefix, fns...)
 }
+
+// RouteFuncWithPrefix 带有前缀的方法路由，可以传入多个方法（便于版本、分组等管理）
 func (can *Can) RouteFuncWithPrefix(prefix string, fns ...interface{}) *Can {
 	for _, fn := range fns {
 		can.routeFunc(prefix, fn)
 	}
 	return can
 }
+
 func (can *Can) routeFunc(prefix string, fn interface{}) {
 	fv := reflect.ValueOf(fn)
 	if fv.Kind() != reflect.Func {
@@ -75,6 +81,7 @@ var uriRegMap = map[URI]bool{}
 
 // todo with prefix???
 // todo with can app Name ???
+// RegisterURI 在定义struct的时候引入，也这是非常推荐的方法
 func RegisterURI(uri URI) bool {
 	uriRegMap[uri] = true
 	return true
