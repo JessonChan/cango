@@ -23,7 +23,7 @@ cango-cli start
 cd start
 ```  
 本命令完成的工作：创建一个文件，route.go，写入下面的代码（也可以手动输入以下代码）。
-```go
+```go start.route.go
 package main
 
 import "github.com/JessonChan/cango"
@@ -39,11 +39,11 @@ func main() {
 ```
 
 ```bash
-go run route.go
+go run route-func.go
 ```
 打开 `http://127.0.0.1:8080`[链接](http://127.0.0.1:8080),就会看到`Hello,World!` 。
 接下来，通过修改过上面的代码来展示如何通过tag来定义路由。
-```go
+```go start.func.go
 package main
 
 import "github.com/JessonChan/cango"
@@ -64,7 +64,7 @@ func main() {
 `http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello)来访问。  
 
 上述两段的代码初步展示cango的使用。在工程中，更为推荐的写法是将函数定义在特定的struct上，创建新的文件 route_struct.go，并写入代码如下(start目录下的route_struct.go)
-```go
+```go start.route-struct.go
 package main
 
 import "github.com/JessonChan/cango"
@@ -97,7 +97,7 @@ func main() {
 ```
 
 ```bash
-go run route_struct.go
+go run route-struct.go
 ```
 打开 `http://127.0.0.1:8080/hello`[链接](http://127.0.0.1:8080/hello),就会看到`Hello,World!`;打开 `http://127.0.0.1:8080/hello/world.html`[链接](http://127.0.0.1:8080/hello/world.html),就会看到`Hello,Cango!`；
 
