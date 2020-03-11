@@ -307,7 +307,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			path = "/" + path
 		}
 		// todo 更好的实现 filepath.Clean的性能问题
-		paths := [3]string{can.staticRootPath + path, can.rootPath + path, path}
+		paths := [3]string{can.rootPath + path, can.staticRootPath + path, path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
 			if err != nil {
