@@ -4,7 +4,7 @@
 **cango** **web 开发框架** 通过tag进行URI自发现，不需要显式的定义路由。
 ## 安装
 
-cango需要Go1.12及以上，同时本教程需要依赖go mod。  
+cango需要Go1.12及以上，同时本教程需要依赖go mod。   
 添加cango包
 
 ```bash
@@ -103,13 +103,16 @@ go run route_struct.go
 
 ## 路由简介 
 
-cango中，路由都定义在方法参数或者结构体上，以上面的例子，只需要定义将cango.URI做为成员引入实现URI接口的函数，就会自动写入路由，路由模式是由tag中的value值来定义的，需要特殊说明的是value值可以使用`;`来定义多个。  
-定义的函数入参为cango.URI类型，出参为interface{}，当前版本必须要返回值的，返回值做为请求的返回依据。
+cango中，路由都定义在控制器结构体和控制器方法参数上。在`Hello, World!`这一节中已经对此进行初步的说明，可以知道，只需要定义将cango.URI做为成员变量引入结构体（控制器或者控制器方法入参），
+就会自动写入路由，路由规则是由tag中的value值来定义的。
+需要特殊说明的是value值可以使用`;`来定义多个同时生效的平行规则，也可以为空。 
+定义的函数入参为cango.URI类型，出参为interface{}，当前版本必须要返回值的，
+返回值做为请求的返回依据。
 
 ```go
-// 路由一个方法
+// RouteFunc 方法路由，可以传入多个方法
 can.RouteFunc(...func(cango.URI)interface{})
-// 定义方法并且带有路由前缀（便于版本、分组等管理）
+// RouteFuncWithPrefix 带有前缀的方法路由，可以传入多个方法（便于版本、分组等管理）
 can.RouteFuncWithPrefix(prefix, ...func(cango.URI)interface{})
 // 路由结构体上所有的方法
 can.Route(cango.URI)
@@ -117,10 +120,12 @@ can.Route(cango.URI)
 can.RouteWithPrefix(cango.URI)
 // 在定义struct的时候引入，也这是非常推荐的方法
 var _ = cango.RegisterURI(cango.URI)
+// RegisterURIWithPrefix 在定义struct的时候引入，同时使用prefix做为路由前缀，也这是非常推荐的方法
+var _ = cango.RegisterURIWithPrefix(prefix string, uri URI) 
 ```
 * `can` 是cango.NewCan()的实例
 * `cango.URI`是用来保存路由及请求相关数据的。
-* `prefix`是定义在路由上的前缀，使用prefix参数后，路由地址为prefix+URI-Tag-Value，看以下的例子
+* `prefix`是定义在路由上的前缀，使用prefix参数后，路由地址为prefix+URI-Tag-Value
 * `interface{}` 映射请求的返回值，当前版本支持的类型如下
 
 ```go
@@ -130,8 +135,10 @@ cango.ModelView
 cango.StaticFile 
 // 重定向
 cango.Redirect 
+cango.RedirectWithCode
 // 上面的例子中使用，会直接返回Content.String
 cango.Content
+cango.ContentWithCode
 ```
 如果返回值不是以上类型，当前版本的处理逻辑是返回JSON。   
 
@@ -151,19 +158,6 @@ cango-cli app
 ```
 app.go中写入
 ```go
-// Copyright 2020 Cango Author.
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//    http://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 package main
 
 import (
@@ -242,19 +236,6 @@ type TraceMethod httpMethod
 ```
 还以上面的例子说明。在app.go中加入新的方法，更新后如下
 ```go
-// Copyright 2020 Cango Author.
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//    http://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 package main
 
 import (
@@ -339,8 +320,6 @@ curl  -d ""  http://127.0.0.1:8080/ping/2020/15/white.json
 ```
 也就是定义在路由中的变量
 
-```
-
 ### 通配符路由
 当前版本支持在路由中最多包含一个 `*` 通配符的路径，并且通配符路由不能再包含路径变量，定义方法如下
 ```go
@@ -348,8 +327,8 @@ cango.URI `value:"/goto/*"`
 ```
 ### 过滤器
 当前版本支持前置过滤器和后置过滤器，目前不支持对执行结果的修改。定义如下
-```go 
-type GzipFilter struct {
+```go
+type VisitFilter struct {
 	cango.Filter `value:"/static/*.css;/static/*.js"`
 }
 func (v *VisitFilter) PreHandle(w http.ResponseWriter, req *http.Request) interface{} {
@@ -358,8 +337,10 @@ func (v *VisitFilter) PreHandle(w http.ResponseWriter, req *http.Request) interf
 func (v *VisitFilter) PostHandle(w http.ResponseWriter, req *http.Request) interface{} {
 	return true
 }
-```	
-如上所写，使用tag定义filter路径是最推荐的。上面的代码完成会在执行controller的函数前先执行PreHandle，再执行函数，最后执行PostHandle。它的作用范围是所有的css和js静态文件。  
+```
+
+如上所写，使用tag定义filter路径是最推荐的。  
+上面的代码完成会在执行controller的函数前先执行PreHandle，再执行函数，最后执行PostHandle。它的作用范围是所有在`static`目录下的的`css`和`js`静态文件。  
 但是你也可以根据自己的需要，只注册某些cango.URI，如下所示。
 ```go
 can.Filter(f cango.Filter, uris ...cango.URI)
