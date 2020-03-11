@@ -86,7 +86,7 @@ func RegisterURI(uri URI) bool {
 	return RegisterURIWithPrefix(emptyPrefix, uri)
 }
 
-// RegisterURIWithPrefix 在定义struct的时候引入，也这是非常推荐的方法
+// RegisterURIWithPrefix 在定义struct的时候引入，同时使用prefix做为路由前缀，也这是非常推荐的方法
 func RegisterURIWithPrefix(prefix string, uri URI) bool {
 	uriRegMap[uri] = prefix
 	return true
