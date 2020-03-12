@@ -219,7 +219,7 @@ func main() {
 ```bash
 go run app.go
 ```
-在浏览器打开 `http://127.0.0.1:8080/index.html`、`http://127.0.0.1:8080/v2/index.html`和`http://127.0.0.1:8080/goto`
+在浏览器打开 `http://127.0.0.1:8080/index.html`[链接](http://127.0.0.1:8080/index.html)、`http://127.0.0.1:8080/v2/index.html`[链接](http://127.0.0.1:8080/v2/index.html)和`http://127.0.0.1:8080/goto`[链接](http://127.0.0.1:8080/goto)
 
 ### 请求方法
 
