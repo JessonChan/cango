@@ -1,7 +1,8 @@
 
 #   简介
 
-**cango** **web 开发框架** 通过tag进行URI自发现，不需要显式的定义路由。
+**cango** **web 开发框架** 通过tag进行URI自发现，不需要显式的定义路由；同时支持对于请求参数自动构造，减少
+编码和转化，更高效简洁的进行开发。
 ## 安装
 
 cango需要Go1.12及以上，同时本教程需要依赖go mod。   
@@ -194,7 +195,7 @@ func main() {
 		Run()
 }
 ```
-在index.html中写入
+同时在index.html中写入
 ```html
 <!DOCTYPE html>
 <html lang="en">
