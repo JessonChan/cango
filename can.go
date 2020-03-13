@@ -183,7 +183,7 @@ func copyOpts() Opts {
 		TplDir:    defaultOpts.TplDir,
 		StaticDir: defaultOpts.StaticDir,
 		TplSuffix: append(defaultOpts.TplSuffix),
-		DebugTpl:  false,
+		DebugTpl:  defaultOpts.DebugTpl,
 	}
 }
 func getRootPath() string {
