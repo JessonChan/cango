@@ -415,7 +415,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			}
 		}
 
-		checkSet(reqHolder, addr(callerIn[i]), fieldTagNames)
+		doDecode(reqHolder, addr(callerIn[i]), fieldTagNames)
 
 		if in.Implements(constructorType) {
 			uriFiled := value(callerIn[i]).FieldByName(constructorTypeName)
