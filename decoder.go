@@ -21,7 +21,6 @@ import (
 
 var timeType = reflect.TypeOf(time.Time{})
 
-// todo 缓存v struct结构
 func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) []string) {
 	checkSet(func(s string) (interface{}, int, bool) {
 		v, ok := holder[s]
@@ -48,7 +47,6 @@ const (
 	strSliceFlag = 1
 )
 
-// todo clean the code
 func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
 	if rv.Kind() == reflect.Interface {
 		return
