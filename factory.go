@@ -150,7 +150,7 @@ func urlStr(typ reflect.Type) ([]string, string) {
 			continue
 		}
 		if f.Type == uriType {
-			return tagUriParse(f.Tag), typ.Name()
+			return tagUriParse(f.Tag), typ.PkgPath() + "." + typ.Name()
 		}
 	}
 	return []string{}, ""
