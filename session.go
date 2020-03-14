@@ -12,22 +12,3 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package cango
-
-import (
-	"net/http"
-)
-
-// todo session 可以直接集成在请求参数中
-
-type sessionStore interface {
-	New(r *http.Request, name string)
-	Get(r *http.Request, name string) (*session, error)
-	Put(r *http.Request, w http.ResponseWriter, s *session) error
-}
-
-// Session stores the values  for a session.
-type session struct {
-	ID     string
-	Values map[interface{}]interface{}
-	name   string
-}
