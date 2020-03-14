@@ -23,6 +23,56 @@ type WebRequest struct {
 	*http.Request
 }
 
+/*
+	httpMethods := []string{"Get", "Post", "Head", "Put", "Patch", "Delete", "Options", "Trace"}
+	for _, m := range httpMethods {
+		fmt.Println("// Is"+m+" check the request method is http.Method"+m)
+		fmt.Println("func (wr *WebRequest) Is"+m+"() bool {")
+		fmt.Println("\treturn wr.Method == http.Method"+m)
+		fmt.Println("}")
+	}
+*/
+
+// IsGet check the request method is http.MethodGet
+func (wr *WebRequest) IsGet() bool {
+	return wr.Method == http.MethodGet
+}
+
+// IsPost check the request method is http.MethodPost
+func (wr *WebRequest) IsPost() bool {
+	return wr.Method == http.MethodPost
+}
+
+// IsHead check the request method is http.MethodHead
+func (wr *WebRequest) IsHead() bool {
+	return wr.Method == http.MethodHead
+}
+
+// IsPut check the request method is http.MethodPut
+func (wr *WebRequest) IsPut() bool {
+	return wr.Method == http.MethodPut
+}
+
+// IsPatch check the request method is http.MethodPatch
+func (wr *WebRequest) IsPatch() bool {
+	return wr.Method == http.MethodPatch
+}
+
+// IsDelete check the request method is http.MethodDelete
+func (wr *WebRequest) IsDelete() bool {
+	return wr.Method == http.MethodDelete
+}
+
+// IsOptions check the request method is http.MethodOptions
+func (wr *WebRequest) IsOptions() bool {
+	return wr.Method == http.MethodOptions
+}
+
+// IsTrace check the request method is http.MethodTrace
+func (wr *WebRequest) IsTrace() bool {
+	return wr.Method == http.MethodTrace
+}
+
 type URI interface {
 	Request() *WebRequest
 }
