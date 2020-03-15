@@ -12,3 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package cango
+
+import (
+	"time"
+)
+
+type sessionValue struct {
+	timeOut time.Time
+	value   interface{}
+}
+
+func (wr *WebRequest) sessionGet(key string, value interface{}) {
+}
+
+func (wr *WebRequest) sessionPut(key string, value interface{}, timeOut ...time.Time) {
+}
