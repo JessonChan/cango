@@ -14,16 +14,40 @@
 package cango
 
 import (
+	"fmt"
+	"net/http"
 	"time"
 )
+
+var sessionMap = map[string]sessionValue{}
 
 type sessionValue struct {
 	timeOut time.Time
 	value   interface{}
 }
 
+const cangoSessionKey = "__cango_session_id"
+
 func (wr *WebRequest) SessionGet(key string, value interface{}) {
+	if sc, err := wr.Cookie(cangoSessionKey); err == nil {
+		if v, ok := sessionMap[sc.Value]; ok {
+			value = v.value
+			return
+		}
+	}
 }
 
 func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
+	mapKey := "random" + fmt.Sprintf("%d", time.Now().UnixNano())
+	sessionMap[mapKey] = sessionValue{value: value}
+	wr.SetCookie(&http.Cookie{
+		Name:     cangoSessionKey,
+		Value:    mapKey,
+		Path:     "/",
+		Expires:  time.Now().AddDate(0, 0, 7),
+		MaxAge:   int(time.Hour * 24 * 7),
+		Secure:   false,
+		HttpOnly: false,
+		SameSite: 0,
+	})
 }
