@@ -14,16 +14,20 @@
 package cango
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/JessonChan/canlog"
 )
 
 var sessionMap = map[string]sessionValue{}
 
 type sessionValue struct {
 	timeOut time.Time
-	value   interface{}
+	value   []byte
 }
 
 const cangoSessionKey = "__cango_session_id"
@@ -31,15 +35,24 @@ const cangoSessionKey = "__cango_session_id"
 func (wr *WebRequest) SessionGet(key string, value interface{}) {
 	if sc, err := wr.Cookie(cangoSessionKey); err == nil {
 		if v, ok := sessionMap[sc.Value]; ok {
-			value = v.value
+			err := gob.NewDecoder(bytes.NewReader(v.value)).Decode(&value)
+			if err != nil {
+				canlog.CanError(err)
+			}
 			return
 		}
 	}
 }
 
 func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
+	bb := &bytes.Buffer{}
+	err := gob.NewEncoder(bb).Encode(value)
+	if err != nil {
+		canlog.CanError(err)
+		return
+	}
 	mapKey := "random" + fmt.Sprintf("%d", time.Now().UnixNano())
-	sessionMap[mapKey] = sessionValue{value: value}
+	sessionMap[mapKey] = sessionValue{value: bb.Bytes()}
 	wr.SetCookie(&http.Cookie{
 		Name:     cangoSessionKey,
 		Value:    mapKey,
