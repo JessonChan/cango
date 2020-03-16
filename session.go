@@ -22,8 +22,8 @@ type sessionValue struct {
 	value   interface{}
 }
 
-func (wr *WebRequest) sessionGet(key string, value interface{}) {
+func (wr *WebRequest) SessionGet(key string, value interface{}) {
 }
 
-func (wr *WebRequest) sessionPut(key string, value interface{}, timeOut ...time.Time) {
+func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
 }
