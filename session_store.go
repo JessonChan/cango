@@ -13,10 +13,14 @@
 // limitations under the License.
 package cango
 
-import (
-	"net/http"
-)
+type memStore struct {
+	store map[string]*sessionValue
+}
 
-type SessionStorer interface {
-	Put(r *http.Request, key string, value interface{})
+func (m *memStore) Put(key string, sv *sessionValue) {
+	m.store[key] = sv
+}
+func (m *memStore) Get(key string) (sv *sessionValue, b bool) {
+	sv, b = m.store[key]
+	return
 }
