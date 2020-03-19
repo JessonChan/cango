@@ -64,14 +64,16 @@ type Addr struct {
 }
 
 type Opts struct {
-	Host       string
-	Port       int
-	RootPath   string
-	TplDir     string
-	StaticDir  string
-	TplSuffix  []string
-	DebugTpl   bool
-	CanlogPath string
+	Host                string
+	Port                int
+	RootPath            string
+	TplDir              string
+	StaticDir           string
+	TplSuffix           []string
+	DebugTpl            bool
+	CanlogPath          string
+	CookieSessionKey    string
+	CookieSessionSecure string
 }
 
 var defaultTplSuffix = []string{".tpl", ".html"}
@@ -124,6 +126,11 @@ func (can *Can) Run(as ...interface{}) {
 	can.buildRoute()
 	// 务必要先构建route再去构建filter
 	can.buildFilter()
+
+	// 初化session
+	if opts.CookieSessionKey != "" {
+		gorillaStore = newCookieSession(opts.CookieSessionKey, opts.CookieSessionSecure)
+	}
 
 	startChan := make(chan error, 1)
 	go func() {
@@ -178,12 +185,14 @@ func getOpts(as []interface{}) Opts {
 	return newOpts
 }
 func copyOpts() Opts {
+	// todo why not default opts directly???
 	return Opts{
-		RootPath:  defaultOpts.RootPath,
-		TplDir:    defaultOpts.TplDir,
-		StaticDir: defaultOpts.StaticDir,
-		TplSuffix: append(defaultOpts.TplSuffix),
-		DebugTpl:  defaultOpts.DebugTpl,
+		RootPath:         defaultOpts.RootPath,
+		TplDir:           defaultOpts.TplDir,
+		StaticDir:        defaultOpts.StaticDir,
+		TplSuffix:        append(defaultOpts.TplSuffix),
+		DebugTpl:         defaultOpts.DebugTpl,
+		CookieSessionKey: defaultOpts.CookieSessionKey,
 	}
 }
 func getRootPath() string {

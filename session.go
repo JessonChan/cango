@@ -15,79 +15,58 @@ package cango
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/gob"
-	"encoding/hex"
-	numRand "math/rand"
 	"net/http"
 	"time"
 
 	"github.com/JessonChan/canlog"
+	"github.com/gorilla/sessions"
 )
 
-var sessionStore = &memStore{store: map[string]*sessionValue{}}
+var gorillaStore sessions.Store
 
-type sessionValue struct {
-	timeOut time.Time
-	values  map[string][]byte
+func newCookieSession(key, secure string) sessions.Store {
+	switch len(secure) {
+	case 16, 24, 32:
+		return sessions.NewCookieStore([]byte(key), []byte(secure))
+	default:
+		return sessions.NewCookieStore([]byte(key))
+	}
 }
 
 const cangoSessionKey = "__cango_session_id"
 
-func (wr *WebRequest) SessionGet(key string, value interface{}) {
-	if sc, err := wr.Cookie(cangoSessionKey); err == nil {
-		if vs, ok := sessionStore.Get(sc.Value); ok {
-			if v, ok := vs.values[key]; ok {
-				err := gob.NewDecoder(bytes.NewReader(v)).Decode(value)
-				if err != nil {
-					canlog.CanError(err)
-				}
-				return
-			}
-		}
+func SessionGet(r *http.Request, key string, value interface{}) {
+	gs, _ := gorillaStore.Get(r, cangoSessionKey)
+	if gs.IsNew {
+		return
 	}
+	err := gob.NewDecoder(bytes.NewReader(gs.Values[key].([]byte))).Decode(value)
+	if err != nil {
+		canlog.CanError(err)
+	}
+	return
 }
 
-func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
+func (wr *WebRequest) SessionGet(key string, value interface{}) {
+	SessionGet(wr.Request, key, value)
+}
+
+func SessionPut(r *http.Request, rw http.ResponseWriter, key string, value interface{}, timeOut ...time.Time) {
 	bb := &bytes.Buffer{}
 	err := gob.NewEncoder(bb).Encode(value)
 	if err != nil {
 		canlog.CanError(err)
 		return
 	}
-	sid := sessionID()
-	sessionStore.Put(sid, &sessionValue{values: map[string][]byte{key: bb.Bytes()}})
-	wr.SetCookie(&http.Cookie{
-		Name:     cangoSessionKey,
-		Value:    sid,
-		Path:     "/",
-		Expires:  time.Now().AddDate(0, 0, 7),
-		MaxAge:   int(time.Hour * 24 * 7),
-		Secure:   false,
-		HttpOnly: false,
-		SameSite: 0,
-	})
+	gs, _ := gorillaStore.Get(r, cangoSessionKey)
+	gs.Values[key] = bb.Bytes()
+	err = gorillaStore.Save(r, rw, gs)
+	if err != nil {
+		canlog.CanError(err)
+	}
 }
 
-var defaultSessionLength = 32
-
-func sessionID() string {
-	b := make([]byte, defaultSessionLength)
-	n, err := rand.Read(b)
-	if n != len(b) || err != nil {
-		getRandBytes(&b)
-	}
-	return hex.EncodeToString(b)
-}
-
-func getRandBytes(b *[]byte) {
-	rd := numRand.New(numRand.NewSource(time.Now().UnixNano()))
-	for i := 0; i < len(*b); i++ {
-		(*b)[i] = byte(rd.Int31n(26) + (func() int32 {
-			if rd.Int31n(2) == 0 {
-				return 'a'
-			}
-			return 'A'
-		}()))
-	}
+func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
+	SessionPut(wr.Request, wr.ResponseWriter, key, value, timeOut...)
 }
