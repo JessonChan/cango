@@ -416,6 +416,12 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 					}
 				}
 				return nil, stringFlag, false
+			case sessionHolderKey:
+				gs, _ := gorillaStore.Get(request.Request, cangoSessionKey)
+				if i, ok := gs.Values[valueKey]; ok {
+					return gs.Values[valueKey], gobBytes, true
+				}
+				return nil, gobBytes, false
 			default:
 				if v, ok := match.GetVars()[valueKey]; ok {
 					return v, stringFlag, true

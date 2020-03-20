@@ -14,6 +14,8 @@
 package cango
 
 import (
+	"bytes"
+	"encoding/gob"
 	"reflect"
 	"strings"
 	"time"
@@ -58,6 +60,7 @@ func doDecode(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 const (
 	stringFlag   = 0
 	strSliceFlag = 1
+	gobBytes     = 2
 )
 
 // setValue sets key-value to a struct
@@ -92,6 +95,8 @@ func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 								f.Set(caster(str.(string)))
 							case strSliceFlag:
 								f.Set(caster(str.([]string)[0]))
+							case gobBytes:
+								_ = gob.NewDecoder(bytes.NewReader(str.([]byte))).DecodeValue(f)
 							}
 						}
 					}
@@ -136,17 +141,29 @@ func filedName(f reflect.StructField, tagName string) []string {
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
 }
 
+func fieldTagHolder(field reflect.StructField, name, holder string) []string {
+	if strings.Contains(string(field.Tag), name) {
+		tagValue := field.Tag.Get(name)
+		if tagValue != "" {
+			if tagValue == "~" {
+				return []string{holder + lowerCase(field.Name), holder + field.Name, holder + underScore(field.Name)}
+			} else {
+				return []string{holder + tagValue}
+			}
+		}
+	}
+	return nil
+}
+
 func fieldTagNames(field reflect.StructField) []string {
 	if field.Tag != "" {
-		if strings.Contains(string(field.Tag), cookieTagName) {
-			tagValue := field.Tag.Get(cookieTagName)
-			if tagValue != "" {
-				if tagValue == "~" {
-					return []string{cookieHolderKey + lowerCase(field.Name), cookieHolderKey + field.Name, cookieHolderKey + underScore(field.Name)}
-				} else {
-					return []string{cookieHolderKey + tagValue}
-				}
-			}
+		names := fieldTagHolder(field, cookieTagName, cookieHolderKey)
+		if len(names) > 0 {
+			return names
+		}
+		names = fieldTagHolder(field, sessionTagName, sessionHolderKey)
+		if len(names) > 0 {
+			return names
 		}
 	}
 	return []string{formPathHolderKey + lowerCase(field.Name), formPathHolderKey + field.Name, formPathHolderKey + underScore(field.Name)}

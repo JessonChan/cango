@@ -19,12 +19,14 @@ const (
 	cookieTagName    string = "cookie"
 	pathValueTagName string = "path"
 	formValueTagName string = "form"
+	sessionTagName   string = "session"
 	nameTagName      string = "name"
 	holderLen               = 12
 )
 
 var cookieHolderKey = len16String(cookieTagName)
 var formPathHolderKey = len16String(formValueTagName + pathValueTagName)
+var sessionHolderKey = len16String(sessionTagName)
 
 func len16String(key string) string {
 	if len(key) > holderLen {
