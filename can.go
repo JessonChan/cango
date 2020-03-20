@@ -24,6 +24,7 @@ import (
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
+	"github.com/gorilla/sessions"
 )
 
 type Can struct {
@@ -102,6 +103,10 @@ func InitLogger(rw io.Writer) {
 	canlog.SetWriter(rw, "CANGO")
 }
 
+func SetGorillaSessionStore(store sessions.Store) {
+	gorillaStore = store
+}
+
 func (can *Can) Run(as ...interface{}) {
 	// 优先从配置文件中读取
 	// 之后从传入参数中读取
@@ -128,7 +133,7 @@ func (can *Can) Run(as ...interface{}) {
 	can.buildFilter()
 
 	// 初化session
-	if opts.CookieSessionKey != "" {
+	if opts.CookieSessionKey != "" && gorillaStore == nil {
 		gorillaStore = newCookieSession(opts.CookieSessionKey, opts.CookieSessionSecure)
 	}
 
