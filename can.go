@@ -64,16 +64,27 @@ type Addr struct {
 	Port int
 }
 
+// Opts 程序启动的配置参数
 type Opts struct {
-	Host                string
-	Port                int
-	RootPath            string
-	TplDir              string
-	StaticDir           string
-	TplSuffix           []string
-	DebugTpl            bool
-	CanlogPath          string
-	CookieSessionKey    string
+	// 监听的主机
+	Host string
+	// 监听的端口
+	Port int
+	// 配置文件、模板文件及静态文件的根目录
+	RootPath string
+	// 模板文件文件夹，相对RootPath路径
+	TplDir string
+	// 静态文件文件夹，相对RootPath路径
+	StaticDir string
+	// 模板文件后续名，默认为 .tpl 和 .html
+	TplSuffix []string
+	// 是否调试页面，true 表示每次都重新加载模板
+	DebugTpl bool
+	// 日志文件位置，绝对路径
+	CanlogPath string
+	// gorilla cookie store 的key
+	CookieSessionKey string
+	// gorilla cookie store 加密使用的key
 	CookieSessionSecure string
 }
 
