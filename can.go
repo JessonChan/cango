@@ -211,6 +211,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// todo filter should not be here?????
 	needStop := false
 	var filterReturn interface{}
+	var needHandle = true
 	for typ, dsp := range can.filterMuxMap {
 		match := deepMatch(dsp, r)
 		if match.Error() == nil {
@@ -225,6 +226,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				// 如果不是bool类型，需要提前结束
 				// todo 需要设计filter的执行顺序，优先生效最早返回的
 				filterReturn = ri
+				if filterReturn != nil {
+					// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
+					if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
+						rw = filterReturn.(http.ResponseWriter)
+					} else {
+						needHandle = false
+					}
+				}
 			}
 		}
 	}
@@ -234,15 +243,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	var handleReturn interface{}
 	var statusCode int
-	var needHandle = true
-	if filterReturn != nil {
-		// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
-		if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
-			rw = filterReturn.(http.ResponseWriter)
-		} else {
-			needHandle = false
-		}
-	}
+
 	if needHandle {
 		handleReturn, statusCode = can.serve(rw, r)
 		// todo nil是不是可以表示已经在函数内完成了？
