@@ -163,38 +163,28 @@ func getAddr(as []interface{}) Addr {
 	return Addr{host, port}
 }
 
-func getOpts(as []interface{}) Opts {
-	newOpts := copyOpts()
+func getOpts(as []interface{}) *Opts {
+	optsPtr := &defaultOpts
 	for _, v := range as {
 		if opts, ok := v.(Opts); ok {
 			if opts.RootPath != "" {
-				newOpts.RootPath = opts.RootPath
+				optsPtr.RootPath = opts.RootPath
 			}
 			if opts.TplDir != "" {
-				newOpts.TplDir = opts.TplDir
+				optsPtr.TplDir = opts.TplDir
 			}
 			if opts.StaticDir != "" {
-				newOpts.StaticDir = opts.StaticDir
+				optsPtr.StaticDir = opts.StaticDir
 			}
 			if len(opts.TplSuffix) != 0 {
-				newOpts.TplSuffix = opts.TplSuffix
+				optsPtr.TplSuffix = opts.TplSuffix
 			}
-			newOpts.DebugTpl = opts.DebugTpl
+			optsPtr.DebugTpl = opts.DebugTpl
 		}
 	}
-	return newOpts
+	return optsPtr
 }
-func copyOpts() Opts {
-	// todo why not default opts directly???
-	return Opts{
-		RootPath:         defaultOpts.RootPath,
-		TplDir:           defaultOpts.TplDir,
-		StaticDir:        defaultOpts.StaticDir,
-		TplSuffix:        append(defaultOpts.TplSuffix),
-		DebugTpl:         defaultOpts.DebugTpl,
-		CookieSessionKey: defaultOpts.CookieSessionKey,
-	}
-}
+
 func getRootPath() string {
 	dir, err := os.Getwd()
 	if err == nil {
