@@ -373,7 +373,8 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		return nil, http.StatusMethodNotAllowed
 	}
 
-	uriContext := reflect.ValueOf(newContext(rw, req))
+	uriContext := newContext(rw, req)
+	uriContextValue := reflect.ValueOf(uriContext)
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	cookies := req.Cookies()
 	_ = req.ParseForm()
@@ -382,11 +383,11 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		callerIn[i] = newValue(in)
 		if in.Implements(uriType) {
 			if in == uriType {
-				callerIn[i].Set(uriContext)
+				callerIn[i].Set(uriContextValue)
 			} else {
 				uriFiled := value(callerIn[i]).FieldByName(uriName)
 				if uriFiled.IsValid() && uriFiled.CanSet() {
-					uriFiled.Set(uriContext)
+					uriFiled.Set(uriContextValue)
 				}
 			}
 		}
@@ -422,7 +423,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			if uriFiled.IsValid() && uriFiled.CanSet() {
 				uriFiled.Set(valueOfEmptyConstructor)
 			}
-			addr(callerIn[i]).Interface().(Constructor).Construct(req)
+			addr(callerIn[i]).Interface().(Constructor).Construct(uriContext.Request())
 		}
 	}
 	return call(*invoker.Method, callerIn)

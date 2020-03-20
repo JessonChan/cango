@@ -14,7 +14,6 @@
 package cango
 
 import (
-	"net/http"
 	"reflect"
 )
 
@@ -22,7 +21,7 @@ import (
 //
 // Construct 可以从*http.Request中进行初始化变量
 type Constructor interface {
-	Construct(r *http.Request)
+	Construct(request *WebRequest)
 }
 
 var constructorType = reflect.TypeOf((*Constructor)(nil)).Elem()
@@ -32,5 +31,5 @@ var valueOfEmptyConstructor = reflect.ValueOf(&emptyConstructor{})
 type emptyConstructor struct {
 }
 
-func (e *emptyConstructor) Construct(r *http.Request) {
+func (e *emptyConstructor) Construct(request *WebRequest) {
 }
