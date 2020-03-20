@@ -70,8 +70,6 @@ type Opts struct {
 	Host string
 	// 监听的端口
 	Port int
-	// 配置文件、模板文件及静态文件的根目录
-	RootPath string
 	// 模板文件文件夹，相对RootPath路径
 	TplDir string
 	// 静态文件文件夹，相对RootPath路径
@@ -91,7 +89,6 @@ type Opts struct {
 var defaultTplSuffix = []string{".tpl", ".html"}
 
 var defaultOpts = Opts{
-	RootPath:  getRootPath(),
 	TplDir:    "/view",
 	StaticDir: "/static",
 	TplSuffix: defaultTplSuffix,
@@ -128,12 +125,12 @@ func (can *Can) Run(as ...interface{}) {
 		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
 	}
 
+	can.rootPath = getRootPath()
 	addr := getAddr(as)
 	can.srv.Addr = addr.String()
 	can.srv.Handler = can
 	can.srv.ErrorLog = canlog.GetLogger()
 	opts := getOpts(as)
-	can.rootPath = opts.RootPath
 	can.tplRootPath = filepath.Clean(can.rootPath + "/" + opts.TplDir)
 	can.staticRootPath = filepath.Clean(can.rootPath + "/" + opts.StaticDir)
 	can.tplSuffix = opts.TplSuffix
@@ -183,9 +180,6 @@ func getOpts(as []interface{}) *Opts {
 	optsPtr := &defaultOpts
 	for _, v := range as {
 		if opts, ok := v.(Opts); ok {
-			if opts.RootPath != "" {
-				optsPtr.RootPath = opts.RootPath
-			}
 			if opts.TplDir != "" {
 				optsPtr.TplDir = opts.TplDir
 			}
