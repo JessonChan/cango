@@ -27,6 +27,17 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+var cangoMark = []byte(`
+ _______  _______  _        _______  _______ 
+(  ____ \(  ___  )( (    /|(  ____ \(  ___  )
+| (    \/| (   ) ||  \  ( || (    \/| (   ) |
+| |      | (___) ||   \ | || |      | |   | |
+| |      |  ___  || (\ \) || | ____ | |   | |
+| |      | (   ) || | \   || | \_  )| |   | |
+| (____/\| )   ( || )  \  || (___) || (___) |
+(_______/|/     \||/    )_)(_______)(_______)
+`)
+
 type Can struct {
 	srv            *http.Server
 	rootPath       string
@@ -123,6 +134,8 @@ func (can *Can) Run(as ...interface{}) {
 
 	if loggerInitialed == false && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
 		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
+	} else {
+		_, _ = canlog.GetLogger().Writer().Write(cangoMark)
 	}
 
 	can.rootPath = getRootPath()
