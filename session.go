@@ -25,6 +25,10 @@ import (
 
 var gorillaStore sessions.Store
 
+func SetGorillaSessionStore(store sessions.Store) {
+	gorillaStore = store
+}
+
 func newCookieSession(key, secure string) sessions.Store {
 	switch len(secure) {
 	case 16, 24, 32:
