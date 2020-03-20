@@ -42,14 +42,12 @@ const cangoSessionKey = "__cango_session_id"
 
 func SessionGet(r *http.Request, key string, value interface{}) {
 	gs, _ := gorillaStore.Get(r, cangoSessionKey)
-	if gs.IsNew {
-		return
+	if i, ok := gs.Values[key]; ok {
+		err := gob.NewDecoder(bytes.NewReader(i.([]byte))).Decode(value)
+		if err != nil {
+			canlog.CanError(err)
+		}
 	}
-	err := gob.NewDecoder(bytes.NewReader(gs.Values[key].([]byte))).Decode(value)
-	if err != nil {
-		canlog.CanError(err)
-	}
-	return
 }
 
 func (wr *WebRequest) SessionGet(key string, value interface{}) {
