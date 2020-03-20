@@ -345,10 +345,10 @@ cango.URI `value:"/goto/*"`
 type VisitFilter struct {
 	cango.Filter `value:"/static/*.css;/static/*.js"`
 }
-func (v *VisitFilter) PreHandle(w http.ResponseWriter, req *http.Request) interface{} {
+func (v *VisitFilter) PreHandle(req *cango.WebRequest) interface{} {
 	return true
 }
-func (v *VisitFilter) PostHandle(w http.ResponseWriter, req *http.Request) interface{} {
+func (v *VisitFilter) PostHandle(req *cango.WebRequest) interface{} {
 	return true
 }
 ```
