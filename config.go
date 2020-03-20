@@ -37,18 +37,17 @@ func NewIniConfig(filePath string) *IniConfig {
 
 // Env 从配置文件中取配置项为key的值
 func Env(key string) string {
-	configOnce.Do(func() {
-		canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
-	})
+	configOnce.Do(initCangoIni)
 	return canIniConfig.Env(key)
+}
+func initCangoIni() {
+	canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
 }
 
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
 func Envs(i interface{}) {
-	configOnce.Do(func() {
-		canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
-	})
+	configOnce.Do(initCangoIni)
 	canIniConfig.Envs(i)
 }
 
