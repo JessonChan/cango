@@ -368,9 +368,8 @@ cango.RegisterFilter(cango.Filter)
 | ---- |---- |---- |
 | host/Host |string |监听的主机 |
 | port/Port |int |监听的端口 |
-| root_path/rootPath/RootPath |string |配置文件、模板文件及静态文件的根目录 |
-| tpl_dir/tplDir/TplDir |string |模板文件文件夹，相对RootPath路径 |
-| static_dir/staticDir/StaticDir |string |静态文件文件夹，相对RootPath路径 |
+| tpl_dir/tplDir/TplDir |string |模板文件文件夹，相对程序运行路径 |
+| static_dir/staticDir/StaticDir |string |静态文件文件夹，相对程序运行路径 |
 | tpl_suffix/tplSuffix/TplSuffix |[]string |模板文件后续名，默认为 .tpl 和 .html |
 | debug_tpl/debugTpl/DebugTpl |bool |是否调试页面，true 表示每次都重新加载模板 |
 | canlog_path/canlogPath/CanlogPath |string |日志文件位置，绝对路径 |

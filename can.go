@@ -70,9 +70,9 @@ type Opts struct {
 	Host string
 	// 监听的端口
 	Port int
-	// 模板文件文件夹，相对RootPath路径
+	// 模板文件文件夹，相对程序运行路径
 	TplDir string
-	// 静态文件文件夹，相对RootPath路径
+	// 静态文件文件夹，相对程序运行路径
 	StaticDir string
 	// 模板文件后续名，默认为 .tpl 和 .html
 	TplSuffix []string
