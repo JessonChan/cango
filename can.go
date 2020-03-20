@@ -207,6 +207,10 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
+	request := &WebRequest{
+		ResponseWriter: rw,
+		Request:        r,
+	}
 
 	// todo filter should not be here?????
 	needStop := false
@@ -215,7 +219,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for typ, dsp := range can.filterMuxMap {
 		match := deepMatch(dsp, r)
 		if match.Error() == nil {
-			ri := can.filterMap[typ].PreHandle(rw, r)
+			ri := can.filterMap[typ].PreHandle(request)
 			if rt, ok := ri.(bool); ok {
 				// todo 这样的设计是不是合理？？？？
 				// 返回为false 这个之后注册的filter失效
@@ -245,7 +249,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var statusCode int
 
 	if needHandle {
-		handleReturn, statusCode = can.serve(rw, r)
+		handleReturn, statusCode = can.serve(request)
 		// todo nil是不是可以表示已经在函数内完成了？
 		// todo 这样的设计返回是有问题的
 		if handleReturn == nil {
@@ -340,7 +344,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for typ, dsp := range can.filterMuxMap {
 		match := deepMatch(dsp, r)
 		if match.Error() == nil {
-			can.filterMap[typ].PostHandle(rw, r)
+			can.filterMap[typ].PostHandle(request)
 		}
 	}
 }
@@ -360,7 +364,8 @@ func deepMatch(mux dispatcher, req *http.Request) matcher {
 	return match
 }
 
-func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, int) {
+func (can *Can) serve(request *WebRequest) (interface{}, int) {
+	req := request.Request
 	match := deepMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
@@ -373,8 +378,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		return nil, http.StatusMethodNotAllowed
 	}
 
-	uriContext := newContext(rw, req)
-	uriContextValue := reflect.ValueOf(uriContext)
+	uriRequestValue := reflect.ValueOf(newContext(request))
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	cookies := req.Cookies()
 	_ = req.ParseForm()
@@ -383,11 +387,11 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 		callerIn[i] = newValue(in)
 		if in.Implements(uriType) {
 			if in == uriType {
-				callerIn[i].Set(uriContextValue)
+				callerIn[i].Set(uriRequestValue)
 			} else {
 				uriFiled := value(callerIn[i]).FieldByName(uriName)
 				if uriFiled.IsValid() && uriFiled.CanSet() {
-					uriFiled.Set(uriContextValue)
+					uriFiled.Set(uriRequestValue)
 				}
 			}
 		}
@@ -423,7 +427,7 @@ func (can *Can) serve(rw http.ResponseWriter, req *http.Request) (interface{}, i
 			if uriFiled.IsValid() && uriFiled.CanSet() {
 				uriFiled.Set(valueOfEmptyConstructor)
 			}
-			addr(callerIn[i]).Interface().(Constructor).Construct(uriContext.Request())
+			addr(callerIn[i]).Interface().(Constructor).Construct(request)
 		}
 	}
 	return call(*invoker.Method, callerIn)

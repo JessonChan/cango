@@ -104,9 +104,9 @@ type uriImpl struct {
 func (c *uriImpl) Request() *WebRequest {
 	return c.request
 }
-func newContext(rw http.ResponseWriter, req *http.Request) *uriImpl {
+func newContext(request *WebRequest) *uriImpl {
 	// todo sync.Pool
-	return &uriImpl{&WebRequest{Request: req, ResponseWriter: rw}}
+	return &uriImpl{request: request}
 }
 
 // todo  可以根据路由的uri/方法名等自动查找tpl

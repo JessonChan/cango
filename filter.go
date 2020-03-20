@@ -15,7 +15,6 @@
 package cango
 
 import (
-	"net/http"
 	"path/filepath"
 	"reflect"
 )
@@ -27,10 +26,10 @@ type Filter interface {
 	// If this method returns false,the request will stop.
 	// If this method returns cango-return type(Redirect/ModelView...),the request will response with the type
 	// If this method returns http.ResponseWriter,the rw will be replaced
-	PreHandle(rw http.ResponseWriter, req *http.Request) interface{}
+	PreHandle(request *WebRequest) interface{}
 	// PostHandle is used to perform operations before sending the response to the client.
 	// This method should return true.
-	PostHandle(rw http.ResponseWriter, req *http.Request) interface{}
+	PostHandle(request *WebRequest) interface{}
 	// todo
 	// AfterHandled()
 }
@@ -40,10 +39,10 @@ var _ = Filter(&emptyFilter{})
 type emptyFilter struct {
 }
 
-func (*emptyFilter) PreHandle(rw http.ResponseWriter, req *http.Request) interface{} {
+func (*emptyFilter) PreHandle(request *WebRequest) interface{} {
 	return true
 }
-func (*emptyFilter) PostHandle(rw http.ResponseWriter, req *http.Request) interface{} {
+func (*emptyFilter) PostHandle(request *WebRequest) interface{} {
 	return true
 }
 
