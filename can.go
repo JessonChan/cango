@@ -24,7 +24,6 @@ import (
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
-	"github.com/gorilla/sessions"
 )
 
 type Can struct {
@@ -109,10 +108,6 @@ var loggerInitialed = false
 func InitLogger(rw io.Writer) {
 	loggerInitialed = true
 	canlog.SetWriter(rw, "CANGO")
-}
-
-func SetGorillaSessionStore(store sessions.Store) {
-	gorillaStore = store
 }
 
 func (can *Can) Run(as ...interface{}) {
