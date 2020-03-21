@@ -24,32 +24,32 @@ import (
 var timeType = reflect.TypeOf(time.Time{})
 
 // decode decodes a map[string]string to a struct.
-// The first parameter is a map
-// The second parameter must be a reflect.Ptr to a struct.
+// The first parameter must be a reflect.Ptr to a struct.
+// The second parameter is a map
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
 func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) []string) {
-	doDecode(func(s string) (interface{}, int, bool) {
+	doDecode(rv, func(s string) (interface{}, int, bool) {
 		v, ok := holder[s]
 		return v, stringFlag, ok
-	}, rv, append(filedName, noTagName)[0])
+	}, append(filedName, noTagName)[0])
 }
 
 // decodeForm decodes a map[string][]string to a struct.
-// The first parameter is a map, typically url.Values from an HTTP request.
-// The second parameter must be a reflect.Ptr to a struct.
+// The first parameter must be a reflect.Ptr to a struct.
+// The second parameter is a map, typically url.Values from an HTTP request.
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
 func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
-	doDecode(func(s string) (interface{}, int, bool) {
+	doDecode(rv, func(s string) (interface{}, int, bool) {
 		v, ok := holder[s]
 		return v, strSliceFlag, ok
-	}, rv, append(filedName, noTagName)[0])
+	}, append(filedName, noTagName)[0])
 }
 
 // decodeForm decodes holder func to a struct.
-// The first parameter is a func,which in args is string-key and out-args is string/[]string
-// The second parameter must be a reflect.Ptr to a struct.
+// The first parameter must be a reflect.Ptr to a struct.
+// The second parameter is a func,which in args is string-key and out-args is string/[]string
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
-func doDecode(holder func(string) (interface{}, int, bool), rv reflect.Value, filedNameFn func(field reflect.StructField) []string) {
+func doDecode(rv reflect.Value, holder func(string) (interface{}, int, bool), filedNameFn func(field reflect.StructField) []string) {
 	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
