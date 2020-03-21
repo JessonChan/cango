@@ -241,6 +241,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 					// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
 					if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
 						rw = filterReturn.(http.ResponseWriter)
+						request.ResponseWriter = rw
 					} else {
 						needHandle = false
 					}
@@ -419,7 +420,7 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 			case sessionHolderKey:
 				gs, _ := gorillaStore.Get(request.Request, cangoSessionKey)
 				if i, ok := gs.Values[valueKey]; ok {
-					return gs.Values[valueKey], gobBytes, true
+					return i, gobBytes, true
 				}
 				return nil, gobBytes, false
 			default:
