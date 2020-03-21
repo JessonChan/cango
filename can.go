@@ -435,7 +435,7 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 			}
 		}
 
-		doDecode(reqHolder, addr(callerIn[i]), fieldTagNames)
+		doDecode(addr(callerIn[i]), reqHolder, fieldTagNames)
 
 		if in.Implements(constructorType) {
 			uriFiled := value(callerIn[i]).FieldByName(constructorTypeName)
