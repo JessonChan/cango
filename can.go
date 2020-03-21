@@ -390,6 +390,7 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	cookies := req.Cookies()
 	_ = req.ParseForm()
+	gs, _ := gorillaStore.Get(request.Request, cangoSessionKey)
 	for i := 0; i < len(callerIn); i++ {
 		in := invoker.Type.In(i)
 		callerIn[i] = newValue(in)
@@ -418,7 +419,6 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 				}
 				return nil, stringFlag, false
 			case sessionHolderKey:
-				gs, _ := gorillaStore.Get(request.Request, cangoSessionKey)
 				if i, ok := gs.Values[valueKey]; ok {
 					return i, gobBytes, true
 				}
