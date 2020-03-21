@@ -47,7 +47,7 @@ func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(
 
 // decodeForm decodes holder func to a struct.
 // The first parameter must be a reflect.Ptr to a struct.
-// The second parameter is a func,which in args is string-key and out-args is string/[]string
+// The second parameter is a func,which in args is string-key and out-args is string/[]string/gob bytes
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
 func doDecode(rv reflect.Value, holder func(string) (interface{}, int, bool), filedNameFn func(field reflect.StructField) []string) {
 	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
