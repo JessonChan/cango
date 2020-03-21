@@ -406,7 +406,8 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 		}
 		// 先解析form
 		// 再赋值path value，如果form中包含和path中相同的变量，被path覆盖
-		// 最后读取cookie，只赋值有cookie标签的变量
+		// 读取cookie，只赋值有cookie标签的变量
+		// 解析session，赋值有session标签的变量
 		reqHolder := func(key string) (interface{}, int, bool) {
 			holderKey := key[0:holderLen]
 			valueKey := key[holderLen:]
