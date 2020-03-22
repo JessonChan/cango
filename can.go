@@ -142,6 +142,11 @@ func (can *Can) Run(as ...interface{}) {
 		gorillaStore = newCookieSession(opts.CookieSessionKey, opts.CookieSessionSecure)
 	}
 
+	// 当没有开启session功能时，需要进行空赋值
+	if gorillaStore == nil {
+		gorillaStore = &emptyGorillaStore{}
+	}
+
 	startChan := make(chan error, 1)
 	go func() {
 		canlog.CanInfo("cango start success @ " + addr.String())
