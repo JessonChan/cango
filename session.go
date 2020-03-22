@@ -17,13 +17,27 @@ import (
 	"bytes"
 	"encoding/gob"
 	"net/http"
-	"time"
 
 	"github.com/JessonChan/canlog"
 	"github.com/gorilla/sessions"
 )
 
 var gorillaStore sessions.Store
+var emptySession = sessions.NewSession(&emptyGorillaStore{}, "empty")
+
+type emptyGorillaStore struct{}
+
+func (e *emptyGorillaStore) Get(r *http.Request, name string) (*sessions.Session, error) {
+	return emptySession, nil
+}
+
+func (e *emptyGorillaStore) New(r *http.Request, name string) (*sessions.Session, error) {
+	return emptySession, nil
+}
+
+func (e *emptyGorillaStore) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
+	return nil
+}
 
 func SetGorillaSessionStore(store sessions.Store) {
 	gorillaStore = store
@@ -54,7 +68,7 @@ func (wr *WebRequest) SessionGet(key string, value interface{}) {
 	SessionGet(wr.Request, key, value)
 }
 
-func SessionPut(r *http.Request, rw http.ResponseWriter, key string, value interface{}, timeOut ...time.Time) {
+func SessionPut(r *http.Request, rw http.ResponseWriter, key string, value interface{}, opts ...*sessions.Options) {
 	bb := &bytes.Buffer{}
 	err := gob.NewEncoder(bb).Encode(value)
 	if err != nil {
@@ -63,12 +77,15 @@ func SessionPut(r *http.Request, rw http.ResponseWriter, key string, value inter
 	}
 	gs, _ := gorillaStore.Get(r, cangoSessionKey)
 	gs.Values[key] = bb.Bytes()
+	if len(opts) > 0 {
+		gs.Options = opts[0]
+	}
 	err = gorillaStore.Save(r, rw, gs)
 	if err != nil {
 		canlog.CanError(err)
 	}
 }
 
-func (wr *WebRequest) SessionPut(key string, value interface{}, timeOut ...time.Time) {
-	SessionPut(wr.Request, wr.ResponseWriter, key, value, timeOut...)
+func (wr *WebRequest) SessionPut(key string, value interface{}, opts ...*sessions.Options) {
+	SessionPut(wr.Request, wr.ResponseWriter, key, value, opts...)
 }
