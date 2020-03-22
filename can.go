@@ -483,8 +483,13 @@ func call(m reflect.Method, values []reflect.Value) (interface{}, int) {
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed
 	}
+	if vs[0].IsValid() == false {
+		return nil, http.StatusMethodNotAllowed
+	}
 	if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
-		return vs[0].Elem().Interface(), http.StatusOK
+		if vs[0].Elem().IsValid() {
+			return vs[0].Elem().Interface(), http.StatusOK
+		}
 	}
 	return vs[0].Interface(), http.StatusOK
 }
