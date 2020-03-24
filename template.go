@@ -35,7 +35,7 @@ func (can *Can) RegTplFunc(name string, fn interface{}) *Can {
 	return can
 }
 
-// lazy-init
+// initTpl lazy-init 第一次加载模板时初始化
 func (can *Can) initTpl() {
 	rootTpl = template.New("")
 	_ = filepath.Walk(can.tplRootPath, func(path string, info os.FileInfo, err error) error {
@@ -83,6 +83,7 @@ func (can *Can) initTpl() {
 	})
 }
 
+// lookupTpl 查找模板
 func (can *Can) lookupTpl(name string) *template.Template {
 	if can.debugTpl {
 		rootTpl = nil
