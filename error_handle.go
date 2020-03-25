@@ -21,6 +21,7 @@ var errorHandleMap = map[int]func(w http.ResponseWriter, r *http.Request){
 	http.StatusNotFound: http.NotFound,
 }
 
+// SetError can define http status code with specific method
 func SetError(code int, fn func(w http.ResponseWriter, r *http.Request)) {
 	errorHandleMap[code] = fn
 }
