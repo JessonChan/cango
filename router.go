@@ -102,6 +102,7 @@ type ctrlEntry struct {
 
 type sortCtrlEntry []ctrlEntry
 
+// sortCtrlEntry
 func (s sortCtrlEntry) Len() int           { return len(s) }
 func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
 func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
