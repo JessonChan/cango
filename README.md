@@ -332,6 +332,14 @@ struct{
 ```
 需要指出的是，在cookie后使用`~`这个符号表示，对应的cookie名称是自动从成员变量名读取。  
 
+### Session变量
+获取session中的值，只需要结构体成员使用session这个tag名就可以，如
+```go 
+struct{
+    Name string `cookie:"~"`
+}
+```
+后使用`~`这个符号表示，对应的session名称是自动从成员变量名读取
 
 
 ### 通配符路由
