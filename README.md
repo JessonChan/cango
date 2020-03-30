@@ -333,6 +333,8 @@ struct{
 需要指出的是，在cookie后使用`~`这个符号表示，对应的cookie名称是自动从成员变量名读取。  
 
 ### Session变量
+需要在配置文件中开启session，方法为在cango.ini中添加`cookie_session_key=my_session_key`，加入后会
+自动开启session，当前使用的session是gorilla/session包。
 获取session中的值，只需要结构体成员使用session这个tag名就可以，如
 ```go 
 struct{
