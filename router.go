@@ -79,7 +79,6 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 
 var uriRegMap = map[URI]string{}
 
-// todo with prefix???
 // todo with can app Name ???
 // RegisterURI 在定义struct的时候引入，也这是非常推荐的方法
 func RegisterURI(uri URI) bool {
