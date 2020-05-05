@@ -81,13 +81,13 @@ var uriRegMap = map[URI]string{}
 
 // todo with can app Name ???
 // RegisterURI 在定义struct的时候引入，也这是非常推荐的方法
-func RegisterURI(uri URI) bool {
-	return RegisterURIWithPrefix(emptyPrefix, uri)
+func RegisterURI(uri URI, cangoName ...string) bool {
+	return RegisterURIWithPrefix(emptyPrefix, uri, cangoName...)
 }
 
 // RegisterURIWithPrefix 在定义struct的时候引入，同时使用prefix做为路由前缀，也这是非常推荐的方法
-func RegisterURIWithPrefix(prefix string, uri URI) bool {
-	uriRegMap[uri] = prefix
+func RegisterURIWithPrefix(prefix string, uri URI, cangoName ...string) bool {
+	uriRegMap[uri] = append(cangoName, "")[0] + "|" + prefix
 	return true
 }
 
@@ -107,8 +107,14 @@ func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
 func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 func (can *Can) buildRoute() {
-	for uri, prefix := range uriRegMap {
-		can.route(prefix, uri)
+	for uri, nameAndPrefix := range uriRegMap {
+		ss := strings.Split(nameAndPrefix, "|")
+		if len(ss) != 2 {
+			continue
+		}
+		if can.name == ss[0] {
+			can.route(ss[1], uri)
+		}
 	}
 	var ces []ctrlEntry
 	for _, ce := range can.ctrlEntryMap {
