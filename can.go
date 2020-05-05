@@ -27,6 +27,7 @@ import (
 )
 
 type Can struct {
+	name           string
 	srv            *http.Server
 	rootPath       string
 	tplRootPath    string
@@ -45,8 +46,11 @@ type Can struct {
 
 var defaultAddr = Addr{Host: "", Port: 8080}
 
-func NewCan() *Can {
+// NewCan 生成服务对象，name 为生成的对象名，可以为空
+// 一般，只有我们在工程中需要注册多个web服务时才需要设置
+func NewCan(name ...string) *Can {
 	return &Can{
+		name:         append(name, "")[0],
 		srv:          &http.Server{Addr: defaultAddr.String()},
 		routeMux:     newCanMux(),
 		filterMuxMap: map[reflect.Type]dispatcher{},
