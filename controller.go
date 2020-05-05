@@ -105,7 +105,6 @@ func (c *uriImpl) Request() *WebRequest {
 	return c.request
 }
 func newContext(request *WebRequest) *uriImpl {
-	// todo sync.Pool
 	return &uriImpl{request: request}
 }
 
