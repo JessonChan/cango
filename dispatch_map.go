@@ -21,7 +21,8 @@ import (
 type (
 	mapDispatcher struct {
 		forwarders map[string]*mapForwarder
-		pathName   map[string]string
+		// pathName 用来标记路由和对应的处理标识之间的关系
+		pathName map[string][]string
 	}
 	mapForwarder struct {
 		name       string
@@ -42,7 +43,7 @@ type (
 )
 
 func newMapMux() *mapDispatcher {
-	return &mapDispatcher{forwarders: map[string]*mapForwarder{}, pathName: map[string]string{}}
+	return &mapDispatcher{forwarders: map[string]*mapForwarder{}, pathName: map[string][]string{}}
 }
 
 func (m *mapDispatcher) NewForwarder(name string) forwarder {
@@ -55,15 +56,33 @@ func (m *mapDispatcher) NewForwarder(name string) forwarder {
 	return mr
 }
 func (m *mapDispatcher) Match(req *http.Request) matcher {
-	r, ok := m.forwarders[m.pathName[req.URL.Path]]
-	if ok && r.patternMap[req.URL.Path].methods[req.Method] {
-		return &mapMatcher{innerRouter: r}
+	names := m.pathName[req.URL.Path]
+	for _, name := range names {
+		r, ok := m.forwarders[name]
+		if ok && r.patternMap[req.URL.Path].methods[req.Method] {
+			return &mapMatcher{innerRouter: r}
+		}
 	}
 	return &mapMatcher{err: errors.New("map dispatch can't find the path")}
 }
 
 func (m *mapForwarder) PathMethods(path string, ms ...string) {
-	m.innerMux.pathName[path] = m.name
+	names := m.innerMux.pathName[path]
+	if len(names) == 0 {
+		m.innerMux.pathName[path] = []string{m.name}
+	} else {
+		contains := false
+		for _, v := range names {
+			if v == m.name {
+				contains = true
+				break
+			}
+		}
+		if contains {
+		} else {
+			m.innerMux.pathName[path] = append(names, m.name)
+		}
+	}
 	pattern := m.patternMap[path]
 	if pattern == nil {
 		pattern = &mapPattern{path: path}

@@ -25,6 +25,7 @@ type (
 		Match(req *http.Request) matcher
 	}
 
+	// todo 应该直接返回handler
 	forwarder interface {
 		PathMethods(path string, ms ...string)
 		GetName() string
