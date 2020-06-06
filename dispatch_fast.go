@@ -129,6 +129,10 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		for _, v := range searchMap {
 			pattern = v
 		}
+		// never happen
+		if pattern == nil {
+			return nil
+		}
 		vars := map[string]string{}
 		for _, id := range pattern.varIdx {
 			vars[pattern.words[id].key] = elements[id]
@@ -142,7 +146,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		// 找到多个
 		// todo 选最接近的
 		// todo 这里可以随机选一个
-		panic("multi should handle")
+		// panic("multi should handle")
 		return nil
 	}
 }
