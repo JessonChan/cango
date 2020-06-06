@@ -26,6 +26,7 @@ type (
 	}
 	mapForwarder struct {
 		name       string
+		invoker    *Invoker
 		innerMux   *mapDispatcher
 		paths      []string
 		patternMap map[string]*mapPattern
@@ -46,12 +47,12 @@ func newMapMux() *mapDispatcher {
 	return &mapDispatcher{forwarders: map[string]*mapForwarder{}, pathName: map[string][]string{}}
 }
 
-func (m *mapDispatcher) NewForwarder(name string) forwarder {
+func (m *mapDispatcher) NewForwarder(name string, invoker *Invoker) forwarder {
 	mr, ok := m.forwarders[name]
 	if ok {
 		return mr
 	}
-	mr = &mapForwarder{name: name, innerMux: m, patternMap: map[string]*mapPattern{}}
+	mr = &mapForwarder{name: name, innerMux: m, invoker: invoker, patternMap: map[string]*mapPattern{}}
 	m.forwarders[name] = mr
 	return mr
 }
@@ -96,6 +97,9 @@ func (m *mapForwarder) PathMethods(path string, ms ...string) {
 func (m *mapForwarder) GetName() string {
 	return m.name
 }
+func (m *mapForwarder) GetInvoker() *Invoker {
+	return m.invoker
+}
 
 func (m *mapMatcher) Error() error {
 	return m.err
@@ -104,6 +108,7 @@ func (m *mapMatcher) Error() error {
 func (m *mapMatcher) Forwarder() forwarder {
 	return m.innerRouter
 }
+
 func (m *mapMatcher) GetVars() map[string]string {
 	return map[string]string{}
 }

@@ -37,7 +37,6 @@ type Can struct {
 
 	routeMux     dispatcher
 	filterMuxMap map[reflect.Type]dispatcher
-	methodMap    map[string]*invoker
 	filterMap    map[reflect.Type]Filter
 	ctrlEntryMap map[string]ctrlEntry
 	tplFuncMap   map[string]interface{}
@@ -54,7 +53,6 @@ func NewCan(name ...string) *Can {
 		srv:          &http.Server{Addr: defaultAddr.String()},
 		routeMux:     newCanMux(),
 		filterMuxMap: map[reflect.Type]dispatcher{},
-		methodMap:    map[string]*invoker{},
 		filterMap:    map[reflect.Type]Filter{},
 		ctrlEntryMap: map[string]ctrlEntry{},
 		tplFuncMap:   map[string]interface{}{},
@@ -388,13 +386,7 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, http.StatusNotFound
 	}
-
-	invoker, ok := can.methodMap[match.Forwarder().GetName()]
-	if ok == false {
-		// error,match failed
-		return nil, http.StatusMethodNotAllowed
-	}
-
+	invoker := match.Forwarder().GetInvoker()
 	uriRequestValue := reflect.ValueOf(newContext(request))
 	callerIn := make([]reflect.Value, invoker.Type.NumIn())
 	cookies := req.Cookies()

@@ -21,7 +21,7 @@ import (
 
 type (
 	dispatcher interface {
-		NewForwarder(name string) forwarder
+		NewForwarder(name string, invoker *Invoker) forwarder
 		Match(req *http.Request) matcher
 	}
 
@@ -29,6 +29,7 @@ type (
 	forwarder interface {
 		PathMethods(path string, ms ...string)
 		GetName() string
+		GetInvoker() *Invoker
 	}
 
 	matcher interface {
@@ -64,8 +65,8 @@ func isVarPattern(path string) bool {
 	return strings.Contains(path, "{") || strings.Contains(path, "*")
 }
 
-func (m *canDispatcher) NewForwarder(name string) forwarder {
-	return &canForwarder{mapForwarder: m.mapMux.NewForwarder(name), fastForwarder: m.fastMux.NewForwarder(name)}
+func (m *canDispatcher) NewForwarder(name string, invoker *Invoker) forwarder {
+	return &canForwarder{mapForwarder: m.mapMux.NewForwarder(name, invoker), fastForwarder: m.fastMux.NewForwarder(name, invoker)}
 }
 func (m *canDispatcher) Match(req *http.Request) matcher {
 	for _, v := range m.muxSlice {
@@ -84,4 +85,7 @@ func (m *canForwarder) PathMethods(path string, ms ...string) {
 }
 func (m *canForwarder) GetName() string {
 	return m.mapForwarder.GetName()
+}
+func (m *canForwarder) GetInvoker() *Invoker {
+	return nil
 }

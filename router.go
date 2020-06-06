@@ -164,8 +164,7 @@ func (can *Can) routeMethod(invokeByWho int, prefix string, m reflect.Method, ro
 		return
 	}
 	for _, hp := range hm.patterns {
-		route := can.routeMux.NewForwarder(routerName)
-		can.methodMap[routerName] = &invoker{kind: invokeByWho, Method: &m}
+		route := can.routeMux.NewForwarder(routerName, &Invoker{kind: invokeByWho, Method: &m})
 		for _, path := range combinePaths(prefix, ctrlTagPaths, hp.path) {
 			// default method is get
 			httpMethods := defaultHTTPMethods

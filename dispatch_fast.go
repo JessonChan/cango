@@ -29,6 +29,7 @@ type (
 	fastForwarder struct {
 		innerMux   *fastDispatcher
 		name       string
+		invoker    *Invoker
 		pattens    []*fastPatten
 		paths      []string
 		methods    []string
@@ -64,12 +65,12 @@ func newFastMux() *fastDispatcher {
 	return &fastDispatcher{forwarders: map[string]*fastForwarder{}, patternMap: map[string]*fastPatten{}}
 }
 
-func (fm *fastDispatcher) NewForwarder(name string) forwarder {
+func (fm *fastDispatcher) NewForwarder(name string, invoker *Invoker) forwarder {
 	ff, ok := fm.forwarders[name]
 	if ok {
 		return ff
 	}
-	ff = &fastForwarder{innerMux: fm, name: name, patternMap: map[string]*fastPatten{}}
+	ff = &fastForwarder{innerMux: fm, name: name, invoker: invoker, patternMap: map[string]*fastPatten{}}
 	fm.forwarders[name] = ff
 	fm.forwarderArr = append(fm.forwarderArr, ff)
 	return ff
@@ -181,6 +182,9 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 }
 func (fr *fastForwarder) GetName() string {
 	return fr.name
+}
+func (fr *fastForwarder) GetInvoker() *Invoker {
+	return fr.invoker
 }
 
 func (fm *fastMatcher) Error() error {

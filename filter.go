@@ -130,7 +130,7 @@ func buildSingleFilter(dsp dispatcher, f Filter, path string, methods []string) 
 		panic("filter must be ptr")
 	}
 	name := fv.Elem().Type().Name()
-	dsp.NewForwarder(name).PathMethods(path, methods...)
+	dsp.NewForwarder(name, nil).PathMethods(path, methods...)
 }
 
 func (can *Can) filter(f Filter, uri URI) {
