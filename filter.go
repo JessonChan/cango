@@ -36,6 +36,13 @@ type Filter interface {
 
 var _ = Filter(&emptyFilter{})
 
+type FilterType reflect.Type
+
+type filterDispatcher struct {
+	filter     Filter
+	dispatcher dispatcher
+}
+
 type emptyFilter struct {
 }
 
@@ -65,8 +72,8 @@ func (can *Can) buildFilter() {
 	for filter, _ := range filterRegMap {
 		can.Filter(filter)
 	}
-	for _, filter := range can.filterMap {
-		fv := reflect.ValueOf(filter).Elem()
+	for _, filter := range can.filterMuxMap {
+		fv := reflect.ValueOf(filter.filter).Elem()
 		ffv := fv.FieldByName(filterName)
 		if ffv.CanSet() && ffv.IsNil() {
 			ffv.Set(filterImpl)
@@ -76,12 +83,12 @@ func (can *Can) buildFilter() {
 	for flt, typArr := range uriFilterMap {
 		dsp, ok := can.filterMuxMap[flt]
 		if !ok {
-			dsp = newCanMux()
+			continue
 		}
 		can.filterMuxMap[flt] = dsp
 		paths, methods := getPaths(flt)
 		for _, path := range paths {
-			buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(path), methods)
+			buildSingleFilter(dsp.dispatcher, dsp.filter, filepath.Clean(path), methods)
 		}
 		for _, typ := range typArr {
 			hs := factoryType(typ)
@@ -92,7 +99,7 @@ func (can *Can) buildFilter() {
 			for _, fn := range hs.fns {
 				for _, pattern := range fn.patterns {
 					for _, url := range urls {
-						buildSingleFilter(dsp, can.filterMap[flt], filepath.Clean(url+"/"+pattern.path), pattern.httpMethods)
+						buildSingleFilter(dsp.dispatcher, dsp.filter, filepath.Clean(url+"/"+pattern.path), pattern.httpMethods)
 					}
 				}
 			}
@@ -138,7 +145,8 @@ func (can *Can) filter(f Filter, uri URI) {
 	if rp.Kind() != reflect.Ptr {
 		panic("filter controller must be ptr")
 	}
-	ts := uriFilterMap[reflect.TypeOf(f)]
+	typeOf := reflect.TypeOf(f)
+	ts := uriFilterMap[typeOf]
 	contain := false
 	for _, t := range ts {
 		if t == rp.Type() {
@@ -149,8 +157,8 @@ func (can *Can) filter(f Filter, uri URI) {
 	if contain {
 		return
 	}
-	uriFilterMap[reflect.TypeOf(f)] = append(ts, rp.Type())
-	can.filterMap[reflect.TypeOf(f)] = f
+	uriFilterMap[typeOf] = append(ts, rp.Type())
+	can.filterMuxMap[typeOf] = &filterDispatcher{filter: f, dispatcher: newCanMux()}
 }
 
 func (can *Can) Filter(f Filter, uris ...URI) *Can {
@@ -170,9 +178,10 @@ func (can *Can) Filter(f Filter, uris ...URI) *Can {
 	}
 	// 只是注册Filter,路由使用Filter的Value字段
 	if len(uris) == 0 {
-		if len(uriFilterMap[reflect.TypeOf(f)]) == 0 {
-			uriFilterMap[reflect.TypeOf(f)] = nil
-			can.filterMap[reflect.TypeOf(f)] = f
+		typeOf := reflect.TypeOf(f)
+		if len(uriFilterMap[typeOf]) == 0 {
+			uriFilterMap[typeOf] = nil
+			can.filterMuxMap[typeOf] = &filterDispatcher{filter: f, dispatcher: newCanMux()}
 		}
 	} else {
 		for _, uri := range uris {

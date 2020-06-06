@@ -36,8 +36,7 @@ type Can struct {
 	debugTpl       bool
 
 	routeMux     dispatcher
-	filterMuxMap map[reflect.Type]dispatcher
-	filterMap    map[reflect.Type]Filter
+	filterMuxMap map[FilterType]*filterDispatcher
 	ctrlEntryMap map[string]ctrlEntry
 	tplFuncMap   map[string]interface{}
 	tplNameMap   map[string]bool
@@ -52,8 +51,7 @@ func NewCan(name ...string) *Can {
 		name:         append(name, "")[0],
 		srv:          &http.Server{Addr: defaultAddr.String()},
 		routeMux:     newCanMux(),
-		filterMuxMap: map[reflect.Type]dispatcher{},
-		filterMap:    map[reflect.Type]Filter{},
+		filterMuxMap: map[FilterType]*filterDispatcher{},
 		ctrlEntryMap: map[string]ctrlEntry{},
 		tplFuncMap:   map[string]interface{}{},
 		tplNameMap:   map[string]bool{},
@@ -230,10 +228,10 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	needStop := false
 	var filterReturn interface{}
 	var needHandle = true
-	for typ, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp, r)
+	for _, dsp := range can.filterMuxMap {
+		match := doubleMatch(dsp.dispatcher, r)
 		if match.Error() == nil {
-			ri := can.filterMap[typ].PreHandle(request)
+			ri := dsp.filter.PreHandle(request)
 			if rt, ok := ri.(bool); ok {
 				// todo 这样的设计是不是合理？？？？
 				// 返回为false 这个之后注册的filter失效
@@ -356,10 +354,10 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// postHandle
-	for typ, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp, r)
+	for _, dsp := range can.filterMuxMap {
+		match := doubleMatch(dsp.dispatcher, r)
 		if match.Error() == nil {
-			can.filterMap[typ].PostHandle(request)
+			dsp.filter.PostHandle(request)
 		}
 	}
 }
