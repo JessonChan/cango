@@ -97,14 +97,14 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 			// todo 为了简化，先约定只允许有一个通配符，并且通配符pattern不允许再有路径变量
 			// todo 通配符逻辑统一
 			if pattern.isWildcard {
-				// todo 效率提升
 				if strings.HasPrefix(url, pattern.wildcardLeft) && strings.HasSuffix(url, pattern.wildcardRight) {
 					continue
 				}
-			}
-			if len(pattern.words) != len(elements) {
-				delete(searchMap, key)
-				continue
+			} else {
+				if len(pattern.words) != len(elements) {
+					delete(searchMap, key)
+					continue
+				}
 			}
 
 			// 如果是变量，肯定符合
