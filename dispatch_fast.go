@@ -75,17 +75,22 @@ func (fm *fastDispatcher) NewForwarder(name string) forwarder {
 	return ff
 }
 
+func (fm *fastDispatcher) copy() map[string]*fastPatten {
+	searchMap := make(map[string]*fastPatten, len(fm.patternMap))
+	for k, v := range fm.patternMap {
+		searchMap[k] = v
+	}
+	return searchMap
+}
+
 func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 	elements := parsePath(url)
-	stopMap := map[*fastPatten]bool{}
+	searchMap := fm.copy()
 
 	for k, elem := range elements {
-		for _, pattern := range fm.patternMap {
-			if stopMap[pattern] {
-				continue
-			}
+		for key, pattern := range searchMap {
 			if pattern.methodMap[method] == false {
-				stopMap[pattern] = true
+				delete(searchMap, key)
 			}
 			// todo wildcard逻辑要加进来
 			// todo /login/*.html 如果为 /log/*html则不行，通配符必须在两个分隔符之前
@@ -98,7 +103,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 				}
 			}
 			if len(pattern.words) != len(elements) {
-				stopMap[pattern] = true
+				delete(searchMap, key)
 				continue
 			}
 
@@ -111,11 +116,10 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 				continue
 			}
 			// 两种情况都不是，不符合
-			stopMap[pattern] = true
+			delete(searchMap, key)
 		}
 	}
-	diff := len(fm.patternMap) - len(stopMap)
-	switch diff {
+	switch len(searchMap) {
 	case 0:
 		// 没有找到
 		return nil
@@ -123,15 +127,8 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		// 找到了
 		// todo 优化找到后的逻辑
 		var pattern *fastPatten
-		for _, v := range fm.patternMap {
-			if stopMap[v] {
-				continue
-			}
+		for _, v := range searchMap {
 			pattern = v
-			break
-		}
-		if pattern == nil {
-			return nil
 		}
 		vars := map[string]string{}
 		for _, id := range pattern.varIdx {
