@@ -24,7 +24,6 @@ type (
 	fastDispatcher struct {
 		forwarders   map[string]*fastForwarder
 		forwarderArr []*fastForwarder
-		pathNameMap  map[string]string
 		patternMap   map[string]*fastPatten
 	}
 	fastForwarder struct {
@@ -36,7 +35,7 @@ type (
 		patternMap map[string]*fastPatten
 	}
 	fastPatten struct {
-		name          string
+		forwarder     *fastForwarder
 		pattern       string
 		words         []word
 		varIdx        []int
@@ -62,7 +61,7 @@ type word struct {
 var _ = forwarder(&fastForwarder{})
 
 func newFastMux() *fastDispatcher {
-	return &fastDispatcher{forwarders: map[string]*fastForwarder{}, pathNameMap: map[string]string{}, patternMap: map[string]*fastPatten{}}
+	return &fastDispatcher{forwarders: map[string]*fastForwarder{}, patternMap: map[string]*fastPatten{}}
 }
 
 func (fm *fastDispatcher) NewForwarder(name string) forwarder {
@@ -139,7 +138,7 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 			vars[pattern.words[id].key] = elements[id]
 		}
 		fm := &fastMatcher{
-			forwarder: fm.forwarders[fm.pathNameMap[pattern.name]],
+			forwarder: pattern.forwarder,
 			vars:      vars,
 		}
 		return fm
@@ -162,8 +161,7 @@ func (fm *fastDispatcher) Match(req *http.Request) matcher {
 func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 	patten, ok := fr.patternMap[path]
 	if !ok {
-		fr.innerMux.pathNameMap[path] = fr.name
-		patten = &fastPatten{name: path, pattern: path, methodMap: map[string]bool{}}
+		patten = &fastPatten{forwarder: fr, pattern: path, methodMap: map[string]bool{}}
 		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
 		if patten.isWildcard {
 			ss := strings.Split(path, "*")
@@ -179,7 +177,7 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 		}
 		patten.methodMap[m] = true
 	}
-	fr.innerMux.patternMap[path] = patten
+	fr.innerMux.patternMap[fr.name] = patten
 }
 func (fr *fastForwarder) GetName() string {
 	return fr.name
