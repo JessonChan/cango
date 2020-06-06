@@ -233,7 +233,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var filterReturn interface{}
 	var needHandle = true
 	for typ, dsp := range can.filterMuxMap {
-		match := deepMatch(dsp, r)
+		match := doubleMatch(dsp, r)
 		if match.Error() == nil {
 			ri := can.filterMap[typ].PreHandle(request)
 			if rt, ok := ri.(bool); ok {
@@ -359,14 +359,14 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	// postHandle
 	for typ, dsp := range can.filterMuxMap {
-		match := deepMatch(dsp, r)
+		match := doubleMatch(dsp, r)
 		if match.Error() == nil {
 			can.filterMap[typ].PostHandle(request)
 		}
 	}
 }
 
-func deepMatch(mux dispatcher, req *http.Request) matcher {
+func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	match := mux.Match(req)
 	if match.Error() != nil {
 		originalPath := req.URL.Path
@@ -383,7 +383,7 @@ func deepMatch(mux dispatcher, req *http.Request) matcher {
 
 func (can *Can) serve(request *WebRequest) (interface{}, int) {
 	req := request.Request
-	match := deepMatch(can.routeMux, req)
+	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, http.StatusNotFound
