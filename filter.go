@@ -80,7 +80,7 @@ func (can *Can) buildFilter() {
 		can.Filter(filter)
 	}
 
-	for flt, fd := range can.filterMuxMap {
+	for flt, fd := range can.filterDispatcher {
 		paths, methods := getPaths(flt)
 		for _, path := range paths {
 			buildSingleFilter(fd.dispatcher, fd.filter, filepath.Clean(path), methods)
@@ -141,7 +141,7 @@ func (can *Can) filter(f Filter, uri URI) {
 		panic("filter controller must be ptr")
 	}
 	typeOf := reflect.TypeOf(f)
-	fd := can.filterMuxMap[typeOf]
+	fd := can.filterDispatcher[typeOf]
 	if fd == nil {
 		fd = newFilterDispatcher(f)
 	}
@@ -176,11 +176,11 @@ func (can *Can) Filter(f Filter, uris ...URI) *Can {
 	// 只是注册Filter,路由使用Filter的Value字段
 	if len(uris) == 0 {
 		typeOf := reflect.TypeOf(f)
-		fd := can.filterMuxMap[typeOf]
+		fd := can.filterDispatcher[typeOf]
 		if fd == nil {
 			fd = newFilterDispatcher(f)
 		}
-		can.filterMuxMap[typeOf] = fd
+		can.filterDispatcher[typeOf] = fd
 	} else {
 		for _, uri := range uris {
 			can.filter(f, uri)

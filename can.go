@@ -35,11 +35,11 @@ type Can struct {
 	tplSuffix      []string
 	debugTpl       bool
 
-	routeMux     dispatcher
-	filterMuxMap map[FilterType]*filterDispatcher
-	ctrlEntryMap map[string]ctrlEntry
-	tplFuncMap   map[string]interface{}
-	tplNameMap   map[string]bool
+	routeMux         dispatcher
+	filterDispatcher map[FilterType]*filterDispatcher
+	ctrlEntryMap     map[string]ctrlEntry
+	tplFuncMap       map[string]interface{}
+	tplNameMap       map[string]bool
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -48,13 +48,13 @@ var defaultAddr = Addr{Host: "", Port: 8080}
 // 一般，只有我们在工程中需要注册多个web服务时才需要设置
 func NewCan(name ...string) *Can {
 	return &Can{
-		name:         append(name, "")[0],
-		srv:          &http.Server{Addr: defaultAddr.String()},
-		routeMux:     newCanMux(),
-		filterMuxMap: map[FilterType]*filterDispatcher{},
-		ctrlEntryMap: map[string]ctrlEntry{},
-		tplFuncMap:   map[string]interface{}{},
-		tplNameMap:   map[string]bool{},
+		name:             append(name, "")[0],
+		srv:              &http.Server{Addr: defaultAddr.String()},
+		routeMux:         newCanMux(),
+		filterDispatcher: map[FilterType]*filterDispatcher{},
+		ctrlEntryMap:     map[string]ctrlEntry{},
+		tplFuncMap:       map[string]interface{}{},
+		tplNameMap:       map[string]bool{},
 	}
 }
 
@@ -229,7 +229,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var filterReturn interface{}
 	var needHandle = true
 	var filterChan []Filter
-	for _, dsp := range can.filterMuxMap {
+	for _, dsp := range can.filterDispatcher {
 		match := doubleMatch(dsp.dispatcher, r)
 		if match.Error() == nil {
 			filterChan = append(filterChan, dsp.filter)
