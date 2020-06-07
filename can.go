@@ -35,9 +35,8 @@ type Can struct {
 	tplSuffix      []string
 	debugTpl       bool
 
-	routeMux         dispatcher
+	routeMux         *routeDispatcher
 	filterDispatcher map[FilterType]*filterDispatcher
-	ctrlEntryMap     map[string]ctrlEntry
 	tplFuncMap       map[string]interface{}
 	tplNameMap       map[string]bool
 }
@@ -50,9 +49,8 @@ func NewCan(name ...string) *Can {
 	return &Can{
 		name:             append(name, "")[0],
 		srv:              &http.Server{Addr: defaultAddr.String()},
-		routeMux:         newCanMux(),
+		routeMux:         &routeDispatcher{dispatcher: newCanMux(), ctrlEntryMap: map[string]ctrlEntry{}},
 		filterDispatcher: map[FilterType]*filterDispatcher{},
-		ctrlEntryMap:     map[string]ctrlEntry{},
 		tplFuncMap:       map[string]interface{}{},
 		tplNameMap:       map[string]bool{},
 	}

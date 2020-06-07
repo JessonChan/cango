@@ -28,6 +28,11 @@ import (
 
 const emptyPrefix = ""
 
+type routeDispatcher struct {
+	dispatcher
+	ctrlEntryMap map[string]ctrlEntry
+}
+
 // todo route by controller and method Name???
 // Route 路由结构体上所有的可导出方法
 func (can *Can) Route(uris ...URI) *Can {
@@ -45,7 +50,7 @@ func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 
 func (can *Can) route(prefix string, uri URI) {
 	typ := toPtrKind(uri)
-	can.ctrlEntryMap[prefix+typ.String()] = ctrlEntry{prefix: prefix, kind: reflect.Ptr, ctrl: uri, tim: time.Now().Unix()}
+	can.routeMux.ctrlEntryMap[prefix+typ.String()] = ctrlEntry{prefix: prefix, kind: reflect.Ptr, ctrl: uri, tim: time.Now().Unix()}
 }
 
 // RouteFunc 方法路由，可以传入多个方法
@@ -74,7 +79,7 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 		Func:    fv,
 		Index:   0,
 	}
-	can.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, kind: reflect.Func, fn: funcMethod, tim: time.Now().Unix()}
+	can.routeMux.ctrlEntryMap[prefix+fv.String()] = ctrlEntry{prefix: prefix, kind: reflect.Func, fn: funcMethod, tim: time.Now().Unix()}
 }
 
 var uriRegMap = map[URI]string{}
@@ -117,7 +122,7 @@ func (can *Can) buildRoute() {
 		}
 	}
 	var ces []ctrlEntry
-	for _, ce := range can.ctrlEntryMap {
+	for _, ce := range can.routeMux.ctrlEntryMap {
 		ces = append(ces, ce)
 	}
 	sort.Sort(sortCtrlEntry(ces))
