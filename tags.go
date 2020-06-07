@@ -24,11 +24,11 @@ const (
 	holderLen               = 12
 )
 
-var cookieHolderKey = len16String(cookieTagName)
-var formPathHolderKey = len16String(formValueTagName + pathValueTagName)
-var sessionHolderKey = len16String(sessionTagName)
+var cookieHolderKey = makeHolderKey(cookieTagName)
+var formPathHolderKey = makeHolderKey(formValueTagName + pathValueTagName)
+var sessionHolderKey = makeHolderKey(sessionTagName)
 
-func len16String(key string) string {
+func makeHolderKey(key string) string {
 	if len(key) > holderLen {
 		return key[0:holderLen]
 	}
