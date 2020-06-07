@@ -20,6 +20,7 @@ import (
 const (
 	invokeBySelf     = 0
 	invokeByReceiver = 1
+	invokeByFilter   = 2
 )
 
 // invoker实际执行请求的函数
@@ -29,4 +30,5 @@ const (
 type Invoker struct {
 	kind int
 	*reflect.Method
+	filter Filter
 }
