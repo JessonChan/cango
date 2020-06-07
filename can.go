@@ -228,9 +228,11 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	needStop := false
 	var filterReturn interface{}
 	var needHandle = true
+	var filterChan []Filter
 	for _, dsp := range can.filterMuxMap {
 		match := doubleMatch(dsp.dispatcher, r)
 		if match.Error() == nil {
+			filterChan = append(filterChan, dsp.filter)
 			ri := dsp.filter.PreHandle(request)
 			if rt, ok := ri.(bool); ok {
 				// todo 这样的设计是不是合理？？？？
@@ -354,11 +356,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// postHandle
-	for _, dsp := range can.filterMuxMap {
-		match := doubleMatch(dsp.dispatcher, r)
-		if match.Error() == nil {
-			dsp.filter.PostHandle(request)
-		}
+	for _, f := range filterChan {
+		f.PostHandle(request)
 	}
 }
 
