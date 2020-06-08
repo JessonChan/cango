@@ -342,7 +342,7 @@ struct{
 获取session中的值，只需要结构体成员使用session这个tag名就可以，如
 ```go 
 struct{
-    Name string `cookie:"~"`
+    Name string `session:"~"`
 }
 ```
 后使用`~`这个符号表示，对应的session名称是自动从成员变量名读取
