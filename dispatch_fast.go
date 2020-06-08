@@ -40,7 +40,6 @@ type (
 		pattern       string
 		words         []word
 		varIdx        []int
-		hasVar        bool
 		methodMap     map[string]bool
 		isWildcard    bool
 		wildcardLeft  string
@@ -134,13 +133,14 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 		if pattern == nil {
 			return nil
 		}
-		vars := map[string]string{}
-		for _, id := range pattern.varIdx {
-			vars[pattern.words[id].key] = elements[id]
-		}
 		fm := &fastMatcher{
 			forwarder: pattern.forwarder,
-			vars:      vars,
+			vars:      make(map[string]string, len(pattern.varIdx)),
+		}
+		if len(pattern.varIdx) > 0 {
+			for _, idx := range pattern.varIdx {
+				fm.vars[pattern.words[idx].key] = elements[idx]
+			}
 		}
 		return fm
 	default:
@@ -163,7 +163,7 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 	patten, ok := fr.patternMap[path]
 	if !ok {
 		patten = &fastPatten{forwarder: fr, pattern: path, methodMap: map[string]bool{}}
-		patten.words, patten.varIdx, patten.hasVar, patten.isWildcard = elementsToWords(parsePath(path))
+		patten.words, patten.varIdx, patten.isWildcard = elementsToWords(parsePath(path))
 		if patten.isWildcard {
 			ss := strings.Split(path, "*")
 			patten.wildcardLeft = ss[0]
@@ -197,9 +197,8 @@ func (fm *fastMatcher) GetVars() map[string]string {
 	return fm.vars
 }
 
-func elementsToWords(elements []string) ([]word, []int, bool, bool) {
+func elementsToWords(elements []string) ([]word, []int, bool) {
 	words := make([]word, len(elements))
-	hasVar := false
 	idx := make([]int, len(elements))
 	isWildcard := false
 	j := 0
@@ -213,7 +212,6 @@ func elementsToWords(elements []string) ([]word, []int, bool, bool) {
 		// todo 也就是说地址是/a/{}/b/c 这种的话不会被当做变量
 		// todo 如果真实需要注册的地址就是/a/{name}/b/c 应该怎么办？
 		if strings.HasPrefix(elem, "{") && strings.HasSuffix(elem, "}") {
-			hasVar = true
 			words[i] = word{key: elem[1 : len(elem)-1], isVar: true}
 			idx[j] = i
 			j++
@@ -221,7 +219,7 @@ func elementsToWords(elements []string) ([]word, []int, bool, bool) {
 		}
 		words[i] = word{key: elem, isVar: false}
 	}
-	return words, idx, hasVar, isWildcard
+	return words, idx[0:j], isWildcard
 }
 
 func parsePath(url string) []string {
