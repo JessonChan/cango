@@ -178,7 +178,7 @@ func (fr *fastForwarder) PathMethods(path string, ms ...string) {
 		}
 		patten.methodMap[m] = true
 	}
-	fr.innerMux.patternMap[fr.name] = patten
+	fr.innerMux.patternMap[fr.name+path] = patten
 }
 func (fr *fastForwarder) GetName() string {
 	return fr.name
