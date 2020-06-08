@@ -229,7 +229,7 @@ func parsePath(url string) []string {
 	if url == "" || url == "/" {
 		return []string{"/"}
 	}
-	// todo .这个分隔符应该是最后一个才需要，并且应该是生成两个pattern
+	// todo .这个分隔符应该是最后一个才需要
 	return strings.FieldsFunc(url, func(r rune) bool {
 		if r == '/' || r == '.' {
 			return true
