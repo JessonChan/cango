@@ -92,10 +92,8 @@ func (fm *fastDispatcher) doMatch(method, url string) *fastMatcher {
 			if pattern.methodMap[method] == false {
 				delete(searchMap, key)
 			}
-			// todo wildcard逻辑要加进来
 			// todo /login/*.html 如果为 /log/*html则不行，通配符必须在两个分隔符之前
 			// todo 为了简化，先约定只允许有一个通配符，并且通配符pattern不允许再有路径变量
-			// todo 通配符逻辑统一
 			if pattern.isWildcard {
 				if strings.HasPrefix(url, pattern.wildcardLeft) && strings.HasSuffix(url, pattern.wildcardRight) {
 					continue
