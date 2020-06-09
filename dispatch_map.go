@@ -94,9 +94,7 @@ func (m *mapForwarder) PathMethods(path string, ms ...string) {
 	}
 	m.patternMap[path] = pattern
 }
-func (m *mapForwarder) GetName() string {
-	return m.name
-}
+
 func (m *mapForwarder) GetInvoker() *Invoker {
 	return m.invoker
 }

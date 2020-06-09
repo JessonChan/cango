@@ -25,10 +25,8 @@ type (
 		Match(req *http.Request) matcher
 	}
 
-	// todo 应该直接返回handler
 	forwarder interface {
 		PathMethods(path string, ms ...string)
-		GetName() string
 		GetInvoker() *Invoker
 	}
 
@@ -83,9 +81,7 @@ func (m *canForwarder) PathMethods(path string, ms ...string) {
 		m.fastForwarder.PathMethods(path, ms...)
 	}
 }
-func (m *canForwarder) GetName() string {
-	return m.mapForwarder.GetName()
-}
+
 func (m *canForwarder) GetInvoker() *Invoker {
 	return nil
 }
