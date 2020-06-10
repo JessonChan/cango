@@ -17,6 +17,7 @@ go get -u github.com/JessonChan/cango
 ```
 为了更好更快的了解cango，建议通过以下命令安装`cango-cli`工具
 ```bash
+GO111MODULE=off go get -u  github.com/JessonChan/cango-cli
 GO111MODULE=off go install github.com/JessonChan/cango-cli
 ```
 
