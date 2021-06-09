@@ -87,11 +87,8 @@ func initIniConfig(configPath string) *IniConfig {
 		if commentIdx == 0 {
 			continue
 		}
-		if commentIdx == -1 {
-			commentIdx = len(line)
-		}
 		key := strings.TrimSpace(line[:idx])
-		value := strings.TrimSpace(line[idx+1 : commentIdx])
+		value := strings.TrimSpace(line[idx+1:])
 		envs[key] = trimQuote(value)
 		// 数组变量
 		if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
