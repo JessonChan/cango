@@ -391,6 +391,35 @@ cango.RegisterFilter(cango.Filter)
 | cookie_session_key/cookieSessionKey/CookieSessionKey |string |gorilla cookie store 的key |
 | cookie_session_secure/cookieSessionSecure/CookieSessionSecure |string |gorilla cookie store 加密使用的key |	
 
+### 和其它框架结合（Gin为例）
+以下为如何和gin框架结合
+
+```go
+package main
+
+import "github.com/gin-gonic/gin"
+import "github.com/JessonChan/cango"
+
+func main() {
+
+	can:=cango.
+		NewCan().
+		RouteFunc(func(ps struct {
+			cango.URI `value:"/;/hello"`
+		}) interface{} {
+			return cango.Content{String: "Hello,World!"}
+		})
+	r := gin.Default()
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+	can.FallbackHandler(r)
+	can.Run()
+}
+```
+
 ## 更多例子
 为了更好的理解和使用cango，`cango-cli`中还包含`can`、`short_url`和`demo`三个示例，请自己执行查看。
 另外，可以查看[can_blog](http://www.github.com/JessonChan/can_blog)这个简单的博客项目。
