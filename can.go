@@ -39,6 +39,7 @@ type Can struct {
 	filterDispatcher map[FilterType]*filterDispatcher
 	tplFuncMap       map[string]interface{}
 	tplNameMap       map[string]bool
+	fallbackHandler  http.Handler
 }
 
 var defaultAddr = Addr{Host: "", Port: 8080}
@@ -106,6 +107,11 @@ var loggerInitialed = false
 func InitLogger(rw io.Writer) {
 	loggerInitialed = true
 	canlog.SetWriter(rw, "CANGO")
+}
+
+func (can *Can) FallbackHandler(handler http.Handler) *Can {
+	can.fallbackHandler = handler
+	return can
 }
 
 func (can *Can) Run(as ...interface{}) {
@@ -263,6 +269,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if needHandle {
 		handleReturn, statusCode = can.serve(request)
+		if statusCode == serveFallbackStatus {
+			if can.fallbackHandler != nil {
+				can.fallbackHandler.ServeHTTP(rw, r)
+				return
+			}
+			statusCode = http.StatusNotFound
+		}
 		// todo nil是不是可以表示已经在函数内完成了？
 		// todo 这样的设计返回是有问题的
 		if handleReturn == nil {
@@ -374,12 +387,14 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	return match
 }
 
+const serveFallbackStatus = -1
+
 func (can *Can) serve(request *WebRequest) (interface{}, int) {
 	req := request.Request
 	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
-		return nil, http.StatusNotFound
+		return nil, serveFallbackStatus
 	}
 	invoker := match.Forwarder().GetInvoker()
 	uriRequestValue := reflect.ValueOf(newContext(request))
