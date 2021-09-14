@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"sync"
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
@@ -109,9 +108,7 @@ func InitLogger(rw io.Writer) {
 	canlog.SetWriter(rw, "CANGO")
 }
 
-var preRunSync = sync.Once{}
-
-func (can *Can) preRun(as ...interface{}) {
+func (can *Can) Run(as ...interface{}) {
 	// 优先从配置文件中读取
 	// 之后从传入参数中读取
 	Envs(&defaultAddr)
@@ -147,22 +144,10 @@ func (can *Can) preRun(as ...interface{}) {
 	if gorillaStore == nil {
 		gorillaStore = &emptyGorillaStore{}
 	}
-}
 
-func (can *Can) PreRun(as ...interface{}) {
-	preRunSync.Do(func() {
-		can.preRun(as)
-	})
-}
-func (can *Can) SetSrv(srv *http.Server) {
-	can.srv = srv
-}
-
-func (can *Can) Run(as ...interface{}) {
-	can.PreRun(as)
 	startChan := make(chan error, 1)
 	go func() {
-		canlog.CanInfo("cango start success @ " + can.srv.Addr)
+		canlog.CanInfo("cango start success @ " + addr.String())
 		err := can.srv.ListenAndServe()
 		if err != nil {
 			startChan <- err
