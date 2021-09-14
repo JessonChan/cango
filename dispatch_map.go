@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func newMapMux() *mapDispatcher {
+func newDispatcher() *mapDispatcher {
 	return &mapDispatcher{forwarders: map[string]*mapForwarder{}, pathName: map[string][]string{}}
 }
 

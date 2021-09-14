@@ -50,8 +50,8 @@ type (
 )
 
 func newCanMux() *canDispatcher {
-	mm := newMapMux()
-	gm := newFastMux()
+	mm := newDispatcher()
+	gm := newFastDispatcher()
 	return &canDispatcher{
 		mapMux:   mm,
 		fastMux:  gm,
