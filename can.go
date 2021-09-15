@@ -377,6 +377,7 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	if match.Error() != nil {
 		originalPath := req.URL.Path
 		req.URL.Path = filepath.Clean(originalPath)
+		// some url like "/api//user.json" and "/api/user.json",should match again
 		if originalPath == req.URL.Path {
 			return match
 		}
