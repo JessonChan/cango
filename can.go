@@ -269,7 +269,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if needHandle {
 		handleReturn, statusCode = can.serve(request)
-		if statusCode == serveFallbackStatus {
+		if statusCode == serveFallbackCode {
 			if can.fallbackHandler != nil {
 				can.fallbackHandler.ServeHTTP(rw, r)
 				return
@@ -388,7 +388,7 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 	return match
 }
 
-const serveFallbackStatus = -1
+const serveFallbackCode = -1
 
 func (can *Can) serve(request *WebRequest) (interface{}, int) {
 	req := request.Request
@@ -398,7 +398,7 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 		if can.fallbackHandler == nil {
 			return nil, http.StatusNotFound
 		}
-		return nil, serveFallbackStatus
+		return nil, serveFallbackCode
 	}
 	invoker := match.Forwarder().GetInvoker()
 	uriRequestValue := reflect.ValueOf(newContext(request))
