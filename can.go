@@ -389,9 +389,6 @@ func (can *Can) serve(request *WebRequest) (interface{}, int) {
 	match := doubleMatch(can.routeMux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
-		if can.fallbackHandler == nil {
-			return nil, http.StatusNotFound
-		}
 		return nil, serveFallbackCode
 	}
 	invoker := match.Forwarder().GetInvoker()
