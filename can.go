@@ -114,7 +114,7 @@ func (can *Can) FallbackHandler(handler http.Handler) *Can {
 	return can
 }
 
-func (can *Can) Run(as ...interface{}) {
+func (can *Can) Run(as ...interface{}) error {
 	// 优先从配置文件中读取
 	// 之后从传入参数中读取
 	Envs(&defaultAddr)
@@ -151,12 +151,8 @@ func (can *Can) Run(as ...interface{}) {
 		gorillaStore = &emptyGorillaStore{}
 	}
 
-	runningChan := make(chan error, 1)
-	go func() {
-		canlog.CanInfo("cango start success @ " + addr.String())
-		runningChan <- can.srv.ListenAndServe()
-	}()
-	panic(<-runningChan)
+	canlog.CanInfo("cango start success @ " + addr.String())
+	return can.srv.ListenAndServe()
 }
 
 func getAddr(as []interface{}) Addr {
