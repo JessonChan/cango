@@ -145,18 +145,12 @@ func (can *Can) Run(as ...interface{}) {
 		gorillaStore = &emptyGorillaStore{}
 	}
 
-	startChan := make(chan error, 1)
+	runningChan := make(chan error, 1)
 	go func() {
 		canlog.CanInfo("cango start success @ " + addr.String())
-		err := can.srv.ListenAndServe()
-		if err != nil {
-			startChan <- err
-		}
+		runningChan <- can.srv.ListenAndServe()
 	}()
-	err := <-startChan
-	if err != nil {
-		panic(err)
-	}
+	panic(<-runningChan)
 }
 
 func getAddr(as []interface{}) Addr {
