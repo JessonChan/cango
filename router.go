@@ -33,13 +33,13 @@ type routeDispatcher struct {
 	ctrlEntryMap map[string]ctrlEntry
 }
 
-// todo route by controller and method Name???
+// Route todo route by controller and method Name???
 // Route 路由结构体上所有的可导出方法
 func (can *Can) Route(uris ...URI) *Can {
 	return can.RouteWithPrefix(emptyPrefix, uris...)
 }
 
-// todo route with suffix and simplify
+// RouteWithPrefix todo route with suffix and simplify
 // Route路由结构体上所有的可导出方法，并使用路由前缀
 func (can *Can) RouteWithPrefix(prefix string, uris ...URI) *Can {
 	for _, uri := range uris {
@@ -84,7 +84,7 @@ func (can *Can) routeFunc(prefix string, fn interface{}) {
 
 var uriRegMap = map[URI]string{}
 
-// todo with can app Name ???
+// RegisterURI todo with can app Name ???
 // RegisterURI 在定义struct的时候引入，也这是非常推荐的方法
 func RegisterURI(uri URI, cangoName ...string) bool {
 	return RegisterURIWithPrefix(emptyPrefix, uri, cangoName...)
@@ -106,7 +106,6 @@ type ctrlEntry struct {
 
 type sortCtrlEntry []ctrlEntry
 
-// sortCtrlEntry
 func (s sortCtrlEntry) Len() int           { return len(s) }
 func (s sortCtrlEntry) Less(i, j int) bool { return s[i].tim < s[j].tim }
 func (s sortCtrlEntry) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
@@ -171,7 +170,7 @@ func (can *Can) routeMethod(invokeByWho int, prefix string, m reflect.Method, ro
 	for _, hp := range hm.patterns {
 		route := can.routeMux.NewForwarder(routerName, &Invoker{kind: invokeByWho, Method: &m})
 		for _, path := range combinePaths(prefix, ctrlTagPaths, hp.path) {
-			// default method is get
+			// default method is GET
 			httpMethods := defaultHTTPMethods
 			if len(hp.httpMethods) > 0 {
 				httpMethods = hp.httpMethods

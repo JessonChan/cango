@@ -60,7 +60,7 @@ type word struct {
 
 var _ = forwarder(&fastForwarder{})
 
-func newFastMux() *fastDispatcher {
+func newFastDispatcher() *fastDispatcher {
 	return &fastDispatcher{forwarders: map[string]*fastForwarder{}, patternMap: map[string]*fastPatten{}}
 }
 
