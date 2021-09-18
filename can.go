@@ -191,16 +191,17 @@ func getOpts(as []interface{}) *Opts {
 	return optsPtr
 }
 
+// 取得项目运行目录
 func getRootPath() string {
-	dir, err := os.Getwd()
-	if err == nil {
+	// 先判断当前路径是否有效
+	if dir, err := os.Getwd(); err == nil {
 		return dir
 	}
-	abs, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		return os.Args[0]
+	// 判断当前路径是否为绝对路径
+	if abs, err := filepath.Abs(os.Args[0]); err == nil {
+		return filepath.Dir(abs)
 	}
-	return filepath.Dir(abs)
+	return os.Args[0]
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
