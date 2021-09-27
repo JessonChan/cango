@@ -1,4 +1,4 @@
-// Copyright 2020 Cango Author.
+// Copyright 2021 Cango Author.
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,24 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package cango
 
-import (
-	"reflect"
-)
+package cangin
 
-const (
-	invokeBySelf     = 0
-	invokeByReceiver = 1
-	invokeByFilter   = 2
-)
+import "github.com/gin-gonic/gin"
 
-// Invoker 实际执行请求的函数
-// kind用来表示是通过struct来注册的还是只是通过函数来注册的
-// 0 invokeBySelf --- 通过函数
-// 1 invokeByReceiver --- 通过struct
-type Invoker struct {
-	kind int
-	*reflect.Method
-	filter Filter
+func ginHandle() (url string, hdl func(c *gin.Context)) {
+	return
 }
