@@ -146,6 +146,7 @@ func factoryMethod(m reflect.Method, invokeByWho int) *handlerMethod {
 func urlStr(typ reflect.Type) ([]string, string) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
+		// 不为空，则为不可导出变量
 		if f.PkgPath != "" {
 			continue
 		}
@@ -157,8 +158,8 @@ func urlStr(typ reflect.Type) ([]string, string) {
 }
 
 func tagUriParse(tag reflect.StructTag) []string {
-	if tag.Get(uriTagName) == "" {
-		return []string{}
+	if s := tag.Get(uriTagName); s != "" {
+		return strings.Split(s, ";")
 	}
-	return strings.Split(tag.Get(uriTagName), ";")
+	return []string{}
 }
