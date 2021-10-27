@@ -175,6 +175,9 @@ func noTagName(f reflect.StructField) []string {
 
 // lowerCase = AbcDef -> abcDef
 func lowerCase(s string) string {
+	if s == "" {
+		return s
+	}
 	bs := []rune(s)
 	if 'A' <= bs[0] && bs[0] <= 'Z' {
 		bs[0] += 'a' - 'A'
@@ -184,6 +187,9 @@ func lowerCase(s string) string {
 
 // underScore = AbcDef -> abc_def
 func underScore(s string) string {
+	if s == "" {
+		return s
+	}
 	bs := make([]rune, 0, 2*len(s))
 	for _, s := range s {
 		if 'A' <= s && s <= 'Z' {
@@ -193,9 +199,7 @@ func underScore(s string) string {
 		bs = append(bs, s)
 	}
 	if bs[0] == '_' {
-		s = string(bs[1:])
-	} else {
-		s = string(bs)
+		bs = bs[1:]
 	}
-	return s
+	return string(bs)
 }
