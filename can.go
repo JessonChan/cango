@@ -240,13 +240,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				// todo 需要设计filter的执行顺序，优先生效最早返回的
 				filterReturn = ri
 				if filterReturn != nil {
-					// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
-					if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
-						rw = filterReturn.(http.ResponseWriter)
-						request.ResponseWriter = rw
-					} else {
-						needHandle = false
-					}
+					needHandle = false
 				}
 			}
 		}
