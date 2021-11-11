@@ -67,10 +67,10 @@ var filterImpl = reflect.ValueOf(&emptyFilter{})
 var filterType = reflect.TypeOf((*Filter)(nil)).Elem()
 var filterName = filterType.Name()
 
-var filterRegMap = map[Filter]bool{}
+var filterRegMap = map[Filter][]string{}
 
-func RegisterFilter(filter Filter) bool {
-	filterRegMap[filter] = true
+func RegisterFilter(filter Filter, values ...string) bool {
+	filterRegMap[filter] = values
 	return true
 }
 
