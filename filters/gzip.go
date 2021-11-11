@@ -1,4 +1,4 @@
-package filter
+package filters
 
 import (
 	"compress/flate"
@@ -25,7 +25,6 @@ type gzipWriter struct {
 var writerType = reflect.TypeOf(&gzipWriter{})
 
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
-	w.Header().Set("Content-Encoding", "gzip")
 	w.Header().Del("Content-Length")
 	return &gzipWriter{ResponseWriter: w, gzWriter: func() *gzip.Writer {
 		w, _ := gzip.NewWriterLevel(w, flate.BestCompression)
