@@ -26,6 +26,7 @@ var writerType = reflect.TypeOf(&gzipWriter{})
 
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Del("Content-Length")
 	return &gzipWriter{ResponseWriter: w, gzWriter: func() *gzip.Writer {
 		w, _ := gzip.NewWriterLevel(w, flate.BestCompression)
 		return w
@@ -46,7 +47,7 @@ func (gw *gzipWriter) Close() error {
 
 func (l *GzipFilter) PreHandle(req *cango.WebRequest) interface{} {
 	if strings.Contains(req.Request.Header.Get("Accept-Encoding"), "gzip") {
-		return newGzipWriter(req.ResponseWriter)
+		req.ResponseWriter = newGzipWriter(req.ResponseWriter)
 	}
 	return true
 }
