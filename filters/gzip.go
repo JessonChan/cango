@@ -35,8 +35,7 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 
 func (gw *gzipWriter) Write(bs []byte) (int, error) {
 	gw.written = true
-	n, err := gw.gzWriter.Write(bs)
-	return n, err
+	return gw.gzWriter.Write(bs)
 }
 func (gw *gzipWriter) Close() error {
 	if gw.written {
