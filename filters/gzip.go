@@ -25,7 +25,6 @@ type gzipWriter struct {
 var writerType = reflect.TypeOf(&gzipWriter{})
 
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
-	w.Header().Del("Content-Length")
 	return &gzipWriter{ResponseWriter: w, gzWriter: func() *gzip.Writer {
 		w, _ := gzip.NewWriterLevel(w, flate.BestCompression)
 		return w
@@ -33,9 +32,14 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 }
 
 func (gw *gzipWriter) Write(bs []byte) (int, error) {
+	if !gw.written {
+		gw.Header().Del("Content-Length")
+		gw.Header().Set("Content-Encoding", "gzip")
+	}
 	gw.written = true
 	return gw.gzWriter.Write(bs)
 }
+
 func (gw *gzipWriter) Close() error {
 	if gw.written {
 		return gw.gzWriter.Close()
