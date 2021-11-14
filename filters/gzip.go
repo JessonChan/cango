@@ -3,9 +3,7 @@ package filters
 import (
 	"compress/flate"
 	"compress/gzip"
-	"io"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/JessonChan/cango"
@@ -21,8 +19,6 @@ type gzipWriter struct {
 	gzWriter *gzip.Writer
 	written  bool
 }
-
-var writerType = reflect.TypeOf(&gzipWriter{})
 
 func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 	return &gzipWriter{ResponseWriter: w, gzWriter: func() *gzip.Writer {
@@ -55,8 +51,8 @@ func (l *GzipFilter) PreHandle(req *cango.WebRequest) interface{} {
 }
 
 func (l *GzipFilter) PostHandle(req *cango.WebRequest) interface{} {
-	if reflect.TypeOf(req.ResponseWriter) == writerType {
-		err := req.ResponseWriter.(io.Closer).Close()
+	if rw, ok := req.ResponseWriter.(*gzipWriter); ok {
+		err := rw.Close()
 		if err != nil {
 			canlog.CanError(req.URL.Path+req.URL.RawQuery, err)
 		}
