@@ -10,6 +10,7 @@ import (
 	"github.com/JessonChan/canlog"
 )
 
+// todo register with url
 type GzipFilter struct {
 	cango.Filter `value:"/*"`
 }
