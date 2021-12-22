@@ -15,6 +15,7 @@ package cango
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"os"
@@ -155,6 +156,18 @@ func (can *Can) Run(as ...interface{}) error {
 	return can.srv.ListenAndServe()
 }
 
+type GinHandler struct {
+	Url    string
+	Method func(ctx *gin.Context)
+}
+
+func (can *Can) ToGins() []*GinHandler {
+	gorillaStore = &emptyGorillaStore{}
+	can.buildStaticRoute()
+	can.buildRoute()
+	return ((can.routeMux).dispatcher.(*canDispatcher)).Gins()
+}
+
 func getAddr(as []interface{}) Addr {
 	host := defaultAddr.Host
 	port := defaultAddr.Port
@@ -259,7 +272,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var statusCode int
 
 	if needHandle {
-		handleReturn, statusCode = can.serve(request)
+		handleReturn, statusCode = serve(can.routeMux, request)
 		if statusCode == serveFallbackCode {
 			if can.fallbackHandler != nil {
 				can.fallbackHandler.ServeHTTP(rw, r)
@@ -381,9 +394,9 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 
 const serveFallbackCode = -1
 
-func (can *Can) serve(request *WebRequest) (interface{}, int) {
+func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 	req := request.Request
-	match := doubleMatch(can.routeMux, req)
+	match := doubleMatch(mux, req)
 	if match.Error() != nil {
 		canlog.CanError(req.Method, req.URL.Path, match.Error())
 		return nil, serveFallbackCode
