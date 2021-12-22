@@ -167,6 +167,11 @@ func (can *Can) ToGins() []*GinHandler {
 	can.buildRoute()
 	return ((can.routeMux).dispatcher.(*canDispatcher)).Gins()
 }
+func (can *Can) GinRoute(eg *gin.Engine) {
+	for _, gh := range can.ToGins() {
+		eg.GET(gh.Url, gh.Method)
+	}
+}
 
 func getAddr(as []interface{}) Addr {
 	host := defaultAddr.Host
