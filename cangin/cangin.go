@@ -16,6 +16,11 @@ package cangin
 
 import "github.com/gin-gonic/gin"
 
-func ginHandle() (url string, hdl func(c *gin.Context)) {
+type GinHandle struct {
+	url string
+	hdl func(c *gin.Context)
+}
+
+func GetGinHandle() (url string, hdl func(c *gin.Context)) {
 	return
 }
