@@ -64,11 +64,18 @@ func isVarPattern(path string) bool {
 	return strings.Contains(path, "{") || strings.Contains(path, "*")
 }
 
+var replacer = strings.NewReplacer("{", ":", "}", "")
+
 func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 	for _, forwarder := range m.mapMux.forwarders {
 		for _, pattern := range forwarder.patternMap {
 			gh := &GinHandler{
-				Url: pattern.path,
+				Url: func() string {
+					if strings.Contains(pattern.path, "{") {
+						return replacer.Replace(pattern.path)
+					}
+					return pattern.path
+				}(),
 				Method: func(ctx *gin.Context) {
 					handleReturn, code := serve(m, &WebRequest{
 						ResponseWriter: ctx.Writer,
