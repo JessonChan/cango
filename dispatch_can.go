@@ -77,6 +77,12 @@ func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 					switch handleReturn.(type) {
 					case Content:
 						ctx.String(code, handleReturn.(Content).String)
+					case StaticFile:
+						ctx.File(handleReturn.(StaticFile).Path)
+					case Redirect:
+						ctx.Redirect(code, handleReturn.(Redirect).Url)
+					case ContentWithCode:
+						ctx.String(handleReturn.(ContentWithCode).Code, handleReturn.(ContentWithCode).String)
 					default:
 						ctx.JSON(code, handleReturn)
 					}
