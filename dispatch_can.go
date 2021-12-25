@@ -64,6 +64,7 @@ func isVarPattern(path string) bool {
 	return strings.Contains(path, "{") || strings.Contains(path, "*")
 }
 
+// Gin's path parameters pattern is /:name, Cango's is /{name}
 var replacer = strings.NewReplacer("{", ":", "}", "")
 
 func (m *canDispatcher) Gins() (ghs []*GinHandler) {
