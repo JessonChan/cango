@@ -31,5 +31,5 @@ var valueOfEmptyConstructor = reflect.ValueOf(&emptyConstructor{})
 type emptyConstructor struct {
 }
 
-func (e *emptyConstructor) Construct(request *WebRequest) {
+func (e *emptyConstructor) Construct(*WebRequest) {
 }

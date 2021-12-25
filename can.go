@@ -223,19 +223,20 @@ func getRootPath() string {
 }
 
 func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	request := &WebRequest{
+		ResponseWriter: rw,
+		Request:        r,
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			var buf [1024 * 10]byte
 			runtime.Stack(buf[:], false)
 			canlog.CanError(err)
 			canlog.CanError(string(buf[0:]))
-			rw.WriteHeader(http.StatusInternalServerError)
+			request.ResponseWriter.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
-	request := &WebRequest{
-		ResponseWriter: rw,
-		Request:        r,
-	}
 
 	// todo filter should not be here?????
 	needStop := false
@@ -258,19 +259,13 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				// todo 需要设计filter的执行顺序，优先生效最早返回的
 				filterReturn = ri
 				if filterReturn != nil {
-					// 不需要判断 r (*http.Request) 因为他的改变会在函数内生效（指针）
-					if reflect.TypeOf(filterReturn).Implements(reflect.TypeOf((*http.ResponseWriter)(nil)).Elem()) {
-						rw = filterReturn.(http.ResponseWriter)
-						request.ResponseWriter = rw
-					} else {
-						needHandle = false
-					}
+					needHandle = false
 				}
 			}
 		}
 	}
 	if needStop {
-		rw.WriteHeader(http.StatusInternalServerError)
+		request.ResponseWriter.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	var handleReturn interface{}
@@ -280,7 +275,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		handleReturn, statusCode = serve(can.routeMux, request)
 		if statusCode == serveFallbackCode {
 			if can.fallbackHandler != nil {
-				can.fallbackHandler.ServeHTTP(rw, r)
+				can.fallbackHandler.ServeHTTP(request.ResponseWriter, r)
 				return
 			}
 			statusCode = http.StatusNotFound
@@ -307,24 +302,24 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			canlog.CanError("template not find", mv.Tpl, mv.Model)
 			return
 		} else {
-			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-			err := tpl.Execute(rw, mv.Model)
+			request.ResponseWriter.Header().Set("Content-Type", "text/html; charset=utf-8")
+			err := tpl.Execute(request.ResponseWriter, mv.Model)
 			if err != nil {
 				canlog.CanError("template error", err)
 			}
 		}
 	case Redirect:
-		http.Redirect(rw, r, handleReturn.(Redirect).Url, http.StatusFound)
+		http.Redirect(request.ResponseWriter, r, handleReturn.(Redirect).Url, http.StatusFound)
 	case RedirectWithCode:
 		code := handleReturn.(RedirectWithCode).Code
 		if code == 0 {
 			code = http.StatusFound
 		}
-		http.Redirect(rw, r, handleReturn.(RedirectWithCode).Url, code)
+		http.Redirect(request.ResponseWriter, r, handleReturn.(RedirectWithCode).Url, code)
 	case Content:
-		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-		rw.WriteHeader(http.StatusOK)
-		_, err := rw.Write([]byte(handleReturn.(Content).String))
+		request.ResponseWriter.Header().Set("Content-Type", "text/html; charset=utf-8")
+		request.ResponseWriter.WriteHeader(http.StatusOK)
+		_, err := request.ResponseWriter.Write([]byte(handleReturn.(Content).String))
 		if err != nil {
 			canlog.CanError(err)
 		}
@@ -333,9 +328,9 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if code == 0 {
 			code = http.StatusOK
 		}
-		rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-		rw.WriteHeader(code)
-		_, err := rw.Write([]byte(handleReturn.(Content).String))
+		request.ResponseWriter.Header().Set("Content-Type", "text/html; charset=utf-8")
+		request.ResponseWriter.WriteHeader(code)
+		_, err := request.ResponseWriter.Write([]byte(handleReturn.(Content).String))
 		if err != nil {
 			canlog.CanError(err)
 		}
@@ -356,6 +351,9 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			path = p
 			break
 		}
+		// todo rw???
+		// 这里使用rw 而没有使用request.ResponseWriter 应该保持统一才好
+		// 但是在ServerFile中会直接写入一些数据，产生不可知的影响
 		if err != nil {
 			canlog.CanDebug(err, "can't find the file", handleReturn)
 			errorHandleMap[404](rw, r)
@@ -364,15 +362,15 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	case DoNothing:
 		if statusCode == http.StatusNotFound {
-			errorHandleMap[404](rw, r)
+			errorHandleMap[404](request.ResponseWriter, r)
 		}
 	default:
-		rw.WriteHeader(statusCode)
+		request.ResponseWriter.WriteHeader(statusCode)
 		bs, err := responseJsonHandler(handleReturn)
 		if err == nil {
-			_, _ = rw.Write(bs)
+			_, _ = request.ResponseWriter.Write(bs)
 		} else {
-			_, _ = rw.Write([]byte("{}"))
+			_, _ = request.ResponseWriter.Write([]byte("{}"))
 		}
 	}
 	// postHandle

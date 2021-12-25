@@ -185,3 +185,65 @@ func Test_decodeForm(t *testing.T) {
 		})
 	}
 }
+
+func Test_lowerCase(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			args: args{""},
+			want: "",
+		},
+		{
+			args: args{"A"},
+			want: "a",
+		},
+		{
+			args: args{"Ab"},
+			want: "ab",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := lowerCase(tt.args.s); got != tt.want {
+				t.Errorf("lowerCase() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_underScore(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			args: args{""},
+			want: "",
+		},
+		{
+			args: args{"A"},
+			want: "a",
+		},
+		{
+			args: args{"ABC"},
+			want: "a_b_c",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := underScore(tt.args.s); got != tt.want {
+				t.Errorf("underScore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

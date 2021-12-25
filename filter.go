@@ -25,7 +25,6 @@ type Filter interface {
 	// This method should return true to continue the request serve.
 	// If this method returns false,the request will stop.
 	// If this method returns cango-return type(Redirect/ModelView...),the request will response with the type
-	// If this method returns http.ResponseWriter,the rw will be replaced
 	PreHandle(request *WebRequest) interface{}
 	// PostHandle is used to perform operations before sending the response to the client.
 	// This method should return true.
@@ -68,10 +67,10 @@ var filterImpl = reflect.ValueOf(&emptyFilter{})
 var filterType = reflect.TypeOf((*Filter)(nil)).Elem()
 var filterName = filterType.Name()
 
-var filterRegMap = map[Filter]bool{}
+var filterRegMap = map[Filter][]string{}
 
-func RegisterFilter(filter Filter) bool {
-	filterRegMap[filter] = true
+func RegisterFilter(filter Filter, values ...string) bool {
+	filterRegMap[filter] = values
 	return true
 }
 
