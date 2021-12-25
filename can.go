@@ -165,7 +165,7 @@ func (can *Can) ToGins() []*GinHandler {
 	gorillaStore = &emptyGorillaStore{}
 	can.buildStaticRoute()
 	can.buildRoute()
-	return ((can.routeMux).dispatcher.(*canDispatcher)).Gins()
+	return can.routeMux.dispatcher.(*canDispatcher).Gins()
 }
 func (can *Can) GinRoute(eg *gin.Engine) {
 	for _, gh := range can.ToGins() {
