@@ -27,6 +27,7 @@ import (
 	"github.com/JessonChan/jsun"
 )
 
+type any interface{}
 type Can struct {
 	name           string
 	srv            *http.Server
@@ -162,7 +163,6 @@ type GinHandler struct {
 }
 
 func (can *Can) ToGins() []*GinHandler {
-	gorillaStore = &emptyGorillaStore{}
 	can.buildStaticRoute()
 	can.buildRoute()
 	return can.routeMux.dispatcher.(*canDispatcher).Gins()
@@ -428,35 +428,56 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 		// 读取header，只赋值有header标签的变量
 		// 读取cookie，只赋值有cookie标签的变量
 		// 解析session，赋值有session标签的变量
-		reqHolder := func(key string) (interface{}, int, bool) {
-			holderKey := key[0:holderLen]
-			valueKey := key[holderLen:]
-			switch holderKey {
-			case cookieHolderKey:
+		reqHolder := func(valueKey string, et entityType) *entityValue {
+			switch et {
+			case cookieEntity:
 				for _, cookie := range cookies {
 					if cookie.Name == valueKey {
-						return cookie.Value, stringFlag, true
+						return &entityValue{
+							enc:   stringFlag,
+							typ:   cookieEntity,
+							key:   cookie.Name,
+							value: cookie.Value,
+						}
 					}
 				}
-				return nil, stringFlag, false
-			case headerHolderKey:
+				return nil
+			case headerEntity:
 				if i, ok := req.Header[valueKey]; ok {
-					return i, stringFlag, true
+					return &entityValue{
+						enc:   stringFlag,
+						typ:   headerEntity,
+						key:   valueKey,
+						value: i,
+					}
 				}
-				return nil, stringFlag, false
-			case sessionHolderKey:
+				return nil
+			case sessionEntity:
 				if i, ok := gs.Values[valueKey]; ok {
-					return i, gobBytes, true
+					return &entityValue{
+						enc:   gobBytes,
+						typ:   sessionEntity,
+						key:   valueKey,
+						value: i,
+					}
 				}
-				return nil, gobBytes, false
+				return nil
 			default:
 				if v, ok := match.GetVars()[valueKey]; ok {
-					return v, stringFlag, true
+					return &entityValue{
+						enc:   stringFlag,
+						key:   valueKey,
+						value: v,
+					}
 				}
 				if v, ok := req.Form[valueKey]; ok {
-					return v, strSliceFlag, true
+					return &entityValue{
+						enc:   strSliceFlag,
+						key:   valueKey,
+						value: v,
+					}
 				}
-				return nil, stringFlag, false
+				return nil
 			}
 		}
 
