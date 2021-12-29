@@ -29,11 +29,14 @@ var timeType = reflect.TypeOf(time.Time{})
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
 func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) ([]string, entityType)) {
 	doDecode(rv, func(s string, et entityType) *entityValue {
-		return &entityValue{
-			enc:   stringFlag,
-			key:   s,
-			value: holder[s],
+		if v, ok := holder[s]; ok {
+			return &entityValue{
+				enc:   stringFlag,
+				key:   s,
+				value: v,
+			}
 		}
+		return nil
 	}, append(filedName, noTagName)[0])
 }
 
@@ -43,11 +46,14 @@ func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflec
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
 func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(reflect.StructField) ([]string, entityType)) {
 	doDecode(rv, func(s string, et entityType) *entityValue {
-		return &entityValue{
-			enc:   strSliceFlag,
-			key:   s,
-			value: holder[s],
+		if v, ok := holder[s]; ok {
+			return &entityValue{
+				enc:   strSliceFlag,
+				key:   s,
+				value: v,
+			}
 		}
+		return nil
 	}, append(filedName, noTagName)[0])
 }
 
