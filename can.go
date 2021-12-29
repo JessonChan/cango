@@ -439,6 +439,11 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 					}
 				}
 				return nil, stringFlag, false
+			case headerHolderKey:
+				if i, ok := req.Header[valueKey]; ok {
+					return i, stringFlag, true
+				}
+				return nil, stringFlag, false
 			case sessionHolderKey:
 				if i, ok := gs.Values[valueKey]; ok {
 					return i, gobBytes, true
