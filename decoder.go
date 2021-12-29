@@ -100,9 +100,8 @@ func setValue(holder func(string, entityType) *entityValue, rv reflect.Value, fi
 		if f.Kind() == reflect.Struct && f.Type() != timeType {
 			setValue(holder, f, filedName)
 		}
-		// 返回值表示是否找到对应的caster
-		names, et := filedName(rv.Type().Field(i))
 		if f.CanSet() {
+			names, et := filedName(rv.Type().Field(i))
 			if func() bool {
 				kind := f.Kind()
 				if kind == reflect.Slice {
@@ -111,6 +110,7 @@ func setValue(holder func(string, entityType) *entityValue, rv reflect.Value, fi
 				if f.Type() == timeType {
 					kind = timeTypeKind
 				}
+				// 返回值表示是否找到对应的caster
 				if caster, ok := casterMap[kind]; ok {
 					for _, name := range names {
 						if v := holder(name, et); v != nil {

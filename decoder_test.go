@@ -95,7 +95,7 @@ func Test_decode(t *testing.T) {
 				},
 				v: &Person{},
 				filedName: func(field reflect.StructField) ([]string, entityType) {
-					return filedName(field, "cookie"), defaultEntity
+					return filedName(field, "cookie"), cookieEntity
 				},
 			},
 		},
@@ -151,7 +151,7 @@ func Test_decodeForm(t *testing.T) {
 				},
 				v: &Persons{},
 				filedName: func(field reflect.StructField) ([]string, entityType) {
-					return filedName(field, "cookie"), defaultEntity
+					return filedName(field, "cookie"), cookieEntity
 				},
 			},
 		},
