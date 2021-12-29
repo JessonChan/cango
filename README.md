@@ -362,6 +362,20 @@ curl  -d ""  http://127.0.0.1:8080/ping/2020/15/white.json
 
 获取请求中的变量和路由变量的定义方式相同，只需要在入参加入相应的变量名称。
 
+
+### Header变量
+
+获取header中的值，只需要结构体成员使用header这个tag名就可以，如
+
+```go 
+struct{
+    Name string `header:"~"`
+}
+```
+
+需要指出的是，在header后使用`~`这个符号表示，对应的header名称是自动从成员变量名读取。
+
+
 ### Cookie变量
 
 获取cookie中的值，只需要结构体成员使用cookie这个tag名就可以，如

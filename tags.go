@@ -17,6 +17,7 @@ const (
 	uriTagName       string = "value"
 	pathFormName     string = "name"
 	cookieTagName    string = "cookie"
+	headerTagName    string = "header"
 	pathValueTagName string = "path"
 	formValueTagName string = "form"
 	sessionTagName   string = "session"
@@ -25,6 +26,7 @@ const (
 )
 
 var cookieHolderKey = makeHolderKey(cookieTagName)
+var headerHolderKey = makeHolderKey(headerTagName)
 var formPathHolderKey = makeHolderKey(formValueTagName + pathValueTagName)
 var sessionHolderKey = makeHolderKey(sessionTagName)
 

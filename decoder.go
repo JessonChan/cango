@@ -165,6 +165,10 @@ func fieldTagNames(field reflect.StructField) []string {
 		if len(names) > 0 {
 			return names
 		}
+		names = fieldTagHolder(field, headerTagName, headerHolderKey)
+		if len(names) > 0 {
+			return names
+		}
 	}
 	return []string{formPathHolderKey + lowerCase(field.Name), formPathHolderKey + field.Name, formPathHolderKey + underScore(field.Name)}
 }
