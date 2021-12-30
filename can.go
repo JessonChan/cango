@@ -435,7 +435,6 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 					if cookie.Name == valueKey {
 						return &entityValue{
 							enc:   stringFlag,
-							typ:   cookieEntity,
 							key:   cookie.Name,
 							value: cookie.Value,
 						}
@@ -446,7 +445,6 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 				if i, ok := req.Header[valueKey]; ok {
 					return &entityValue{
 						enc:   stringFlag,
-						typ:   headerEntity,
 						key:   valueKey,
 						value: i,
 					}
@@ -456,7 +454,6 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 				if i, ok := gs.Values[valueKey]; ok {
 					return &entityValue{
 						enc:   gobBytes,
-						typ:   sessionEntity,
 						key:   valueKey,
 						value: i,
 					}

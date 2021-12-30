@@ -72,9 +72,9 @@ func doDecode(rv reflect.Value, holder func(string, entityType) *entityValue, fi
 type encodeType int
 
 const (
-	stringFlag   encodeType = 0
-	strSliceFlag            = 1
-	gobBytes                = 2
+	stringFlag encodeType = iota
+	strSliceFlag
+	gobBytes
 )
 
 type entityType int
@@ -88,7 +88,6 @@ const (
 
 type entityValue struct {
 	enc   encodeType
-	typ   entityType
 	key   string
 	value any
 }
