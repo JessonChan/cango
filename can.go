@@ -324,6 +324,8 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		// todo 更好的实现 filepath.Clean的性能问题
 		// todo 可能有安全隐患
+		// todo here is a bug when file ends with index.html
+		// should use ServeContent instead of ServeFile
 		paths := [...]string{can.rootPath + path, can.staticRootPath + path, path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
