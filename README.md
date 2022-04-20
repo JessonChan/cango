@@ -461,6 +461,37 @@ func main() {
 	can.Run()
 }
 ```
+如下，引入了cango，可以很好的兼容原来的gin项目。
+```go
+package main
+
+import (
+	"github.com/JessonChan/cango"
+	"github.com/gin-gonic/gin"
+)
+
+type Api struct {
+	cango.URI `value:"/api"`
+}
+
+type any interface{}
+
+// 通过 http://127.0.0.1:8080/api/msg/bob.json 来访问
+func (a *Api) Get(ps struct {
+	cango.URI `value:"/msg/{name}.json"`
+	Name      string
+}) any {
+	return map[string]string{"msg": "Very Good! " + ps.Name}
+}
+
+func main() {
+
+	r := gin.Default()
+	cango.NewCan().Route(&Api{}).GinRoute(r)
+	r.Run()
+}
+
+```
 
 ## 更多例子
 

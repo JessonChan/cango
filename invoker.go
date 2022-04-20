@@ -23,7 +23,7 @@ const (
 	invokeByFilter   = 2
 )
 
-// invoker实际执行请求的函数
+// Invoker 实际执行请求的函数
 // kind用来表示是通过struct来注册的还是只是通过函数来注册的
 // 0 invokeBySelf --- 通过函数
 // 1 invokeByReceiver --- 通过struct

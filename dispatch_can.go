@@ -15,6 +15,7 @@ package cango
 
 import (
 	"errors"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
@@ -50,17 +51,55 @@ type (
 )
 
 func newCanMux() *canDispatcher {
-	mm := newDispatcher()
-	gm := newFastDispatcher()
+	mm := newMapDispatcher()
+	fm := newFastDispatcher()
 	return &canDispatcher{
 		mapMux:   mm,
-		fastMux:  gm,
-		muxSlice: []dispatcher{mm, gm},
+		fastMux:  fm,
+		muxSlice: []dispatcher{mm, fm},
 	}
 }
 
 func isVarPattern(path string) bool {
 	return strings.Contains(path, "{") || strings.Contains(path, "*")
+}
+
+// Gin's path parameters pattern is /:name, Cango's is /{name}
+var replacer = strings.NewReplacer("{", ":", "}", "")
+
+func (m *canDispatcher) Gins() (ghs []*GinHandler) {
+	for _, forwarder := range m.mapMux.forwarders {
+		for _, pattern := range forwarder.patternMap {
+			gh := &GinHandler{
+				Url: func() string {
+					if strings.Contains(pattern.path, "{") {
+						return replacer.Replace(pattern.path)
+					}
+					return pattern.path
+				}(),
+				Method: func(ctx *gin.Context) {
+					handleReturn, code := serve(m, &WebRequest{
+						ResponseWriter: ctx.Writer,
+						Request:        ctx.Request,
+					})
+					switch hr := handleReturn.(type) {
+					case Content:
+						ctx.String(code, hr.String)
+					case StaticFile:
+						ctx.File(hr.Path)
+					case Redirect:
+						ctx.Redirect(code, hr.Url)
+					case ContentWithCode:
+						ctx.String(hr.Code, hr.String)
+					default:
+						ctx.JSON(code, handleReturn)
+					}
+				},
+			}
+			ghs = append(ghs, gh)
+		}
+	}
+	return
 }
 
 func (m *canDispatcher) NewForwarder(name string, invoker *Invoker) forwarder {
