@@ -75,7 +75,7 @@ func RegisterFilter(filter Filter, values ...string) bool {
 }
 
 func (can *Can) buildFilter() {
-	for filter, _ := range filterRegMap {
+	for filter := range filterRegMap {
 		can.Filter(filter)
 	}
 
