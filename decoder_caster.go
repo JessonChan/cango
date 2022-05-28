@@ -17,6 +17,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"golang.org/x/text/number"
 )
 
 type Caster func(string) reflect.Value
@@ -80,6 +82,18 @@ func castFloat64(value string) reflect.Value {
 		return reflect.ValueOf(v)
 	}
 	return reflect.ValueOf(f64)
+}
+
+type integerType interface {
+	int | int8 | int16 | int32 | int64
+}
+
+// cast str to integer in generic method
+func castInteger[T integerType](str string, t T) reflect.Value {
+	if v, err := strconv.ParseInt(str, 10, 64); err == nil {
+		return reflect.ValueOf(T(v))
+	}
+	return reflect.ValueOf(t)
 }
 
 func castInt(value string) reflect.Value {
