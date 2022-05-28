@@ -17,8 +17,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-
-	"golang.org/x/text/number"
 )
 
 type Caster func(string) reflect.Value
