@@ -22,8 +22,8 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var gorillaStore sessions.Store
-var emptySession = sessions.NewSession(&emptyGorillaStore{}, "empty")
+var gorillaStore sessions.Store = &emptyGorillaStore{}
+var emptySession = sessions.NewSession(gorillaStore, "empty")
 
 type emptyGorillaStore struct{}
 

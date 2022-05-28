@@ -23,14 +23,20 @@ import (
 
 var timeType = reflect.TypeOf(time.Time{})
 
-// decode decodes a map[string]string to a struct.
+// decode a map[string]string to a struct.
 // The first parameter must be a reflect.Ptr to a struct.
 // The second parameter is a map
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
-func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) []string) {
-	doDecode(rv, func(s string) (interface{}, int, bool) {
-		v, ok := holder[s]
-		return v, stringFlag, ok
+func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflect.StructField) ([]string, entityType)) {
+	doDecode(rv, func(s string, et entityType) *entityValue {
+		if v, ok := holder[s]; ok {
+			return &entityValue{
+				enc:   stringFlag,
+				key:   s,
+				value: v,
+			}
+		}
+		return nil
 	}, append(filedName, noTagName)[0])
 }
 
@@ -38,10 +44,16 @@ func decode(holder map[string]string, rv reflect.Value, filedName ...func(reflec
 // The first parameter must be a reflect.Ptr to a struct.
 // The second parameter is a map, typically url.Values from an HTTP request.
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
-func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(field reflect.StructField) []string) {
-	doDecode(rv, func(s string) (interface{}, int, bool) {
-		v, ok := holder[s]
-		return v, strSliceFlag, ok
+func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(reflect.StructField) ([]string, entityType)) {
+	doDecode(rv, func(s string, et entityType) *entityValue {
+		if v, ok := holder[s]; ok {
+			return &entityValue{
+				enc:   strSliceFlag,
+				key:   s,
+				value: v,
+			}
+		}
+		return nil
 	}, append(filedName, noTagName)[0])
 }
 
@@ -49,7 +61,7 @@ func decodeForm(holder map[string][]string, rv reflect.Value, filedName ...func(
 // The first parameter must be a reflect.Ptr to a struct.
 // The second parameter is a func,which in args is string-key and out-args is string/[]string/gob bytes
 // The third parameter is optional,used to generate the holder's key based on the struct's Field
-func doDecode(rv reflect.Value, holder func(string) (interface{}, int, bool), filedNameFn func(field reflect.StructField) []string) {
+func doDecode(rv reflect.Value, holder func(string, entityType) *entityValue, filedNameFn func(field reflect.StructField) ([]string, entityType)) {
 	if rv.IsValid() == false || rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return
 	}
@@ -57,14 +69,31 @@ func doDecode(rv reflect.Value, holder func(string) (interface{}, int, bool), fi
 	setValue(holder, rv, filedNameFn)
 }
 
+type encodeType int
+
 const (
-	stringFlag   = 0
-	strSliceFlag = 1
-	gobBytes     = 2
+	stringFlag encodeType = iota
+	strSliceFlag
+	gobBytes
 )
 
+type entityType int
+
+const (
+	defaultEntity entityType = iota
+	cookieEntity
+	sessionEntity
+	headerEntity
+)
+
+type entityValue struct {
+	enc   encodeType
+	key   string
+	value any
+}
+
 // setValue sets key-value to a struct
-func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, filedName func(field reflect.StructField) []string) {
+func setValue(holder func(string, entityType) *entityValue, rv reflect.Value, filedName func(field reflect.StructField) ([]string, entityType)) {
 	if rv.Kind() == reflect.Interface {
 		return
 	}
@@ -76,9 +105,8 @@ func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 		if f.Kind() == reflect.Struct && f.Type() != timeType {
 			setValue(holder, f, filedName)
 		}
-		// 返回值表示是否找到对应的caster
-		names := filedName(rv.Type().Field(i))
 		if f.CanSet() {
+			names, et := filedName(rv.Type().Field(i))
 			if func() bool {
 				kind := f.Kind()
 				if kind == reflect.Slice {
@@ -87,16 +115,17 @@ func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 				if f.Type() == timeType {
 					kind = timeTypeKind
 				}
+				// 返回值表示是否找到对应的caster
 				if caster, ok := casterMap[kind]; ok {
 					for _, name := range names {
-						if str, flag, ok := holder(name); ok {
-							switch flag {
+						if v := holder(name, et); v != nil {
+							switch v.enc {
 							case stringFlag:
-								f.Set(caster(str.(string)))
+								f.Set(caster(v.value.(string)))
 							case strSliceFlag:
-								f.Set(caster(str.([]string)[0]))
+								f.Set(caster(v.value.([]string)[0]))
 							case gobBytes:
-								_ = gob.NewDecoder(bytes.NewReader(str.([]byte))).DecodeValue(f)
+								_ = gob.NewDecoder(bytes.NewReader(v.value.([]byte))).DecodeValue(f)
 							}
 						}
 					}
@@ -110,18 +139,22 @@ func setValue(holder func(string) (interface{}, int, bool), rv reflect.Value, fi
 				continue
 			}
 			for _, key := range names {
-				if str, _, ok := holder(key); ok && len(str.([]string)) != 0 {
-					sv := reflect.MakeSlice(f.Type(), len(str.([]string)), len(str.([]string)))
-					kind := sv.Index(0).Kind()
-					if sv.Index(0).Type() == timeType {
+				if v := holder(key, et); v != nil {
+					values := v.value.([]string)
+					if len(values) == 0 {
+						continue
+					}
+					slice := reflect.MakeSlice(f.Type(), len(values), len(values))
+					kind := slice.Index(0).Kind()
+					if slice.Index(0).Type() == timeType {
 						kind = timeTypeKind
 					}
 					if converter, ok := casterMap[kind]; ok {
-						for idx, vs := range str.([]string) {
-							sv.Index(idx).Set(converter(vs))
+						for idx, vs := range values {
+							slice.Index(idx).Set(converter(vs))
 						}
 					}
-					f.Set(sv)
+					f.Set(slice)
 					break
 				}
 			}
@@ -141,36 +174,37 @@ func filedName(f reflect.StructField, tagName string) []string {
 	return []string{lowerCase(f.Name), f.Name, underScore(f.Name)}
 }
 
-func fieldTagHolder(field reflect.StructField, name, holder string) []string {
+func fieldTagHolder(field reflect.StructField, name string) []string {
 	if strings.Contains(string(field.Tag), name) {
 		tagValue := field.Tag.Get(name)
 		if tagValue != "" {
 			if tagValue == "~" {
-				return []string{holder + lowerCase(field.Name), holder + field.Name, holder + underScore(field.Name)}
+				return []string{lowerCase(field.Name), field.Name, underScore(field.Name)}
 			} else {
-				return []string{holder + tagValue}
+				return []string{tagValue}
 			}
 		}
 	}
 	return nil
 }
 
-func fieldTagNames(field reflect.StructField) []string {
+var tagNames = [...]string{cookieTagName, sessionTagName, headerTagName}
+var entityTypes = [...]entityType{cookieEntity, sessionEntity, headerEntity}
+
+func fieldTagNames(field reflect.StructField) ([]string, entityType) {
 	if field.Tag != "" {
-		names := fieldTagHolder(field, cookieTagName, cookieHolderKey)
-		if len(names) > 0 {
-			return names
-		}
-		names = fieldTagHolder(field, sessionTagName, sessionHolderKey)
-		if len(names) > 0 {
-			return names
+		for idx, tag := range tagNames {
+			names := fieldTagHolder(field, tag)
+			if len(names) > 0 {
+				return names, entityTypes[idx]
+			}
 		}
 	}
-	return []string{formPathHolderKey + lowerCase(field.Name), formPathHolderKey + field.Name, formPathHolderKey + underScore(field.Name)}
+	return []string{lowerCase(field.Name), field.Name, underScore(field.Name)}, defaultEntity
 }
 
-func noTagName(f reflect.StructField) []string {
-	return filedName(f, "")
+func noTagName(f reflect.StructField) ([]string, entityType) {
+	return filedName(f, ""), defaultEntity
 }
 
 // lowerCase = AbcDef -> abcDef

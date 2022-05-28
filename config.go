@@ -59,8 +59,8 @@ func (ic *IniConfig) Env(key string) string {
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
 func (ic *IniConfig) Envs(i interface{}) {
-	decodeForm(ic.envForm, reflect.ValueOf(i), func(field reflect.StructField) []string {
-		return filedName(field, nameTagName)
+	decodeForm(ic.envForm, reflect.ValueOf(i), func(field reflect.StructField) ([]string, entityType) {
+		return filedName(field, nameTagName), defaultEntity
 	})
 }
 

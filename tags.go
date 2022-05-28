@@ -17,28 +17,9 @@ const (
 	uriTagName       string = "value"
 	pathFormName     string = "name"
 	cookieTagName    string = "cookie"
+	headerTagName    string = "header"
 	pathValueTagName string = "path"
 	formValueTagName string = "form"
 	sessionTagName   string = "session"
 	nameTagName      string = "name"
-	holderLen               = 12
 )
-
-var cookieHolderKey = makeHolderKey(cookieTagName)
-var formPathHolderKey = makeHolderKey(formValueTagName + pathValueTagName)
-var sessionHolderKey = makeHolderKey(sessionTagName)
-
-func makeHolderKey(key string) string {
-	if len(key) > holderLen {
-		return key[0:holderLen]
-	}
-	newKey := make([]byte, holderLen)
-	for i := 0; i < holderLen; i++ {
-		if i < len(key) {
-			newKey[i] = key[i]
-		} else {
-			newKey[i] = '-'
-		}
-	}
-	return string(newKey)
-}

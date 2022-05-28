@@ -48,8 +48,8 @@ func Test_assign(t *testing.T) {
 		"birth":  now.Format(longSimpleTimeFormat),
 		"IsGood": "true",
 	}
-	filedName := func(field reflect.StructField) []string {
-		return filedName(field, "cookie")
+	filedName := func(field reflect.StructField) ([]string, entityType) {
+		return filedName(field, "cookie"), cookieEntity
 	}
 	var p Person
 	var v = newValue(reflect.TypeOf(p))
@@ -76,7 +76,7 @@ func Test_decode(t *testing.T) {
 	type args struct {
 		holder    map[string]string
 		v         interface{}
-		filedName func(field reflect.StructField) []string
+		filedName func(field reflect.StructField) ([]string, entityType)
 	}
 	now := time.Now()
 	tests := []struct {
@@ -94,8 +94,8 @@ func Test_decode(t *testing.T) {
 					"IsGood": "true",
 				},
 				v: &Person{},
-				filedName: func(field reflect.StructField) []string {
-					return filedName(field, "cookie")
+				filedName: func(field reflect.StructField) ([]string, entityType) {
+					return filedName(field, "cookie"), cookieEntity
 				},
 			},
 		},
@@ -133,7 +133,7 @@ func Test_decodeForm(t *testing.T) {
 	type args struct {
 		holder    map[string][]string
 		v         interface{}
-		filedName func(field reflect.StructField) []string
+		filedName func(field reflect.StructField) ([]string, entityType)
 	}
 	tests := []struct {
 		name string
@@ -150,8 +150,8 @@ func Test_decodeForm(t *testing.T) {
 					"IsGood": {"true"},
 				},
 				v: &Persons{},
-				filedName: func(field reflect.StructField) []string {
-					return filedName(field, "cookie")
+				filedName: func(field reflect.StructField) ([]string, entityType) {
+					return filedName(field, "cookie"), cookieEntity
 				},
 			},
 		},
