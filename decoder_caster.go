@@ -58,7 +58,7 @@ var casterMap = map[reflect.Kind]Caster{
 }
 
 func castBool(value string) reflect.Value {
-	if value == "on" {
+	if value == "on" || value == "1" {
 		return reflect.ValueOf(true)
 	} else if v, err := strconv.ParseBool(value); err == nil {
 		return reflect.ValueOf(v)
