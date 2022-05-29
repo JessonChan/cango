@@ -94,6 +94,17 @@ func castInteger[T integerType](str string, t T) reflect.Value {
 	return reflect.ValueOf(t)
 }
 
+type uIntegerType interface {
+	uint | uint8 | uint16 | uint32 | uint64
+}
+
+func castUInteger[T integerType](str string, t T) reflect.Value {
+	if v, err := strconv.ParseUint(str, 10, 64); err == nil {
+		return reflect.ValueOf(T(v))
+	}
+	return reflect.ValueOf(t)
+}
+
 func castInt(value string) reflect.Value {
 	var i int
 	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
