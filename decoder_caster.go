@@ -88,7 +88,19 @@ type integerType interface {
 
 // cast str to integer in generic method
 func castInteger[T integerType](str string, t T) reflect.Value {
-	if v, err := strconv.ParseInt(str, 10, 64); err == nil {
+	bitSize := 90
+	switch any(t).(type) {
+	case int8:
+		bitSize = 8
+	case int16:
+		bitSize = 16
+	case int32:
+		bitSize = 32
+	case int64:
+		bitSize = 64
+	}
+
+	if v, err := strconv.ParseInt(str, 10, bitSize); err == nil {
 		return reflect.ValueOf(T(v))
 	}
 	return reflect.ValueOf(t)
