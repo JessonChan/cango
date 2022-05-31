@@ -15,7 +15,6 @@ package cango
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
 	"os"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
+	"github.com/gin-gonic/gin"
 )
 
 type any interface{}
@@ -158,8 +158,9 @@ func (can *Can) Run(as ...interface{}) error {
 }
 
 type GinHandler struct {
-	Url    string
-	Method func(ctx *gin.Context)
+	Url         string
+	HttpMethods map[string]bool
+	Handle      func(ctx *gin.Context)
 }
 
 func (can *Can) ToGins() []*GinHandler {
@@ -167,9 +168,13 @@ func (can *Can) ToGins() []*GinHandler {
 	can.buildRoute()
 	return can.routeMux.dispatcher.(*canDispatcher).Gins()
 }
+
+// GinRoute convert gin to cango
 func (can *Can) GinRoute(eg *gin.Engine) {
 	for _, gh := range can.ToGins() {
-		eg.GET(gh.Url, gh.Method)
+		for hm, _ := range gh.HttpMethods {
+			eg.Handle(hm, gh.Url, gh.Handle)
+		}
 	}
 }
 

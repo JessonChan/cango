@@ -15,9 +15,10 @@ package cango
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type (
@@ -77,7 +78,7 @@ func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 					}
 					return pattern.path
 				}(),
-				Method: func(ctx *gin.Context) {
+				Handle: func(ctx *gin.Context) {
 					handleReturn, code := serve(m, &WebRequest{
 						ResponseWriter: ctx.Writer,
 						Request:        ctx.Request,
@@ -95,6 +96,7 @@ func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 						ctx.JSON(code, handleReturn)
 					}
 				},
+				HttpMethods: pattern.methods,
 			}
 			ghs = append(ghs, gh)
 		}
