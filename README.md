@@ -488,8 +488,6 @@ type Api struct {
 	cango.URI `value:"/api"`
 }
 
-type any interface{}
-
 // 通过 http://127.0.0.1:8080/api/msg/bob.json 来访问
 func (a *Api) Get(ps struct {
 	cango.URI `value:"/msg/{name}.json"`
