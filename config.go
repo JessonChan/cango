@@ -108,10 +108,10 @@ func initIniConfig(configPath string) *IniConfig {
 }
 
 func trimQuote(str string) string {
-	if strings.HasPrefix(str, `"`) && strings.HasSuffix(str, `"`) {
-		return str[1 : len(str)-1]
+	if str == "" {
+		return str
 	}
-	if strings.HasPrefix(str, `'`) && strings.HasSuffix(str, `'`) {
+	if start, end := str[0], str[len(str)-1]; (start == end) && (start == '"' || start == '\'') {
 		return str[1 : len(str)-1]
 	}
 	return str
