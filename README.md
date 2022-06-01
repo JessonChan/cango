@@ -7,7 +7,7 @@ a) 动态tag
 
 ## 安装
 
-cango需要Go1.12及以上，同时本教程需要依赖go mod。   
+cango需要Go1.18及以上，同时本教程需要依赖go mod。   
 添加cango包
 
 ```bash
