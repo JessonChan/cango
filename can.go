@@ -178,6 +178,11 @@ func (can *Can) GinRoute(eg *gin.Engine) {
 	}
 }
 
+// SetJsonWriter will set a json writer
+func (can *Can) SetJsonWriter(rth responseTypeHandler) {
+	responseJsonHandler = rth
+}
+
 func getAddr(as []interface{}) Addr {
 	host := defaultAddr.Host
 	port := defaultAddr.Port
