@@ -116,6 +116,12 @@ func (can *Can) FallbackHandler(handler http.Handler) *Can {
 	return can
 }
 
+// SetJsonWriter will set a json writer
+func (can *Can) SetJsonWriter(rth responseTypeHandler) *Can {
+	responseJsonHandler = rth
+	return can
+}
+
 func (can *Can) Run(as ...interface{}) error {
 	// 优先从配置文件中读取
 	// 之后从传入参数中读取
@@ -176,11 +182,6 @@ func (can *Can) GinRoute(eg *gin.Engine) {
 			eg.Handle(hm, gh.Url, gh.Handle)
 		}
 	}
-}
-
-// SetJsonWriter will set a json writer
-func (can *Can) SetJsonWriter(rth responseTypeHandler) {
-	responseJsonHandler = rth
 }
 
 func getAddr(as []interface{}) Addr {
