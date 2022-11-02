@@ -22,6 +22,8 @@ import (
 	"github.com/JessonChan/canlog"
 )
 
+var cangoRunMode string
+
 type IniConfig struct {
 	envs    map[string]string
 	envForm map[string][]string
@@ -40,13 +42,23 @@ func Env(key string) string {
 	configOnce.Do(initCangoIni)
 	return canIniConfig.Env(key)
 }
+
+// runMode的作用就是标识不同的运行环境
+// 对应配置文件为，如果不配置，则为 conf/cango.ini
+// 如果配置了，如果为dev 则为conf/cango_dev.ini
 func initCangoIni() {
-	canIniConfig = NewIniConfig(getRootPath() + "/conf/cango.ini")
+	canIniConfig = NewIniConfig(getRootPath() + "/conf/cango" + func() string {
+		if cangoRunMode == "" {
+			return ""
+		}
+		return "_" + cangoRunMode
+	}() + ".ini")
 }
 
 // Envs 对传入的对象进行赋值
 // i 须为指针类型
-func Envs(i interface{}) {
+func Envs(i interface{}, mode ...string) {
+	cangoRunMode = append(mode, cangoRunMode)[0]
 	configOnce.Do(initCangoIni)
 	canIniConfig.Envs(i)
 }
@@ -70,7 +82,11 @@ func initIniConfig(configPath string) *IniConfig {
 	for _, line := range strings.Split(func() string {
 		bs, err := ioutil.ReadFile(configPath)
 		if err != nil {
-			return ""
+			if cangoRunMode == "" {
+				return ""
+			}
+			// 如果配置了运行环境，则必须包含相应的配置文件
+			canlog.CanFatal("cango config file can't find")
 		}
 		return string(bs)
 	}(), "\n") {

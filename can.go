@@ -121,6 +121,10 @@ func (can *Can) SetJsonWriter(rth responseTypeHandler) *Can {
 	responseJsonHandler = rth
 	return can
 }
+func (can *Can) Mode(runMode string) *Can {
+	cangoRunMode = runMode
+	return can
+}
 
 func (can *Can) Run(as ...interface{}) error {
 	// 优先从配置文件中读取
