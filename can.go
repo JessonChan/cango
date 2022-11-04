@@ -101,7 +101,7 @@ func (addr Addr) String() string {
 
 type responseTypeHandler func(interface{}) ([]byte, error)
 
-var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.LowerCamelStyle) }
+var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.) }
 
 var loggerInitialed = false
 
@@ -387,6 +387,7 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			_, _ = request.ResponseWriter.Write(bs)
 		} else {
+			canlog.CanError(err)
 			_, _ = request.ResponseWriter.Write([]byte("{}"))
 		}
 	}
