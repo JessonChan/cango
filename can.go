@@ -101,7 +101,7 @@ func (addr Addr) String() string {
 
 type responseTypeHandler func(interface{}) ([]byte, error)
 
-var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v, jsun.) }
+var responseJsonHandler responseTypeHandler = func(v interface{}) (bytes []byte, err error) { return jsun.Marshal(v) }
 
 var loggerInitialed = false
 
