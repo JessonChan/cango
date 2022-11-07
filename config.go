@@ -34,6 +34,7 @@ var configOnce sync.Once
 var canIniConfig *IniConfig
 
 func NewIniConfig(filePath string) *IniConfig {
+	canlog.CanDebug("init config file with path", filePath)
 	return initIniConfig(filePath)
 }
 
