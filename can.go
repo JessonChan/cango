@@ -14,6 +14,7 @@
 package cango
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -177,6 +178,10 @@ func (can *Can) ToGins() []*GinHandler {
 	can.buildStaticRoute()
 	can.buildRoute()
 	return can.routeMux.dispatcher.(*canDispatcher).Gins()
+}
+func (p *Can) Shutdown() *Can {
+	p.srv.Shutdown(context.Background())
+	return p
 }
 
 // GinRoute convert gin to cango
