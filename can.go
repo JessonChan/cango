@@ -502,7 +502,7 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 		}
 
 		doDecode(addr(callerIn[i]), reqHolder, fieldTagNames)
-
+		// TODO redesign 这个接口
 		if in.Implements(constructorType) {
 			uriFiled := value(callerIn[i]).FieldByName(constructorTypeName)
 			if uriFiled.IsValid() && uriFiled.CanSet() {
