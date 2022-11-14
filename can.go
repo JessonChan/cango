@@ -15,6 +15,7 @@ package cango
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
@@ -433,6 +435,9 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 	cookies := req.Cookies()
 	_ = req.ParseForm()
 	gs, _ := gorillaStore.Get(request.Request, cangoSessionKey)
+	var bodyBytes []byte
+	var isParse bool
+
 	for i := 0; i < len(callerIn); i++ {
 		in := invoker.Type.In(i)
 		callerIn[i] = newValue(in)
@@ -510,6 +515,25 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 			}
 			addr(callerIn[i]).Interface().(Constructor).Construct(request)
 		}
+		// TODO 如果是json的类型
+		ct := request.Request.Header.Get("Content-Type")
+		// 不太精准
+		if strings.Contains(strings.ToLower(ct), "json") {
+			if !isParse {
+				isParse = true
+				bs, err := io.ReadAll(request.Request.Body)
+				if err != nil {
+					canlog.CanError(err)
+				}
+				bodyBytes = bs
+			}
+			to := addr(callerIn[i]).Interface()
+			err := json.Unmarshal(bodyBytes, to)
+			if err != nil {
+				canlog.CanError(err)
+			}
+		}
+
 	}
 	return call(*invoker.Method, callerIn)
 }
