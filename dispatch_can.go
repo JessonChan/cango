@@ -68,6 +68,43 @@ func isVarPattern(path string) bool {
 // Gin's path parameters pattern is /:name, Cango's is /{name}
 var replacer = strings.NewReplacer("{", ":", "}", "")
 
+type JSON struct {
+	Data interface{}
+}
+
+// Render (JSON) writes data with custom ContentType.
+func (r JSON) Render(w http.ResponseWriter) (err error) {
+	if err = WriteJSON(w, r.Data); err != nil {
+		panic(err)
+	}
+	return
+}
+
+var jsonContentType = []string{"application/json; charset=utf-8"}
+
+// WriteContentType (JSON) writes JSON ContentType.
+func (r JSON) WriteContentType(w http.ResponseWriter) {
+	writeContentType(w, jsonContentType)
+}
+
+// WriteJSON marshals the given interface object and writes it with custom ContentType.
+func WriteJSON(w http.ResponseWriter, obj interface{}) error {
+	writeContentType(w, jsonContentType)
+	jsonBytes, err := responseJsonHandler(obj)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(jsonBytes)
+	return err
+}
+
+func writeContentType(w http.ResponseWriter, value []string) {
+	header := w.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = value
+	}
+}
+
 func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 	for _, forwarder := range m.mapMux.forwarders {
 		for _, pattern := range forwarder.patternMap {
@@ -93,7 +130,7 @@ func (m *canDispatcher) Gins() (ghs []*GinHandler) {
 					case ContentWithCode:
 						ctx.String(hr.Code, hr.String)
 					default:
-						ctx.JSON(code, handleReturn)
+						ctx.Render(code, JSON{Data: handleReturn})
 					}
 				},
 				HttpMethods: pattern.methods,
