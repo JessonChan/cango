@@ -1,7 +1,7 @@
 github.com/JessonChan/canlog v0.0.0-20200310152420-9bbb02113e41 h1:lORXYUxaRC71ecO076VobEXyXZItdi7msD9q8Jvs8PY=
 github.com/JessonChan/canlog v0.0.0-20200310152420-9bbb02113e41/go.mod h1:HqRDLcyEKVzIBznqSOmJjnaF+gHsOFBKA7iaTID4fXA=
-github.com/JessonChan/jsun v0.0.1 h1:BWpW+WL5kyU5SqPVo+SmPUGGHLTugfa6F9sbSSR64VU=
-github.com/JessonChan/jsun v0.0.1/go.mod h1:Fg6C+LGbGkRT4P2pKWNAtjqdT4CjYiqMfuKqvbmyf9g=
+github.com/JessonChan/jsun v0.0.3 h1:qEwnOpWIrW4MdA34mrb+kuobwiajRrKTYtxQA60vbH4=
+github.com/JessonChan/jsun v0.0.3/go.mod h1:0K/qYVU8VTwG6N9kYGb/omf8Rj6e7ZCJ8v0IfylRCeU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -49,7 +49,6 @@ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200116001909-b77594299b42 h1:vEOn+mP2zCOVzKckCZy6YsCtDblrpj/w7B9nxGNELpg=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.2.0 h1:ljd4t30dBnAvMZaQCevtY0xLLD0A+bRZXbgLMLU1F/A=
 golang.org/x/sys v0.2.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

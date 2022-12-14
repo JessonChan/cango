@@ -15,7 +15,6 @@ package cango
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -189,7 +188,7 @@ func (p *Can) Shutdown() *Can {
 // GinRoute convert gin to cango
 func (can *Can) GinRoute(eg *gin.Engine) {
 	for _, gh := range can.ToGins() {
-		for hm, _ := range gh.HttpMethods {
+		for hm := range gh.HttpMethods {
 			eg.Handle(hm, gh.Url, gh.Handle)
 		}
 	}
@@ -528,7 +527,7 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 				bodyBytes = bs
 			}
 			to := addr(callerIn[i]).Interface()
-			err := json.Unmarshal(bodyBytes, to)
+			err := jsun.Unmarshal(bodyBytes, to)
 			if err != nil {
 				canlog.CanError(err)
 			}
