@@ -517,6 +517,7 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 			addr(callerIn[i]).Interface().(Constructor).Construct(request)
 		}
 		// 如果是json data的类型
+		// 这种情况主要是在请求使用json对象直接提交的时候
 		if strings.ToLower(request.Request.Header.Get("Content-Type")) == mimeJSON {
 			if !isParse {
 				isParse = true
