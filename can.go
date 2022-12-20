@@ -421,6 +421,8 @@ func doubleMatch(mux dispatcher, req *http.Request) matcher {
 
 const serveFallbackCode = -1
 
+const mimeJSON = "application/json"
+
 func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 	req := request.Request
 	match := doubleMatch(mux, req)
@@ -514,10 +516,8 @@ func serve(mux dispatcher, request *WebRequest) (interface{}, int) {
 			}
 			addr(callerIn[i]).Interface().(Constructor).Construct(request)
 		}
-		// TODO 如果是json的类型
-		ct := request.Request.Header.Get("Content-Type")
-		// 不太精准
-		if strings.Contains(strings.ToLower(ct), "json") {
+		// 如果是json data的类型
+		if strings.ToLower(request.Request.Header.Get("Content-Type")) == mimeJSON {
 			if !isParse {
 				isParse = true
 				bs, err := io.ReadAll(request.Request.Body)
@@ -544,6 +544,7 @@ func value(value reflect.Value) reflect.Value {
 	return value
 }
 
+// addr 取反射变量的地址
 func addr(value reflect.Value) reflect.Value {
 	if value.Type().Kind() == reflect.Ptr {
 		return value
@@ -567,7 +568,7 @@ func call(m reflect.Method, values []reflect.Value) (interface{}, int) {
 	if len(vs) == 0 {
 		return nil, http.StatusMethodNotAllowed
 	}
-	if vs[0].IsValid() == false {
+	if !vs[0].IsValid() {
 		return nil, http.StatusMethodNotAllowed
 	}
 	if vs[0].Kind() == reflect.Ptr || vs[0].Kind() == reflect.Interface {
