@@ -20,6 +20,73 @@ go get -u github.com/JessonChan/cango
 GO111MODULE=off go get -u  github.com/JessonChan/cango-cli
 GO111MODULE=off go install github.com/JessonChan/cango-cli
 ```
+## 编程代码片段
+在编辑器中添加代码片段，可以方便、高效的生成代码。
+### vscode
+添加的方法是在设置中选择配置代码片段
+```json
+	"Gen Cango Func": {
+		"prefix": ".cf",
+		"body": [
+			"func (p *$1) $2(ps struct {",
+			"\tcango.URI `value:\"/$3\"`",
+			"}) interface{} {",
+			"\treturn nil",
+			"}"
+		],
+		"description": "Log output to console"
+	},
+	"Gen Cango Post": {
+		"prefix": ".post",
+		"body": [
+			"func (p *$1) $2(ps struct {",
+			"\tcango.URI `value:\"/$3\"`",
+			"\tcango.PostMethod",
+			"}) interface{} {",
+			"\treturn nil",
+			"}"
+		],
+		"description": "cango Post method"
+	},
+	"Gen Cango Struct": {
+		"prefix": ".ctrl",
+		"body": [
+			"type $1 struct{",
+			"\tcango.URI `value:\"$2\"`",
+			"}\n",
+			"var _ = cango.RegisterURI(&$1{})",
+		],
+		"description": "生成cango的struct"
+	},
+	"Gen Cango Filter": {
+		"prefix": ".filter",
+		"body": [
+			"type $1 struct{",
+			"\tcango.Filter `value:\"$2\"`",
+			"}\n",
+			"var _ = cango.RegisterFilter(&$1{})\n",
+			"func (p *$1) PreHandle(request *cango.WebRequest) interface{} {",
+			"\treturn true",
+			"}",
+			"func (p *$1) PostHandle(request *cango.WebRequest) interface{} {",
+			"\treturn true",
+			"}",
+		],
+		"description": "生成cango的struct"
+	},
+```
+
+### Goland
+Goland的中添加 `Live Template` 
+```go
+func (p *$NAME$) $FUNC$(ps struct {
+	cango.URI `value:"/$URL$"`
+	cango.PostMethod
+}) interface{} {
+	return nil
+}
+
+```
 
 ## Hello, World!
 
