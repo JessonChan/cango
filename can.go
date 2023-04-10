@@ -86,6 +86,8 @@ type Opts struct {
 	CookieSessionKey string
 	// gorilla cookie store 加密使用的key
 	CookieSessionSecure string
+	// TLS 文件
+	CertFile, KeyFile string
 }
 
 var defaultTplSuffix = []string{".tpl", ".html"}
@@ -134,7 +136,7 @@ func (can *Can) Run(as ...interface{}) error {
 	Envs(&defaultAddr)
 	Envs(&defaultOpts)
 
-	if loggerInitialed == false && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
+	if !loggerInitialed && defaultOpts.CanlogPath != "" && defaultOpts.CanlogPath != "console" {
 		InitLogger(canlog.NewFileWriter(defaultOpts.CanlogPath))
 	} else {
 		_, _ = canlog.GetLogger().Writer().Write(cangoMark)
@@ -166,7 +168,11 @@ func (can *Can) Run(as ...interface{}) error {
 	}
 
 	canlog.CanInfo("cango start success @ " + addr.String())
-	return can.srv.ListenAndServe()
+	if opts.CertFile != "" && opts.KeyFile != "" {
+		return can.srv.ListenAndServeTLS(opts.CertFile, opts.KeyFile)
+	} else {
+		return can.srv.ListenAndServe()
+	}
 }
 
 type GinHandler struct {
