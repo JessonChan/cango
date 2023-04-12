@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/JessonChan/canlog"
 	"github.com/JessonChan/jsun"
@@ -369,8 +370,6 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		// todo 更好的实现 filepath.Clean的性能问题
 		// todo 可能有安全隐患
-		// todo here is a bug when file ends with index.html
-		// should use ServeContent instead of ServeFile
 		paths := [...]string{can.rootPath + path, can.staticRootPath + path, path}
 		for _, p := range paths {
 			_, err = os.Stat(p)
@@ -380,14 +379,19 @@ func (can *Can) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			path = p
 			break
 		}
-		// todo rw???
-		// 这里使用rw 而没有使用request.ResponseWriter 应该保持统一才好
-		// 但是在ServerFile中会直接写入一些数据，产生不可知的影响
+		// todo 这里使用rw 而没有使用request.ResponseWriter 应该保持统一才好
 		if err != nil {
 			canlog.CanDebug(err, "can't find the file", handleReturn)
 			errorHandleMap[404](rw, r)
 		} else {
-			http.ServeFile(rw, r, path)
+			f, err := os.Open(path)
+			if err != nil {
+				canlog.CanDebug(err, "can't find the file", path)
+				errorHandleMap[404](rw, r)
+				return
+			}
+			defer f.Close()
+			http.ServeContent(rw, r, path, time.Now(), f)
 		}
 	case DoNothing:
 		if statusCode == http.StatusNotFound {
