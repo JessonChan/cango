@@ -13,11 +13,5 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-/.idea/cango.iml
-/.idea/codeStyles/codeStyleConfig.xml
-/.idea/dictionaries/jessonchan.xml
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
-/.idea/workspace.xml
+.idea
 .vscode
