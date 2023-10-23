@@ -36,7 +36,7 @@ type TraceMethod interface {
 	cangoHttpTrace()
 }
 
-func methods(ps any) (methods []string) {
+func httpMethods(ps any) (methods []string) {
 	if _, ok := ps.(GetMethod); ok {
 		methods = append(methods, http.MethodGet)
 	}
@@ -60,6 +60,10 @@ func methods(ps any) (methods []string) {
 	}
 	if _, ok := ps.(TraceMethod); ok {
 		methods = append(methods, http.MethodTrace)
+	}
+	// 默认为Get
+	if len(methods) == 0 {
+		methods = append(methods, http.MethodGet)
 	}
 	return
 }

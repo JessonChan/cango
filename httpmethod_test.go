@@ -25,14 +25,18 @@ func _Test_gen_methods(t *testing.T) {
 	for _, m := range httpMethods {
 		fmt.Println(strings.ReplaceAll(template, "$Method", strings.Title(strings.ToLower(m))))
 	}
-	fmt.Println(`func methods(ps any) (methods []string) {`)
+	fmt.Println(`func httpMethods(ps any) (methods []string) {`)
 	template = `	if _, ok := ps.($MethodMethod); ok {
 		methods = append(methods, http.Method$Method)
 	}`
 	for _, m := range httpMethods {
 		fmt.Println(strings.ReplaceAll(template, "$Method", strings.Title(strings.ToLower(m))))
 	}
-	fmt.Println(`	return
+	fmt.Println(`		// 默认为Get
+	if len(methods) == 0 {
+		methods = append(methods, http.MethodGet)
+	}
+	return
 	}`)
 }
 func Test_Methods(t *testing.T) {
@@ -46,7 +50,7 @@ func Test_Methods(t *testing.T) {
 		OptionsMethod
 		TraceMethod
 	}{}
-	rs := methods(ps)
+	rs := httpMethods(ps)
 	should := strings.Split("GET POST PUT DELETE PATCH OPTIONS HEAD TRACE", " ")
 	if len(rs) != len(should) {
 		t.Fail()
