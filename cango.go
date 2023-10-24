@@ -16,7 +16,7 @@ type URI interface {
 }
 
 // TODO MustBind
-var DefaultBind = func(ctx *gin.Context, i interface{}) error {
+var DefaultBind = func(ctx *gin.Context, i any) error {
 	return ctx.ShouldBind(i)
 }
 
