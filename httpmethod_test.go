@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func test_gen_methods(t *testing.T) {
+func Test_gen_methods(t *testing.T) {
 	httpMethods := []string{
 		http.MethodGet,
 		http.MethodPost,
