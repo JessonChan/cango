@@ -15,6 +15,11 @@ type URI interface {
 	Context() *gin.Context
 }
 
+// TODO MustBind
+var DefaultBind = func(ctx *gin.Context, i interface{}) error {
+	return ctx.ShouldBind(i)
+}
+
 type defaultURI struct {
 	ctx *gin.Context
 }
@@ -41,7 +46,6 @@ func (can *Can) Controller(uri URI) {
 	if !ok {
 		return
 	}
-	fmt.Println(ctrlPrefixes)
 	typ = reflect.PtrTo(typ)
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
@@ -70,13 +74,13 @@ func (can *Can) Controller(uri URI) {
 					callIn[1] = reflect.New(in).Elem()
 					callIn[1].FieldByName("URI").Set(reflect.ValueOf(&defaultURI{ctx: ctx}))
 					psInterface := callIn[1].Addr().Interface()
-					err := ctx.ShouldBind(psInterface)
+					err := DefaultBind(ctx, psInterface)
 					if err != nil {
 						// TODO error handle
 					}
 					// Parameters in path
 					if len(ctx.Params) > 0 {
-						err = ctx.ShouldBindUri(psInterface)
+						err = DefaultBind(ctx, psInterface)
 						if err != nil {
 							// TODO error handle
 						}
