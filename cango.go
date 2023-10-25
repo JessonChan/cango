@@ -58,27 +58,31 @@ func (can *Can) Controller(uri URI) {
 		if !ok {
 			continue
 		}
-		uris := []string{}
+		urls := []string{}
 		for _, ctrl := range ctrlPrefixes {
 			for _, param := range parameterPrefixes {
-				uris = append(uris, filepath.Clean(ctrl+"/"+param))
+				urls = append(urls, filepath.Clean(ctrl+"/"+param))
 			}
 		}
-		for _, u := range uris {
+		for _, url := range urls {
 			for _, httpMethod := range httpMethods(reflect.New(in).Interface()) {
-				can.Handle(httpMethod, u, func(ctx *gin.Context) {
+				can.Handle(httpMethod, url, func(ctx *gin.Context) {
 					callIn := make([]reflect.Value, method.Type.NumIn())
 					callIn[0] = reflect.New(typ).Elem()
 					callIn[1] = reflect.New(in).Elem()
 					callIn[1].FieldByName("URI").Set(reflect.ValueOf(&defaultURI{ctx: ctx}))
 					psInterface := callIn[1].Addr().Interface()
-					err := DefaultBind(ctx, psInterface)
+					bind := (ShouldBind{}).bind()
+					if v, ok := uri.(requestBind); ok {
+						bind = v.bind()
+					}
+					err := bind(ctx, psInterface)
 					if err != nil {
 						// TODO error handle
 					}
 					// Parameters in path
 					if len(ctx.Params) > 0 {
-						err = DefaultBind(ctx, psInterface)
+						err = bind(ctx, psInterface)
 						if err != nil {
 							// TODO error handle
 						}
