@@ -86,7 +86,7 @@ func (can *Can) Controller(uri URI) {
 						}
 					}
 					outs := method.Func.Call(callIn)
-					if outs[0].CanInterface() && outs[0].Interface() != nil {
+					if len(outs) > 0 && outs[0].CanInterface() && outs[0].Interface() != nil {
 						ctx.JSON(http.StatusOK, outs[0].Interface())
 					}
 				})
