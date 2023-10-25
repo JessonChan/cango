@@ -1,7 +1,6 @@
 package cango
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"reflect"
@@ -36,8 +35,8 @@ type Can struct {
 	*gin.Engine
 }
 
-func (can *Can) Run(args ...string) {
-	can.Engine.Run(args...)
+func (can *Can) Run(args ...string) error {
+	return can.Engine.Run(args...)
 }
 
 func (can *Can) Controller(uri URI) {
@@ -59,7 +58,6 @@ func (can *Can) Controller(uri URI) {
 		if !ok {
 			continue
 		}
-		fmt.Println("=>", parameterPrefixes, httpMethods(reflect.New(in).Interface()))
 		uris := []string{}
 		for _, ctrl := range ctrlPrefixes {
 			for _, param := range parameterPrefixes {
