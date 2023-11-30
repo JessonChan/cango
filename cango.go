@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 type URI interface {
@@ -36,7 +37,7 @@ type Can struct {
 }
 
 func (can *Can) Run(args ...string) error {
-	return can.Engine.Run(args...)
+	return can.Engine.Run(append(args, ":"+ternary(viper.GetString("default.port") != "", viper.GetString("default.port"), viper.GetString("cango.port")))[0])
 }
 
 func (can *Can) Controller(uri URI) {
@@ -117,8 +118,27 @@ func uriValue(typ reflect.Type) (prefixes []string, isCango bool) {
 	return strings.Split(prefix, ";"), isCango
 }
 
-func NewCan() *Can {
+func NewCan(args ...string) *Can {
+	//TODO viper args
+	viper.SetConfigName("cango")
+	viper.SetConfigType("ini")
+	viper.AddConfigPath("./conf/")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+		} else {
+			// Config file was found but another error was produced
+		}
+	}
 	return &Can{
 		gin.Default(),
 	}
+}
+
+// ternary for example ternary(true, "a", "b")=="a"
+func ternary[T any](ok bool, a, b T) T {
+	if ok {
+		return a
+	}
+	return b
 }
