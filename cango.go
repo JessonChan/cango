@@ -46,7 +46,9 @@ func (can *Can) Controller(uri URI) {
 	if !ok {
 		return
 	}
-	typ = reflect.PtrTo(typ)
+	if typ.Kind() != reflect.Ptr {
+		typ = reflect.PtrTo(typ)
+	}
 	for i := 0; i < typ.NumMethod(); i++ {
 		method := typ.Method(i)
 		// 限定只有一个输入

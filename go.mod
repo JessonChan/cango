@@ -2,7 +2,10 @@ module github.com/JessonChan/cango
 
 go 1.20
 
-require github.com/gin-gonic/gin v1.9.1
+require (
+	github.com/JessonChan/canlog v0.0.0-20200418122001-f1e0a9b51c43
+	github.com/gin-gonic/gin v1.9.1
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
