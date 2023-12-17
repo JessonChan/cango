@@ -20,7 +20,7 @@ type ShouldBind struct {
 
 func (bind ShouldBind) bind() func(ctx *gin.Context, i any) error {
 	return func(ctx *gin.Context, i any) error {
-		return ctx.Bind(i)
+		return ctx.ShouldBind(i)
 	}
 }
 
