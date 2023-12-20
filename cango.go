@@ -37,7 +37,24 @@ type Can struct {
 }
 
 func (can *Can) Run(args ...string) error {
+	for k := range controllerHolder {
+		can.Controller(k)
+	}
 	return can.Engine.Run(append(args, ":"+ternary(viper.GetString("default.port") != "", viper.GetString("default.port"), viper.GetString("cango.port")))[0])
+}
+
+func Env(key string) string {
+	return viper.GetString("default." + key)
+}
+
+var controllerHolder = map[URI]string{}
+
+// TODO 不同的can实例不同的名字
+const defaultCangoName = "_cango"
+
+func RegisterURI(uri URI, cangoName ...string) bool {
+	controllerHolder[uri] = append(cangoName, defaultCangoName)[0]
+	return true
 }
 
 func (can *Can) Controller(uri URI) {
