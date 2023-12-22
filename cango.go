@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/JessonChan/canlog"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -149,6 +150,13 @@ func NewCan(args ...string) *Can {
 			// Config file was found but another error was produced
 		}
 	}
+	canlogPath := viper.GetString("default.canlog_path")
+	if canlogPath != "" {
+		canlog.SetWriter(canlog.NewFileWriter(canlogPath), "CANGO")
+	}
+	canlog.SetPrefix("CANGO")
+	gin.DefaultWriter = canlog.GetLogger().Writer()
+	gin.DefaultErrorWriter = canlog.GetLogger().Writer()
 	return &Can{
 		gin.Default(),
 	}
