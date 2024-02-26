@@ -82,7 +82,7 @@ func (can *Can) Controller(uri URI) {
 		urls := []string{}
 		for _, ctrl := range ctrlPrefixes {
 			for _, param := range parameterPrefixes {
-				urls = append(urls, filepath.Clean(ctrl+"/"+param))
+				urls = append(urls, filepath.ToSlash(filepath.Clean(ctrl+"/"+param)))
 			}
 		}
 		for _, url := range urls {
