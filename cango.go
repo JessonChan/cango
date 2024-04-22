@@ -151,10 +151,12 @@ func NewCan(args ...string) *Can {
 		}
 	}
 	canlogPath := viper.GetString("default.canlog_path")
+	canlog.SetPrefix("CANGO")
 	if canlogPath != "" {
 		canlog.SetWriter(canlog.NewFileWriter(canlogPath), "CANGO")
+	} else {
+		_, _ = canlog.GetLogger().Writer().Write(cangoMark)
 	}
-	canlog.SetPrefix("CANGO")
 	gin.DefaultWriter = canlog.GetLogger().Writer()
 	gin.DefaultErrorWriter = canlog.GetLogger().Writer()
 	return &Can{
