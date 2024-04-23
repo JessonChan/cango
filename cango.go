@@ -99,13 +99,14 @@ func (can *Can) Controller(uri URI) {
 					}
 					err := bind(ctx, psInterface)
 					if err != nil {
-						// TODO error handle
+						canlog.CanError("bind", err)
 					}
 					// Parameters in path
+					canlog.CanError("ctx.Params", ctx.Params)
 					if len(ctx.Params) > 0 {
-						err = bind(ctx, psInterface)
+						err = ctx.ShouldBindUri(psInterface)
 						if err != nil {
-							// TODO error handle
+							canlog.CanError("bind params error", err)
 						}
 					}
 					outs := method.Func.Call(callIn)
@@ -135,7 +136,16 @@ func uriValue(typ reflect.Type) (prefixes []string, isCango bool) {
 			break
 		}
 	}
+	prefix = converCangoPathValue2Gin(prefix)
 	return strings.Split(prefix, ";"), isCango
+}
+
+// in Cango,we use {} to mark the parameter
+// in Gin ,we use : to mark the parameter
+var cangoReplacer = strings.NewReplacer("{", ":", "}", "")
+
+func converCangoPathValue2Gin(value string) string {
+	return cangoReplacer.Replace(value)
 }
 
 func NewCan(args ...string) *Can {
