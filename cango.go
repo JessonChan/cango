@@ -101,8 +101,6 @@ func (can *Can) Controller(uri URI) {
 					if err != nil {
 						canlog.CanError("bind", err)
 					}
-					// Parameters in path
-					canlog.CanError("ctx.Params", ctx.Params)
 					if len(ctx.Params) > 0 {
 						err = ctx.ShouldBindUri(psInterface)
 						if err != nil {
