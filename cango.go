@@ -60,7 +60,7 @@ func RegisterURI(uri URI, cangoName ...string) bool {
 
 func (can *Can) Controller(uri URI) {
 	typ := reflect.TypeOf(uri)
-	ctrlPrefixes, ok := uriValue(typ)
+	ctrlPrefixes, ok := extractRoutePaths(typ)
 	if !ok {
 		return
 	}
@@ -75,7 +75,7 @@ func (can *Can) Controller(uri URI) {
 		}
 
 		in := method.Type.In(1)
-		parameterPrefixes, ok := uriValue(in)
+		parameterPrefixes, ok := extractRoutePaths(in)
 		if !ok {
 			continue
 		}
@@ -117,7 +117,20 @@ func (can *Can) Controller(uri URI) {
 	}
 }
 
-func uriValue(typ reflect.Type) (prefixes []string, isCango bool) {
+// extractRoutePaths extracts route path prefixes from a type and determines if it's a Cango-compatible type.
+// It handles both pointer and value types, supporting multiple path prefixes separated by semicolons.
+// The function also converts Cango-style path parameters to Gin-compatible format.
+//
+// Parameters:
+//   - typ: reflect.Type of the struct to analyze
+//
+// Returns:
+//   - prefixes: slice of URI path prefixes, converted from Cango to Gin format
+//   - isCango: true if the type implements the URI interface or has a field implementing it
+func extractRoutePaths(typ reflect.Type) (prefixes []string, isCango bool) {
+	if typ == nil {
+		return
+	}
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
